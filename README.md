@@ -32,7 +32,7 @@ servicios ya preparada para conectarse a una API real cuando exista.
 
 | Componente | Estado |
 |---|---|
-| Frontend web · Panel del negocio | ✅ En desarrollo, ver [`frontend/`](frontend/) |
+| Frontend web · Panel del negocio | ✅ En desarrollo, ver [`src/`](src/) |
 | Frontend web · Vista barista/vendedor | ⬜ Pendiente |
 | Frontend web · Catálogo y checkout del cliente final | ⬜ Pendiente |
 | Backend / API | ⬜ Pendiente |
@@ -46,12 +46,14 @@ servicios ya preparada para conectarse a una API real cuando exista.
 Cafexis/
   Documentos/     Documento de alcance, manual de marca, guías de diseño UI,
                   presentación del sistema y logotipos
-  frontend/       Aplicación web (React + Vite + TypeScript) — panel del negocio
+  src/            Código de la aplicación web (React + Vite + TypeScript)
+  public/         Assets estáticos servidos tal cual (favicon, etc.)
 ```
 
-Para correr el frontend y ver el detalle de su arquitectura (modelo de datos,
-capa de servicios, componentes, cómo conectar el futuro backend), ve a
-[`frontend/README.md`](frontend/README.md).
+El código del frontend vive directamente en la raíz del repositorio (no en una
+subcarpeta separada). Para correrlo y ver el detalle de su arquitectura (modelo
+de datos, capa de servicios, componentes, cómo conectar el futuro backend), ve
+a [`README_FrontEnd.md`](README_FrontEnd.md).
 
 ## Identidad de marca
 

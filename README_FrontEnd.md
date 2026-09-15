@@ -1,9 +1,10 @@
 # Cafexis · Frontend (Panel del negocio)
 
 Primera etapa del sistema de gestión y ventas para negocios de café, descrito en
-`../documento_alcance_proyecto.pdf`. Esta entrega cubre el **panel web para el
-administrador/dueño del negocio**: dashboard, ventas, inventario, productos y
-recetas, compras, proveedores, reportes, trazabilidad y configuración.
+[`Documentos/documento_alcance_proyecto.pdf`](Documentos/documento_alcance_proyecto.pdf).
+Esta entrega cubre el **panel web para el administrador/dueño del negocio**:
+dashboard, ventas, inventario, productos y recetas, compras, proveedores,
+reportes, trazabilidad y configuración.
 
 El backend y la base de datos todavía no existen. Este frontend funciona hoy
 con datos de ejemplo (`src/services/mock/data.ts`) servidos a través de una
