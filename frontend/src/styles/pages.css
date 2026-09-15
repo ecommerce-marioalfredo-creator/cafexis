@@ -1,0 +1,160 @@
+/* Estilos compartidos entre páginas del panel (grids, listas, toolbars). */
+
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.dashboard-page__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.dashboard-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.dashboard-page__ranking,
+.dashboard-page__alerts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dashboard-page__ranking li,
+.dashboard-page__alerts li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.dashboard-page__ranking li:last-child,
+.dashboard-page__alerts li:last-child {
+  border-bottom: none;
+}
+
+.dashboard-page__alerts-value {
+  color: var(--color-state-warning);
+  font-weight: 700;
+}
+
+/* Toolbar genérico de página (título de sección + filtros/acciones) */
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.page-toolbar__filters {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-default);
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.filter-chip--active {
+  border-color: var(--color-brand-teal);
+  color: var(--color-brand-teal);
+  background: rgba(29, 158, 117, 0.08);
+  font-weight: 700;
+}
+
+/* Ventas: tablero por estado */
+.orders-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: var(--space-4);
+  overflow-x: auto;
+}
+
+.orders-board__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 220px;
+}
+
+.orders-board__column-title {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 900px) {
+  .orders-board {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Inventario / tablas genéricas */
+.data-table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 2px solid var(--color-border-default);
+}
+
+/* Grillas de tarjetas de dominio */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.section-stack h3 {
+  margin-bottom: var(--space-2);
+}
+
+.section-subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.card-grid--spaced {
+  margin-top: var(--space-4);
+}

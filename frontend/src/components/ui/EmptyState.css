@@ -1,0 +1,15 @@
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--color-text-secondary);
+}
+
+.empty-state strong {
+  font-family: var(--font-heading);
+  color: var(--color-text-charcoal);
+  font-size: 16px;
+}

@@ -1,0 +1,10 @@
+.inventory-row td {
+  padding: var(--space-3) var(--space-3);
+  font-size: 14px;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.inventory-row__name {
+  font-weight: 700;
+  color: var(--color-text-charcoal);
+}

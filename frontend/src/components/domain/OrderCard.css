@@ -1,0 +1,63 @@
+.order-card {
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  box-shadow: var(--shadow-sm);
+}
+
+.order-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-card__customer {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.order-card__items {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.order-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-1);
+}
+
+.order-card__total {
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+.order-card__payment {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.order-card__advance {
+  margin-top: var(--space-1);
+  border: 1px solid var(--color-brand-teal);
+  color: var(--color-brand-teal);
+  background: transparent;
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.order-card__advance:hover {
+  background: rgba(29, 158, 117, 0.08);
+}
