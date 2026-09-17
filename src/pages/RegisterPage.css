@@ -1,0 +1,43 @@
+.register-page__color-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.register-page__color-row input[type='color'] {
+  width: 48px;
+  height: 40px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.register-page__swatches {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.register-page__swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--color-surface-default);
+  box-shadow: 0 0 0 1px var(--color-border-default);
+  cursor: pointer;
+}
+
+.register-page__preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.register-page__preview img {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--color-border-default);
+}

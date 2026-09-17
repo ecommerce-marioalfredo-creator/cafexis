@@ -8,22 +8,52 @@
 
 export type BusinessType = 'cafeteria' | 'grano_molido' | 'mixto'
 
+/** Personalización visual que cada negocio define al registrarse (sección "theming"). */
+export interface BusinessBranding {
+  primaryColor: string
+  logoUrl?: string
+}
+
 export interface Business {
   id: string
   name: string
   type: BusinessType
-  logoUrl?: string
   country: string
+  branding: BusinessBranding
 }
 
 export type UserRole = 'supervisor_tecnico' | 'administrador' | 'barista' | 'cliente'
 
 export interface AppUser {
   id: string
+  businessId: string
   name: string
   email: string
   role: UserRole
   active: boolean
+}
+
+// --- Autenticación (mock local vía localStorage, ver services/api/authService.ts) ---
+
+export interface AuthSession {
+  userId: string
+  businessId: string
+}
+
+export interface RegisterInput {
+  businessName: string
+  businessType: BusinessType
+  country: string
+  ownerName: string
+  email: string
+  password: string
+  primaryColor: string
+  logoUrl?: string
+}
+
+export interface LoginInput {
+  email: string
+  password: string
 }
 
 // --- Inventario ---

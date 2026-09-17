@@ -3,7 +3,12 @@ import './RecipeCard.css'
 
 const currency = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 
-export function RecipeCard({ product }: { product: Product }) {
+interface RecipeCardProps {
+  product: Product
+  onEdit?: (product: Product) => void
+}
+
+export function RecipeCard({ product, onEdit }: RecipeCardProps) {
   return (
     <article className="recipe-card">
       <header className="recipe-card__header">
@@ -23,6 +28,11 @@ export function RecipeCard({ product }: { product: Product }) {
         </ul>
       ) : (
         <p className="recipe-card__no-recipe">Producto empacado, sin receta asociada.</p>
+      )}
+      {onEdit && (
+        <button className="recipe-card__edit" onClick={() => onEdit(product)}>
+          Editar
+        </button>
       )}
     </article>
   )

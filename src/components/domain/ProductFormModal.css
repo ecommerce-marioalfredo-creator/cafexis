@@ -1,0 +1,82 @@
+.product-form__recipe {
+  border-top: 1px solid var(--color-border-default);
+  padding-top: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.product-form__recipe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.product-form__add-line {
+  border: 1px solid var(--color-brand-teal);
+  color: var(--color-brand-teal);
+  background: transparent;
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-3);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.product-form__add-line:hover:not(:disabled) {
+  background: rgba(29, 158, 117, 0.08);
+}
+
+.product-form__add-line:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.product-form__recipe-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.product-form__recipe-line select {
+  flex: 2;
+  height: 40px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-2);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+.product-form__recipe-line input {
+  flex: 1;
+  height: 40px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-2);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+.product-form__unit {
+  width: 32px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.product-form__remove-line {
+  border: none;
+  background: transparent;
+  color: var(--color-state-error);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.product-form__remove-line:hover {
+  background: rgba(214, 69, 69, 0.1);
+}

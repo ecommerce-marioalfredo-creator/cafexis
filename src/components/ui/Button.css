@@ -20,6 +20,10 @@
   cursor: not-allowed;
 }
 
+.btn--block {
+  width: 100%;
+}
+
 .btn--primary {
   background: var(--color-brand-orange);
   color: #fff;

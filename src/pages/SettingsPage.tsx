@@ -24,12 +24,31 @@ export function SettingsPage() {
       <section>
         <h3>Datos del negocio</h3>
         <Card>
-          <p>
-            <strong>{business?.name}</strong>
-          </p>
-          <p className="section-subtitle">
-            {business?.type === 'mixto' ? 'Cafetería y venta de café en grano/molido' : business?.type} ·{' '}
-            {business?.country}
+          <div className="settings-page__business">
+            {business?.branding.logoUrl ? (
+              <img src={business.branding.logoUrl} alt={business.name} className="settings-page__logo" />
+            ) : (
+              <span
+                className="settings-page__logo-fallback"
+                style={{ background: business?.branding.primaryColor }}
+                aria-hidden="true"
+              >
+                {business?.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+            <div>
+              <p>
+                <strong>{business?.name}</strong>
+              </p>
+              <p className="section-subtitle">
+                {business?.type === 'mixto' ? 'Cafetería y venta de café en grano/molido' : business?.type} ·{' '}
+                {business?.country}
+              </p>
+            </div>
+          </div>
+          <p className="settings-page__brand-color">
+            Color de marca: <span className="settings-page__color-dot" style={{ background: business?.branding.primaryColor }} />
+            {business?.branding.primaryColor}
           </p>
         </Card>
       </section>
