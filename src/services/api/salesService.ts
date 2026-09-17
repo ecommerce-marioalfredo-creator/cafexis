@@ -1,17 +1,32 @@
-import { delay } from './client'
-import { orders as mockOrders } from '@/services/mock/data'
+import { supabase, getActiveBusinessId } from './supabaseClient'
+import { mapOrder } from './mappers'
 import type { Order, OrderStatus } from '@/types/domain'
+import type { OrderRow } from '@/types/database'
 
-// Copia mutable en memoria: simula persistencia mientras no exista backend.
-const orders: Order[] = [...mockOrders]
+const ORDER_SELECT = '*, order_items_cafexis(*)'
 
 export async function listOrders(): Promise<Order[]> {
-  return delay([...orders].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)))
+  const businessId = await getActiveBusinessId()
+
+  const { data, error } = await supabase
+    .from('orders_cafexis')
+    .select(ORDER_SELECT)
+    .eq('business_id', businessId)
+    .order('created_at', { ascending: false })
+    .returns<OrderRow[]>()
+
+  if (error) throw new Error(error.message)
+  return (data ?? []).map(mapOrder)
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order> {
-  const order = orders.find((o) => o.id === orderId)
-  if (!order) throw new Error(`Pedido ${orderId} no encontrado`)
-  order.status = status
-  return delay(order, 150)
+  const { data, error } = await supabase
+    .from('orders_cafexis')
+    .update({ status })
+    .eq('id', orderId)
+    .select(ORDER_SELECT)
+    .single<OrderRow>()
+
+  if (error || !data) throw new Error(error?.message ?? `Pedido ${orderId} no encontrado`)
+  return mapOrder(data)
 }

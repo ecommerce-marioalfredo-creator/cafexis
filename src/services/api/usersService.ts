@@ -1,11 +1,15 @@
-import { delay } from './client'
-import { users, business } from '@/services/mock/data'
-import type { AppUser, Business } from '@/types/domain'
+import { supabase } from './supabaseClient'
+import { mapAppUser } from './mappers'
+import type { AppUser } from '@/types/domain'
+import type { AppUserRow } from '@/types/database'
 
-export async function listUsers(): Promise<AppUser[]> {
-  return delay([...users])
-}
+export async function listUsers(businessId: string): Promise<AppUser[]> {
+  const { data, error } = await supabase
+    .from('app_users_cafexis')
+    .select('*')
+    .eq('business_id', businessId)
+    .returns<AppUserRow[]>()
 
-export async function getBusiness(): Promise<Business> {
-  return delay(business)
+  if (error) throw new Error(error.message)
+  return (data ?? []).map(mapAppUser)
 }

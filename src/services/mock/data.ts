@@ -2,7 +2,12 @@
  * Datos de ejemplo para el panel del negocio.
  * Representan un negocio mixto (cafetería + venta de café en grano),
  * tal como contempla la sección 3 del documento de alcance del proyecto.
- * Reemplazar por llamadas reales cuando exista el backend (ver services/api).
+ *
+ * Ningún services/api/*Service.ts activo usa ya este archivo: desde la
+ * conexión a Supabase, todos leen de las tablas *_cafexis reales. Se
+ * conserva como referencia legible de qué datos existen en el seed SQL
+ * (supabase/migrations/0003_seed_demo_cafexis.sql es la fuente equivalente
+ * ya aplicada en la base de datos).
  */
 import type {
   Business,
@@ -21,13 +26,17 @@ export const business: Business = {
   name: 'Mi Cafetería',
   type: 'mixto',
   country: 'Colombia',
+  branding: { primaryColor: '#D85A30' }, // colores por defecto de Cafexis; sin logo propio (demo)
 }
 
 export const users: AppUser[] = [
-  { id: 'u-1', name: 'Laura Gómez', email: 'laura@micafeteria.co', role: 'administrador', active: true },
-  { id: 'u-2', name: 'Andrés Ruiz', email: 'andres@micafeteria.co', role: 'barista', active: true },
-  { id: 'u-3', name: 'Soporte Cafexis', email: 'soporte@cafexis.co', role: 'supervisor_tecnico', active: true },
+  { id: 'u-1', businessId: 'biz-1', name: 'Laura Gómez', email: 'laura@micafeteria.co', role: 'administrador', active: true },
+  { id: 'u-2', businessId: 'biz-1', name: 'Andrés Ruiz', email: 'andres@micafeteria.co', role: 'barista', active: true },
+  { id: 'u-3', businessId: 'biz-1', name: 'Soporte Cafexis', email: 'soporte@cafexis.co', role: 'supervisor_tecnico', active: true },
 ]
+
+/** Contraseña de la cuenta demo (solo para el mock local, ver authService.ts). */
+export const DEMO_PASSWORD = 'cafexis123'
 
 export const inventoryItems: InventoryItem[] = [
   { id: 'inv-1', name: 'Leche entera', unit: 'l', quantity: 3, lowStockThreshold: 8, status: 'bajo' },

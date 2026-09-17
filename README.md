@@ -25,18 +25,20 @@ El detalle completo del alcance está en
 
 ## Estado actual del proyecto
 
-Esta es una etapa temprana: **solo existe el frontend web**, y únicamente para
-el panel del negocio (rol administrador/dueño). Todavía no hay backend ni base
-de datos — el frontend funciona con datos de ejemplo a través de una capa de
-servicios ya preparada para conectarse a una API real cuando exista.
+El frontend web (panel del negocio, rol administrador/dueño) ya está
+conectado a una base de datos real en Supabase: autenticación, negocios,
+usuarios, inventario, productos y recetas, pedidos, compras, proveedores,
+trazabilidad y reportes se leen y escriben directamente en Postgres, con
+seguridad por negocio (Row Level Security) activada.
 
 | Componente | Estado |
 |---|---|
 | Frontend web · Panel del negocio | ✅ En desarrollo, ver [`src/`](src/) |
 | Frontend web · Vista barista/vendedor | ⬜ Pendiente |
 | Frontend web · Catálogo y checkout del cliente final | ⬜ Pendiente |
-| Backend / API | ⬜ Pendiente |
-| Base de datos | ⬜ Pendiente |
+| Base de datos (Supabase) | ✅ Esquema aplicado, ver [`supabase/`](supabase/) |
+| Conexión frontend ↔ Supabase | ✅ Autenticación y datos ya conectados |
+| Backend / API propia | ⬜ No hace falta por ahora (Supabase + RLS la reemplaza) |
 | Apps Android / iOS | ⬜ Pendiente |
 | Facturación electrónica (DIAN) | ⬜ Pendiente |
 
@@ -48,12 +50,17 @@ Cafexis/
                   presentación del sistema y logotipos
   src/            Código de la aplicación web (React + Vite + TypeScript)
   public/         Assets estáticos servidos tal cual (favicon, etc.)
+  supabase/       Esquema de base de datos (migraciones SQL) para Supabase
 ```
 
 El código del frontend vive directamente en la raíz del repositorio (no en una
 subcarpeta separada). Para correrlo y ver el detalle de su arquitectura (modelo
 de datos, capa de servicios, componentes, cómo conectar el futuro backend), ve
 a [`README_FrontEnd.md`](README_FrontEnd.md).
+
+Para la base de datos —qué contiene, cómo aplicarla en un proyecto de
+Supabase y qué necesitas entregar para conectarla— ve a
+[`supabase/README.md`](supabase/README.md).
 
 ## Identidad de marca
 
@@ -69,8 +76,8 @@ el logotipo definitivo aún está en validación):
 
 ## Próximos pasos
 
-1. Definir y construir el backend (API + base de datos) que reemplace la capa
-   mock del frontend.
+1. Crear el usuario demo en Supabase Auth (`laura@micafeteria.co`) para poder
+   probar el login con datos de ejemplo — ver el paso 4 en `supabase/README.md`.
 2. Vistas para los roles barista/vendedor y cliente final.
 3. Aplicaciones Android e iOS.
 4. Integración con un proveedor de facturación electrónica autorizado por la
