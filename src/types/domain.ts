@@ -33,6 +33,21 @@ export interface AppUser {
   active: boolean
 }
 
+/** Rol que se puede asignar a un usuario interno invitado (nunca 'cliente' ni 'supervisor_tecnico'). */
+export type InvitableRole = 'administrador' | 'barista'
+
+export type InvitationStatus = 'pendiente' | 'aceptada' | 'expirada'
+
+export interface UserInvitation {
+  id: string
+  businessId: string
+  email: string
+  name: string
+  role: UserRole
+  status: InvitationStatus
+  createdAt: string
+}
+
 // --- Autenticación (mock local vía localStorage, ver services/api/authService.ts) ---
 
 export interface AuthSession {

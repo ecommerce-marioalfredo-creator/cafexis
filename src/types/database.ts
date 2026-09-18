@@ -16,6 +16,7 @@ export type OrderStatusRow = 'pedido' | 'en_preparacion' | 'listo' | 'entregado'
 export type PaymentMethodRow = 'efectivo' | 'tarjeta' | 'transferencia' | 'billetera_digital' | 'cripto'
 export type PurchaseOrderOriginRow = 'sugerida_sistema' | 'manual'
 export type PurchaseOrderStatusRow = 'propuesta' | 'confirmada' | 'recibida' | 'cancelada'
+export type InvitationStatusRow = 'pendiente' | 'aceptada' | 'expirada'
 
 export interface BusinessRow {
   id: string
@@ -35,6 +36,17 @@ export interface AppUserRow {
   email: string
   role: UserRoleRow
   active: boolean
+  created_at: string
+}
+
+export interface UserInvitationRow {
+  id: string
+  business_id: string
+  email: string
+  name: string
+  role: UserRoleRow
+  invited_by: string | null
+  status: InvitationStatusRow
   created_at: string
 }
 

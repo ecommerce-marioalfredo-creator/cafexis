@@ -16,6 +16,7 @@ import type {
   OrderItemRow,
   PurchaseOrderRow,
   CustomReportRow,
+  UserInvitationRow,
 } from '@/types/database'
 import type {
   Business,
@@ -29,6 +30,7 @@ import type {
   OrderItem,
   PurchaseOrder,
   ReportDefinition,
+  UserInvitation,
 } from '@/types/domain'
 
 export function mapBusiness(row: BusinessRow): Business {
@@ -38,6 +40,18 @@ export function mapBusiness(row: BusinessRow): Business {
     type: row.type,
     country: row.country,
     branding: { primaryColor: row.primary_color, logoUrl: row.logo_url ?? undefined },
+  }
+}
+
+export function mapUserInvitation(row: UserInvitationRow): UserInvitation {
+  return {
+    id: row.id,
+    businessId: row.business_id,
+    email: row.email,
+    name: row.name,
+    role: row.role,
+    status: row.status,
+    createdAt: row.created_at,
   }
 }
 

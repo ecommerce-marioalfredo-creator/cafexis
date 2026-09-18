@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useAsync } from './useAsync'
-import { listUsers } from '@/services/api/usersService'
+import { listUsers, listInvitations, inviteUser, updateUserRole, setUserActive } from '@/services/api/usersService'
 import { useAuth } from '@/context/AuthContext'
+import type { InvitableRole, UserRole } from '@/types/domain'
 
 /** Usuarios internos del negocio de la sesión activa. */
 export function useUsers() {
@@ -21,7 +22,40 @@ export function useUsers() {
     return fromMock
   }, [data, sessionUser])
 
-  return { users, loading, error, reload }
+  const invite = useCallback(
+    async (input: { email: string; name: string; role: InvitableRole }) => {
+      await inviteUser(input)
+      reload()
+    },
+    [reload],
+  )
+
+  const updateRole = useCallback(
+    async (userId: string, role: UserRole) => {
+      await updateUserRole(userId, role)
+      reload()
+    },
+    [reload],
+  )
+
+  const setActive = useCallback(
+    async (userId: string, active: boolean) => {
+      await setUserActive(userId, active)
+      reload()
+    },
+    [reload],
+  )
+
+  return { users, loading, error, reload, invite, updateRole, setActive }
+}
+
+/** Invitaciones pendientes del negocio de la sesión activa. */
+export function useInvitations() {
+  const { business } = useAuth()
+  const businessId = business?.id ?? ''
+
+  const { data, loading, error, reload } = useAsync(() => listInvitations(businessId), [businessId])
+  return { invitations: data ?? [], loading, error, reload }
 }
 
 /** Negocio de la sesión activa (demo o registrado), no el mock fijo. */

@@ -10,9 +10,12 @@ convivan sin conflicto en un proyecto de Supabase compartido con otras cosas.
 ```
 supabase/
   migrations/
-    0001_schema_cafexis.sql   Tablas, tipos y triggers
-    0002_rls_cafexis.sql      Seguridad por negocio (Row Level Security)
-    0003_seed_demo_cafexis.sql  Datos de ejemplo del negocio demo
+    0001_schema_cafexis.sql          Tablas, tipos y triggers
+    0002_rls_cafexis.sql             Seguridad por negocio (Row Level Security)
+    0003_seed_demo_cafexis.sql       Datos de ejemplo del negocio demo
+    0004_user_management_cafexis.sql Invitaciones, roles y permisos de gestión
+  functions/
+    invite-user/index.ts             Edge Function: invita usuarios sin cerrar tu sesión
 ```
 
 El esquema traduce 1 a 1 el modelo de datos que ya usa el frontend
@@ -65,6 +68,7 @@ Tienes dos formas, elige la que prefieras:
    - `migrations/0001_schema_cafexis.sql`
    - `migrations/0002_rls_cafexis.sql`
    - `migrations/0003_seed_demo_cafexis.sql` (opcional, son datos de ejemplo)
+   - `migrations/0004_user_management_cafexis.sql`
 
 **Opción B — Supabase CLI (recomendado si seguimos iterando el esquema):**
 ```bash
@@ -97,6 +101,55 @@ De ahí en adelante, cuando alguien se registre desde el formulario de
 Cafexis, todo este proceso (crear usuario en Auth + su fila en
 `app_users_cafexis` + su negocio en `businesses_cafexis`) lo hará el propio
 frontend automáticamente — este paso manual es solo para la cuenta demo.
+
+## Gestión de usuarios y roles (invitaciones)
+
+Desde "Configuración" en el panel, un administrador (o el supervisor técnico)
+puede invitar usuarios internos nuevos (administrador o barista) a su
+negocio. Como `supabase.auth.signUp()` autenticaría como el usuario invitado
+y cerraría la sesión de quien invita, este flujo usa
+`supabase.auth.admin.inviteUserByEmail`, que solo funciona con la
+**service_role key** — por eso vive en una Edge Function
+(`functions/invite-user/`), nunca en el frontend.
+
+### Desplegar la Edge Function (pendiente — necesario para que "Invitar usuario" funcione)
+
+1. Instala la CLI de Supabase si no la tienes: `npm install -g supabase`.
+2. Autentícate y enlaza el proyecto (si no lo hiciste ya para las migraciones):
+   ```bash
+   supabase login
+   supabase link --project-ref <tu-project-ref>
+   ```
+3. Despliega la función:
+   ```bash
+   supabase functions deploy invite-user
+   ```
+4. Configúrale su variable de entorno secreta — **nunca la pongas en el
+   repositorio ni me la compartas por mensaje**, solo en el panel de
+   Supabase: **Project Settings → Edge Functions → invite-user → Secrets**,
+   o por CLI:
+   ```bash
+   supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<tu-service-role-key>
+   ```
+   La `service_role key` está en **Project Settings → API** (la misma
+   pantalla donde está la anon key, más abajo, marcada como secreta).
+
+Sin este despliegue, el botón "Invitar usuario" del panel mostrará un error
+al intentar enviar la invitación (la función no existe todavía en tu
+proyecto de Supabase).
+
+### Qué hace cada pieza
+
+- `user_invitations_cafexis`: registra cada invitación enviada, para
+  mostrarla como "pendiente" en el panel hasta que la persona acepta.
+- Un trigger sobre `auth.users` completa automáticamente el perfil
+  (`app_users_cafexis`) apenas la persona invitada confirma su cuenta —
+  no requiere ningún paso manual adicional.
+- Solo `administrador` (de su propio negocio) o `supervisor_tecnico` pueden
+  invitar, cambiar el rol de alguien o desactivarlo — reforzado con
+  políticas RLS, no solo con la interfaz.
+- Nadie puede cambiar su propio rol (ni un administrador puede
+  autodegradarse por error), salvo el supervisor técnico.
 
 ## Frontend ya conectado a Supabase
 

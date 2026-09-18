@@ -38,6 +38,7 @@ seguridad por negocio (Row Level Security) activada.
 | Frontend web · Catálogo y checkout del cliente final | ⬜ Pendiente |
 | Base de datos (Supabase) | ✅ Esquema aplicado, ver [`supabase/`](supabase/) |
 | Conexión frontend ↔ Supabase | ✅ Autenticación y datos ya conectados |
+| Gestión de usuarios y roles (invitaciones) | ✅ Construido, falta desplegar la Edge Function |
 | Backend / API propia | ⬜ No hace falta por ahora (Supabase + RLS la reemplaza) |
 | Apps Android / iOS | ⬜ Pendiente |
 | Facturación electrónica (DIAN) | ⬜ Pendiente |
@@ -78,7 +79,10 @@ el logotipo definitivo aún está en validación):
 
 1. Crear el usuario demo en Supabase Auth (`laura@micafeteria.co`) para poder
    probar el login con datos de ejemplo — ver el paso 4 en `supabase/README.md`.
-2. Vistas para los roles barista/vendedor y cliente final.
-3. Aplicaciones Android e iOS.
-4. Integración con un proveedor de facturación electrónica autorizado por la
+2. Desplegar la Edge Function `invite-user` y configurar su clave secreta
+   para que el botón "Invitar usuario" funcione — ver la sección
+   "Gestión de usuarios y roles" en `supabase/README.md`.
+3. Vistas para los roles barista/vendedor y cliente final.
+4. Aplicaciones Android e iOS.
+5. Integración con un proveedor de facturación electrónica autorizado por la
    DIAN.

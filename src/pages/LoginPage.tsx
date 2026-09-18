@@ -42,7 +42,7 @@ export function LoginPage() {
         Cuenta demo: <strong>laura@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
       </p>
 
-      {error && <div className="auth-layout__error">{error}</div>}
+      {error && <div className="form-error-banner">{error}</div>}
 
       <form onSubmit={handleSubmit}>
         <FormField label="Correo electrónico" htmlFor="login-email">

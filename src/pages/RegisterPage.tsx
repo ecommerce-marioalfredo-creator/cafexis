@@ -70,7 +70,7 @@ export function RegisterPage() {
         </span>
       }
     >
-      {error && <div className="auth-layout__error">{error}</div>}
+      {error && <div className="form-error-banner">{error}</div>}
 
       <form onSubmit={handleSubmit}>
         <FormField label="Nombre del negocio" htmlFor="reg-business-name">
