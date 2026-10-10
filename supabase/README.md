@@ -69,6 +69,10 @@ Tienes dos formas, elige la que prefieras:
    - `migrations/0002_rls_cafexis.sql`
    - `migrations/0003_seed_demo_cafexis.sql` (opcional, son datos de ejemplo)
    - `migrations/0004_user_management_cafexis.sql`
+   - `migrations/0005_fase1_datos_base_cafexis.sql`
+   - `migrations/0006_fase2_operacion_diaria_cafexis.sql`
+   - `migrations/0007_fase3_roles_cafexis.sql`
+   - `migrations/0008_supervisor_rpc_negocio_cafexis.sql` (pendiente — ver paso 8)
 
 **Opción B — Supabase CLI (recomendado si seguimos iterando el esquema):**
 ```bash
@@ -101,6 +105,85 @@ De ahí en adelante, cuando alguien se registre desde el formulario de
 Cafexis, todo este proceso (crear usuario en Auth + su fila en
 `app_users_cafexis` + su negocio en `businesses_cafexis`) lo hará el propio
 frontend automáticamente — este paso manual es solo para la cuenta demo.
+
+### 5. Migración de Fase 1 (ya aplicada — Configuración y Lotes de café)
+
+El frontend ya incluye el CRUD completo de Inventario, Configuración del
+negocio, Proveedores y Lotes de café, pero dos piezas dependen de que se
+ejecute `migrations/0005_fase1_datos_base_cafexis.sql` en tu proyecto real:
+
+1. **Vincular un producto empacado a su lote de origen** (en el formulario de
+   Productos): la migración agrega la columna `coffee_lot_id` a
+   `products_cafexis`. Sin ella, guardar un producto con un lote seleccionado
+   falla con `Could not find the 'coffee_lot_id' column...`.
+2. **Subir el logo del negocio desde Configuración**: la migración crea el
+   bucket público de Storage `business-logos` con sus políticas (cada negocio
+   solo puede subir/reemplazar su propio archivo). Sin ella, subir un logo
+   falla con `Bucket not found`. Editar nombre, tipo, país y color del
+   negocio sí funciona sin este paso, porque solo usa columnas que ya
+   existían.
+
+Para aplicarla: en el **SQL Editor** del panel de Supabase, copia y ejecuta
+el contenido de `migrations/0005_fase1_datos_base_cafexis.sql`. El resto de
+los módulos nuevos (Inventario completo, Proveedores con búsqueda por NIT,
+creación/edición de Lotes de café) no dependen de este paso y ya funcionan
+contra el esquema actual.
+
+### 6. Migración de Fase 2 (ya aplicada — vender y comprar)
+
+`migrations/0006_fase2_operacion_diaria_cafexis.sql` (después de la 0005)
+habilita la operación diaria. Sin ella, "Nueva venta" y las acciones de
+Compras fallan con `Could not find the function ...`.
+
+- **Punto de venta** (`register_sale_cafexis`): crea el pedido y sus líneas en
+  una transacción, con los precios de la base de datos. Métodos de pago:
+  efectivo, tarjeta, transferencia y Nequi (solo se registra; no hay cobro en
+  línea). Los pedidos nuevos se numeran `V-0001`, `V-0002`…
+- **Descuento automático de inventario**: un trigger en `order_items_cafexis`
+  descuenta los ingredientes de la receta; si el producto no tiene receta pero
+  sí lote de origen y "kg del lote por unidad", descuenta del lote. Si falta
+  stock, **la venta no se guarda** y se muestra qué falta.
+- **Compras automáticas**: cuando una venta o un ajuste deja un insumo en
+  "bajo" o "agotado", se agrega a una propuesta del sistema para su
+  *proveedor preferido* (campo nuevo en Inventario), sin duplicar insumos que
+  ya estén en una orden abierta. Cantidad sugerida: lo que falta para llegar
+  al doble del umbral. El botón "Revisar inventario" hace la misma revisión
+  para todo el inventario.
+- **Ciclo de una orden**: propuesta → confirmada → recibida, o cancelada desde
+  propuesta/confirmada. Las órdenes manuales nacen confirmadas. Recibir suma
+  las cantidades al inventario. La base de datos rechaza cualquier otro salto
+  de estado.
+
+### 7. Migración de Fase 3 (ya aplicada — roles y personal)
+
+`migrations/0007_fase3_roles_cafexis.sql` amplía las políticas de seguridad
+de las tablas de negocio (inventario, productos, lotes, pedidos, compras,
+proveedores del negocio, reportes personalizados) para que el
+`supervisor_tecnico` pueda también **escribir** en cualquier negocio, no
+solo leerlo como ya podía desde `0002_rls_cafexis.sql`. Esto habilita el
+selector de negocio que aparece en el panel superior solo para ese rol: al
+elegir otro negocio, el supervisor pasa a operar ahí (crear productos,
+registrar ventas, ajustar inventario, etc.) con los mismos permisos que el
+administrador de ese negocio.
+
+También en esta fase: el menú lateral y las rutas del panel ahora se
+filtran por rol. El barista solo ve "Ventas" (su tablero de pedidos, con la
+receta de cada bebida visible en cada tarjeta); intentar abrir cualquier
+otra sección a mano lo redirige de vuelta. Administrador y supervisor
+técnico siguen viendo el panel completo.
+
+### 8. Supervisor operando otro negocio en ventas y compras (pendiente — aplicar antes de publicar el frontend)
+
+`migrations/0008_supervisor_rpc_negocio_cafexis.sql` corrige que las
+funciones de Fase 2 (`register_sale_cafexis`, `create_purchase_order_cafexis`,
+`generate_purchase_proposals_cafexis`) usaban siempre el negocio del perfil:
+un supervisor técnico que eligiera otro negocio en el selector registraba
+ventas y compras en el suyo. Ahora reciben `p_business_id`; un negocio
+distinto al propio solo se acepta si quien llama es supervisor técnico.
+
+**Importante:** el frontend ya envía `p_business_id`, así que sin esta
+migración "Nueva venta", "Nueva orden de compra" y "Revisar inventario"
+fallan con `Could not find the function ...`.
 
 ## Gestión de usuarios y roles (invitaciones)
 

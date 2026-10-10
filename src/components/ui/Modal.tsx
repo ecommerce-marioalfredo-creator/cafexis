@@ -6,13 +6,15 @@ interface ModalProps {
   onClose: () => void
   children: ReactNode
   footer?: ReactNode
+  /** 'lg' para flujos con dos columnas (ej. punto de venta). */
+  size?: 'md' | 'lg'
 }
 
 /**
  * Modal base (Design System sección 19, grupo "Feedback": alert, toast,
  * modal, confirmation, empty state). Cierra con click en el overlay o Esc.
  */
-export function Modal({ title, onClose, children, footer }: ModalProps) {
+export function Modal({ title, onClose, children, footer, size = 'md' }: ModalProps) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -23,7 +25,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-panel" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-panel modal-panel--${size}`} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <header className="modal-panel__header">
           <h3>{title}</h3>
           <button className="modal-panel__close" onClick={onClose} aria-label="Cerrar">

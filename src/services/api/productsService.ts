@@ -58,6 +58,8 @@ export async function createProduct(input: Omit<Product, 'id'>): Promise<Product
       category: input.category,
       price: input.price,
       image_url: input.imageUrl ?? null,
+      coffee_lot_id: input.coffeeLotId ?? null,
+      lot_kg_per_unit: input.coffeeLotId ? (input.lotKgPerUnit ?? null) : null,
     })
     .select()
     .single<ProductRow>()
@@ -76,6 +78,8 @@ export async function updateProduct(id: string, input: Omit<Product, 'id'>): Pro
       category: input.category,
       price: input.price,
       image_url: input.imageUrl ?? null,
+      coffee_lot_id: input.coffeeLotId ?? null,
+      lot_kg_per_unit: input.coffeeLotId ? (input.lotKgPerUnit ?? null) : null,
     })
     .eq('id', id)
     .select()

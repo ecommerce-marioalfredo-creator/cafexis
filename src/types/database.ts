@@ -13,7 +13,7 @@ export type UserRoleRow = 'supervisor_tecnico' | 'administrador' | 'barista' | '
 export type StockStatusRow = 'ok' | 'bajo' | 'agotado'
 export type CoffeeProcessRow = 'lavado' | 'honey' | 'natural' | 'otro'
 export type OrderStatusRow = 'pedido' | 'en_preparacion' | 'listo' | 'entregado'
-export type PaymentMethodRow = 'efectivo' | 'tarjeta' | 'transferencia' | 'billetera_digital' | 'cripto'
+export type PaymentMethodRow = 'efectivo' | 'tarjeta' | 'transferencia' | 'nequi' | 'billetera_digital' | 'cripto'
 export type PurchaseOrderOriginRow = 'sugerida_sistema' | 'manual'
 export type PurchaseOrderStatusRow = 'propuesta' | 'confirmada' | 'recibida' | 'cancelada'
 export type InvitationStatusRow = 'pendiente' | 'aceptada' | 'expirada'
@@ -58,6 +58,7 @@ export interface InventoryItemRow {
   quantity: number
   low_stock_threshold: number
   status: StockStatusRow
+  preferred_supplier_id: string | null
   created_at: string
   updated_at: string
 }
@@ -69,6 +70,8 @@ export interface ProductRow {
   category: string
   price: number
   image_url: string | null
+  coffee_lot_id: string | null
+  lot_kg_per_unit: number | null
   created_at: string
   updated_at: string
 }
@@ -152,10 +155,11 @@ export interface PurchaseOrderRow {
   id: string
   business_id: string
   code: string
-  supplier_id: string
+  supplier_id: string | null
   origin: PurchaseOrderOriginRow
   reason: string | null
   status: PurchaseOrderStatusRow
+  received_at: string | null
   created_at: string
   updated_at: string
   suppliers_cafexis?: { name: string } | null

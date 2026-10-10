@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { InviteUserModal } from '@/components/domain/InviteUserModal'
+import { BusinessEditModal } from '@/components/domain/BusinessEditModal'
 import type { AppUser, InvitableRole, UserRole } from '@/types/domain'
 
 const ROLE_LABEL: Record<UserRole, string> = {
@@ -20,10 +21,11 @@ const ASSIGNABLE_ROLES: InvitableRole[] = ['administrador', 'barista']
 
 export function SettingsPage() {
   const { users, loading, error, reload, invite, updateRole, setActive } = useUsers()
-  const { business, loading: loadingBusiness } = useBusiness()
+  const { business, loading: loadingBusiness, update: updateBusinessInfo, uploadLogo } = useBusiness()
   const { invitations, loading: loadingInvitations, reload: reloadInvitations } = useInvitations()
   const { user: sessionUser } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
+  const [editBusinessOpen, setEditBusinessOpen] = useState(false)
 
   if (loading || loadingBusiness) return <PageLoading label="Cargando configuración…" />
   if (error) return <PageError message={error} onRetry={reload} />
@@ -47,7 +49,14 @@ export function SettingsPage() {
   return (
     <div className="section-stack">
       <section>
-        <h3>Datos del negocio</h3>
+        <div className="page-toolbar">
+          <h3>Datos del negocio</h3>
+          {canManageUsers && (
+            <Button variant="secondary" onClick={() => setEditBusinessOpen(true)}>
+              Editar
+            </Button>
+          )}
+        </div>
         <Card>
           <div className="settings-page__business">
             {business?.branding.logoUrl ? (
@@ -148,6 +157,15 @@ export function SettingsPage() {
       )}
 
       {modalOpen && <InviteUserModal onInvite={handleInvite} onClose={() => setModalOpen(false)} />}
+
+      {editBusinessOpen && business && (
+        <BusinessEditModal
+          business={business}
+          onSave={updateBusinessInfo}
+          onUploadLogo={uploadLogo}
+          onClose={() => setEditBusinessOpen(false)}
+        />
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { getBusinessOverride } from './businessOverrideStorage'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -17,6 +18,13 @@ export const supabase = createClient(url, anonKey)
  * filtrar sus consultas explícitamente (además de la protección que ya da
  * Row Level Security en el servidor). Lanza si no hay sesión activa: ningún
  * *Service debería invocarse sin haber pasado por <RequireAuth>.
+ *
+ * El supervisor técnico puede tener un negocio "override" elegido desde el
+ * selector del Topbar (ver businessOverrideStorage.ts) para operar en
+ * nombre de otro negocio; en ese caso se usa ese id en vez del de su
+ * perfil. Las políticas RLS (0007_fase3_roles_cafexis.sql) son las que de
+ * verdad autorizan la escritura — esto solo decide a qué negocio apunta el
+ * frontend.
  */
 export async function getActiveBusinessId(): Promise<string> {
   const {
@@ -26,10 +34,16 @@ export async function getActiveBusinessId(): Promise<string> {
 
   const { data, error } = await supabase
     .from('app_users_cafexis')
-    .select('business_id')
+    .select('business_id, role')
     .eq('id', session.user.id)
-    .single<{ business_id: string }>()
+    .single<{ business_id: string; role: string }>()
 
   if (error || !data) throw new Error('No se pudo determinar el negocio de la sesión activa.')
+
+  if (data.role === 'supervisor_tecnico') {
+    const override = getBusinessOverride()
+    if (override) return override
+  }
+
   return data.business_id
 }

@@ -8,7 +8,12 @@ const STATUS_META: Record<StockStatus, { label: string; tone: 'success' | 'warni
   agotado: { label: 'Agotado', tone: 'error' },
 }
 
-export function InventoryRow({ item }: { item: InventoryItem }) {
+interface InventoryRowProps {
+  item: InventoryItem
+  onEdit?: (item: InventoryItem) => void
+}
+
+export function InventoryRow({ item, onEdit }: InventoryRowProps) {
   const meta = STATUS_META[item.status]
   return (
     <tr className="inventory-row">
@@ -21,6 +26,13 @@ export function InventoryRow({ item }: { item: InventoryItem }) {
       </td>
       <td>
         <Badge tone={meta.tone}>{meta.label}</Badge>
+      </td>
+      <td>
+        {onEdit && (
+          <button className="inventory-row__edit" onClick={() => onEdit(item)}>
+            Editar
+          </button>
+        )}
       </td>
     </tr>
   )

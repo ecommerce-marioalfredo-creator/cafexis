@@ -1,0 +1,54 @@
+.supplier-form__nit-row,
+.supplier-form__branch-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.supplier-form__nit-row input,
+.supplier-form__branch-row input {
+  flex: 1;
+  height: 40px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-2);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+.supplier-form__found {
+  font-size: 13px;
+  color: var(--color-state-success);
+  margin: calc(var(--space-2) * -1) 0 var(--space-3);
+}
+
+.supplier-form__not-found {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: calc(var(--space-2) * -1) 0 var(--space-3);
+}
+
+.supplier-form__branches {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.supplier-form__branches li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: 13px;
+}
+
+.supplier-form__branches button {
+  border: none;
+  background: transparent;
+  color: var(--color-state-error);
+  cursor: pointer;
+}

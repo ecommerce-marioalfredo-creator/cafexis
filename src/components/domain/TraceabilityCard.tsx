@@ -16,7 +16,12 @@ const PROCESS_LABEL: Record<CoffeeLot['process'], string> = {
  * Muestra origen (hasta la finca cuando exista), variedad, proceso,
  * historia y acceso al QR que verá el cliente final.
  */
-export function TraceabilityCard({ lot }: { lot: CoffeeLot }) {
+interface TraceabilityCardProps {
+  lot: CoffeeLot
+  onEdit?: (lot: CoffeeLot) => void
+}
+
+export function TraceabilityCard({ lot, onEdit }: TraceabilityCardProps) {
   const [showQr, setShowQr] = useState(false)
 
   return (
@@ -42,6 +47,11 @@ export function TraceabilityCard({ lot }: { lot: CoffeeLot }) {
         <Button variant="tertiary" onClick={() => setShowQr((v) => !v)}>
           {showQr ? 'Ocultar código QR' : 'Ver código QR para el cliente'}
         </Button>
+        {onEdit && (
+          <Button variant="secondary" onClick={() => onEdit(lot)}>
+            Editar
+          </Button>
+        )}
         {showQr && (
           <div className="trace-card__qr" role="img" aria-label={`Código QR de trazabilidad para el lote ${lot.code}`}>
             QR

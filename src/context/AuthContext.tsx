@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { supabase } from '@/services/api/supabaseClient'
 import * as authService from '@/services/api/authService'
+import { setBusinessOverride } from '@/services/api/businessOverrideStorage'
 import type { AppUser, Business, LoginInput, RegisterInput } from '@/types/domain'
 
 interface AuthContextValue {
@@ -10,6 +11,10 @@ interface AuthContextValue {
   login: (input: LoginInput) => Promise<void>
   register: (input: RegisterInput) => Promise<void>
   logout: () => Promise<void>
+  /** Vuelve a cargar negocio/usuario desde la sesión activa (ej. tras editar los datos del negocio en Configuración). */
+  refresh: () => Promise<void>
+  /** Solo supervisor_tecnico: cambia qué negocio ve/opera, o null para volver al suyo propio. */
+  switchBusiness: (businessId: string | null) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -64,8 +69,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(undefined)
   }, [])
 
+  const switchBusiness = useCallback(
+    async (businessId: string | null) => {
+      setBusinessOverride(businessId)
+      await refresh()
+    },
+    [refresh],
+  )
+
   return (
-    <AuthContext.Provider value={{ business, user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ business, user, loading, login, register, logout, refresh, switchBusiness }}>
       {children}
     </AuthContext.Provider>
   )

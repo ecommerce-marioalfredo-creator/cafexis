@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react'
 import { useAsync } from './useAsync'
 import { listUsers, listInvitations, inviteUser, updateUserRole, setUserActive } from '@/services/api/usersService'
+import { updateBusiness, uploadBusinessLogo } from '@/services/api/businessService'
 import { useAuth } from '@/context/AuthContext'
-import type { InvitableRole, UserRole } from '@/types/domain'
+import type { BusinessUpdateInput, InvitableRole, UserRole } from '@/types/domain'
 
 /** Usuarios internos del negocio de la sesión activa. */
 export function useUsers() {
@@ -60,6 +61,25 @@ export function useInvitations() {
 
 /** Negocio de la sesión activa (demo o registrado), no el mock fijo. */
 export function useBusiness() {
-  const { business, loading } = useAuth()
-  return { business, loading, error: undefined as string | undefined }
+  const { business, loading, refresh } = useAuth()
+
+  const update = useCallback(
+    async (input: BusinessUpdateInput) => {
+      if (!business) throw new Error('No hay un negocio activo.')
+      await updateBusiness(business.id, input)
+      await refresh()
+    },
+    [business, refresh],
+  )
+
+  const uploadLogo = useCallback(
+    async (file: File) => {
+      if (!business) throw new Error('No hay un negocio activo.')
+      await uploadBusinessLogo(business.id, file)
+      await refresh()
+    },
+    [business, refresh],
+  )
+
+  return { business, loading, error: undefined as string | undefined, update, uploadLogo }
 }

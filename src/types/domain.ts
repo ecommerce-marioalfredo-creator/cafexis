@@ -22,6 +22,14 @@ export interface Business {
   branding: BusinessBranding
 }
 
+/** Datos editables del negocio desde Configuración (el logo se sube aparte, ver uploadBusinessLogo). */
+export interface BusinessUpdateInput {
+  name: string
+  type: BusinessType
+  country: string
+  primaryColor: string
+}
+
 export type UserRole = 'supervisor_tecnico' | 'administrador' | 'barista' | 'cliente'
 
 export interface AppUser {
@@ -82,6 +90,21 @@ export interface InventoryItem {
   quantity: number
   lowStockThreshold: number
   status: StockStatus
+  /** Proveedor al que se propone reponerlo cuando baja del umbral. */
+  preferredSupplierId?: string
+}
+
+/** Datos editables de un ingrediente/insumo (la existencia se ajusta aparte, ver adjustInventoryQuantity). */
+export interface InventoryItemInput {
+  name: string
+  unit: string
+  lowStockThreshold: number
+  preferredSupplierId?: string
+}
+
+/** Al crear un ingrediente nuevo también se define su existencia inicial. */
+export interface NewInventoryItemInput extends InventoryItemInput {
+  quantity: number
 }
 
 // --- Productos y recetas (cafeterías) ---
@@ -100,6 +123,10 @@ export interface Product {
   price: number
   imageUrl?: string
   recipe?: RecipeIngredient[]
+  /** Lote de café (coffee_lots_cafexis) del que proviene, si es café empacado. */
+  coffeeLotId?: string
+  /** Kg del lote que consume cada unidad vendida (ej. bolsa de 500 g = 0.5); sin esto no se descuenta el lote. */
+  lotKgPerUnit?: number
 }
 
 // --- Trazabilidad (café en grano/molido) ---
@@ -122,11 +149,27 @@ export interface CoffeeLot {
   harvestYear: number
 }
 
+/** Datos para crear/editar un lote de café. */
+export interface CoffeeLotInput {
+  code: string
+  variety: string
+  process: CoffeeProcess
+  origin: {
+    country: string
+    region: string
+    farm?: string
+  }
+  story?: string
+  quantityKg: number
+  harvestYear: number
+}
+
 // --- Ventas / pedidos ---
 
 export type OrderStatus = 'pedido' | 'en_preparacion' | 'listo' | 'entregado'
 
-export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia' | 'billetera_digital' | 'cripto'
+/** 'billetera_digital' y 'cripto' solo existen en pedidos antiguos; el punto de venta ofrece los cuatro primeros. */
+export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia' | 'nequi' | 'billetera_digital' | 'cripto'
 
 export interface OrderItem {
   productId: string
@@ -147,6 +190,14 @@ export interface Order {
   createdAt: string
 }
 
+/** Venta registrada desde el punto de venta. Los precios los toma la base de datos, no el cliente. */
+export interface NewSaleInput {
+  items: Array<{ productId: string; quantity: number }>
+  paymentMethod: PaymentMethod
+  tableOrReference?: string
+  customerName?: string
+}
+
 // --- Proveedores ---
 
 export interface Supplier {
@@ -155,6 +206,14 @@ export interface Supplier {
   name: string
   location: string
   branches?: string[]
+}
+
+/** Datos para dar de alta un proveedor nuevo (si el NIT ya existe, se reutiliza en vez de crear uno). */
+export interface SupplierInput {
+  nit: string
+  name: string
+  location: string
+  branches: string[]
 }
 
 // --- Compras ---
@@ -172,13 +231,22 @@ export interface PurchaseOrderLine {
 export interface PurchaseOrder {
   id: string
   code: string
-  supplierId: string
+  /** Vacío en propuestas de insumos sin proveedor preferido; se exige al confirmar. */
+  supplierId?: string
   supplierName: string
   origin: PurchaseOrderOrigin
   reason?: string
   status: PurchaseOrderStatus
   lines: PurchaseOrderLine[]
   createdAt: string
+  receivedAt?: string
+}
+
+/** Orden de compra creada a mano (nace confirmada). */
+export interface NewPurchaseOrderInput {
+  supplierId: string
+  reason?: string
+  lines: Array<Omit<PurchaseOrderLine, 'inventoryItemName'>>
 }
 
 // --- Reportes / dashboard ---

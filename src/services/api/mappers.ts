@@ -11,6 +11,8 @@ import type {
   ProductRow,
   ProductRecipeItemRow,
   CoffeeLotRow,
+  SupplierRow,
+  SupplierBranchRow,
   BusinessSupplierRow,
   OrderRow,
   OrderItemRow,
@@ -74,6 +76,7 @@ export function mapInventoryItem(row: InventoryItemRow): InventoryItem {
     quantity: Number(row.quantity),
     lowStockThreshold: Number(row.low_stock_threshold),
     status: row.status,
+    preferredSupplierId: row.preferred_supplier_id ?? undefined,
   }
 }
 
@@ -94,6 +97,8 @@ export function mapProduct(row: ProductRow, recipeRows: ProductRecipeItemRow[] =
     price: Number(row.price),
     imageUrl: row.image_url ?? undefined,
     recipe: recipeRows.length > 0 ? recipeRows.map(mapRecipeItem) : undefined,
+    coffeeLotId: row.coffee_lot_id ?? undefined,
+    lotKgPerUnit: row.lot_kg_per_unit != null ? Number(row.lot_kg_per_unit) : undefined,
   }
 }
 
@@ -112,6 +117,17 @@ export function mapCoffeeLot(row: CoffeeLotRow): CoffeeLot {
     qrUrl: row.qr_url ?? undefined,
     quantityKg: Number(row.quantity_kg),
     harvestYear: row.harvest_year,
+  }
+}
+
+/** Proveedor directo (sin pasar por la fila puente de negocio), usado al buscar por NIT. */
+export function mapSupplier(row: SupplierRow, branchRows: SupplierBranchRow[] = []): Supplier {
+  return {
+    id: row.id,
+    nit: row.nit,
+    name: row.name,
+    location: row.location,
+    branches: branchRows.length > 0 ? branchRows.map((b) => b.branch_name) : undefined,
   }
 }
 
@@ -154,7 +170,7 @@ export function mapPurchaseOrder(row: PurchaseOrderRow): PurchaseOrder {
   return {
     id: row.id,
     code: row.code,
-    supplierId: row.supplier_id,
+    supplierId: row.supplier_id ?? undefined,
     supplierName: row.suppliers_cafexis?.name ?? '',
     origin: row.origin,
     reason: row.reason ?? undefined,
@@ -166,6 +182,7 @@ export function mapPurchaseOrder(row: PurchaseOrderRow): PurchaseOrder {
       unit: l.unit,
     })),
     createdAt: row.created_at,
+    receivedAt: row.received_at ?? undefined,
   }
 }
 

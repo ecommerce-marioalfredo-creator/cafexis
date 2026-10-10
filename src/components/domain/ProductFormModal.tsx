@@ -3,6 +3,7 @@ import { Modal } from '@/components/ui/Modal'
 import { FormField } from '@/components/ui/FormField'
 import { Button } from '@/components/ui/Button'
 import { useInventory } from '@/hooks/useInventory'
+import { useTraceability } from '@/hooks/useTraceability'
 import type { Product, RecipeIngredient } from '@/types/domain'
 import './ProductFormModal.css'
 
@@ -27,16 +28,20 @@ const EMPTY_LINE = (): RecipeLine => ({ key: crypto.randomUUID(), inventoryItemI
  */
 export function ProductFormModal({ product, onSave, onClose }: ProductFormModalProps) {
   const { items: inventoryItems, loading: loadingInventory } = useInventory()
+  const { lots: coffeeLots } = useTraceability()
 
   const [name, setName] = useState(product?.name ?? '')
   const [category, setCategory] = useState(product?.category ?? '')
   const [price, setPrice] = useState(product ? String(product.price) : '')
+  const [coffeeLotId, setCoffeeLotId] = useState(product?.coffeeLotId ?? '')
+  const [lotKgPerUnit, setLotKgPerUnit] = useState(product?.lotKgPerUnit != null ? String(product.lotKgPerUnit) : '')
   const [lines, setLines] = useState<RecipeLine[]>(() =>
     product?.recipe && product.recipe.length > 0
       ? product.recipe.map((r) => ({ key: crypto.randomUUID(), inventoryItemId: r.inventoryItemId, quantity: String(r.quantity) }))
       : [],
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [saveError, setSaveError] = useState<string>()
   const [saving, setSaving] = useState(false)
 
   const isEditing = Boolean(product)
@@ -51,6 +56,7 @@ export function ProductFormModal({ product, onSave, onClose }: ProductFormModalP
     if (!name.trim()) next.name = 'El nombre es obligatorio.'
     const priceNumber = Number(price)
     if (!price || Number.isNaN(priceNumber) || priceNumber <= 0) next.price = 'Ingresa un precio válido.'
+    if (coffeeLotId && lotKgPerUnit !== '' && !(Number(lotKgPerUnit) > 0)) next.lotKgPerUnit = 'Ingresa un peso válido en kg.'
     if (lines.some((l) => !l.inventoryItemId)) next.recipe = 'Selecciona un ingrediente en cada línea de la receta.'
     if (lines.some((l) => !l.quantity || Number(l.quantity) <= 0)) next.recipe = 'Ingresa una cantidad válida en cada línea.'
     setErrors(next)
@@ -59,6 +65,7 @@ export function ProductFormModal({ product, onSave, onClose }: ProductFormModalP
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    setSaveError(undefined)
     if (!validate()) return
 
     const recipe: RecipeIngredient[] = lines.map((l) => {
@@ -78,8 +85,12 @@ export function ProductFormModal({ product, onSave, onClose }: ProductFormModalP
         category: category.trim() || 'Bebidas',
         price: Number(price),
         recipe: recipe.length > 0 ? recipe : undefined,
+        coffeeLotId: coffeeLotId || undefined,
+        lotKgPerUnit: coffeeLotId && lotKgPerUnit !== '' ? Number(lotKgPerUnit) : undefined,
       })
       onClose()
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'No se pudo guardar el producto.')
     } finally {
       setSaving(false)
     }
@@ -120,6 +131,40 @@ export function ProductFormModal({ product, onSave, onClose }: ProductFormModalP
             placeholder="9500"
           />
         </FormField>
+
+        <FormField
+          label="Lote de origen (opcional)"
+          htmlFor="product-coffee-lot"
+          hint="Para café empacado: de qué lote proviene este producto."
+        >
+          <select id="product-coffee-lot" value={coffeeLotId} onChange={(e) => setCoffeeLotId(e.target.value)}>
+            <option value="">Sin lote asociado</option>
+            {coffeeLots.map((lot) => (
+              <option key={lot.id} value={lot.id}>
+                {lot.code} · {lot.variety}
+              </option>
+            ))}
+          </select>
+        </FormField>
+
+        {coffeeLotId && (
+          <FormField
+            label="Kg del lote por unidad vendida"
+            htmlFor="product-lot-kg"
+            error={errors.lotKgPerUnit}
+            hint="Ej. 0.5 para una bolsa de 500 g. Cada venta descuenta este peso del lote (si el producto no tiene receta)."
+          >
+            <input
+              id="product-lot-kg"
+              type="number"
+              min={0}
+              step={0.001}
+              value={lotKgPerUnit}
+              onChange={(e) => setLotKgPerUnit(e.target.value)}
+              placeholder="0.5"
+            />
+          </FormField>
+        )}
 
         <div className="product-form__recipe">
           <div className="product-form__recipe-header">
@@ -171,6 +216,8 @@ export function ProductFormModal({ product, onSave, onClose }: ProductFormModalP
 
           {errors.recipe && <span className="form-field__error">{errors.recipe}</span>}
         </div>
+
+        {saveError && <div className="form-error-banner">{saveError}</div>}
       </form>
     </Modal>
   )

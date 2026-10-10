@@ -9,6 +9,7 @@
  */
 import { supabase } from './supabaseClient'
 import { mapBusiness, mapAppUser } from './mappers'
+import { getBusinessOverride } from './businessOverrideStorage'
 import type { AppUser, Business, LoginInput, RegisterInput } from '@/types/domain'
 import type { BusinessRow, AppUserRow } from '@/types/database'
 
@@ -86,10 +87,15 @@ export async function getCurrentAccount(): Promise<{ business: Business; user: A
 
   if (userError || !userRow) return undefined
 
+  // El supervisor técnico puede estar "operando" otro negocio (ver
+  // businessOverrideStorage.ts) sin que eso cambie su perfil real.
+  const effectiveBusinessId =
+    userRow.role === 'supervisor_tecnico' ? (getBusinessOverride() ?? userRow.business_id) : userRow.business_id
+
   const { data: businessRow, error: businessError } = await supabase
     .from('businesses_cafexis')
     .select('*')
-    .eq('id', userRow.business_id)
+    .eq('id', effectiveBusinessId)
     .maybeSingle<BusinessRow>()
 
   if (businessError || !businessRow) return undefined

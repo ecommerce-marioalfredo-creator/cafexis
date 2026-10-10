@@ -20,6 +20,10 @@
   flex-direction: column;
 }
 
+.modal-panel--lg {
+  max-width: 920px;
+}
+
 .modal-panel__header {
   display: flex;
   align-items: center;

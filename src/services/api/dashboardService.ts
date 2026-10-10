@@ -5,11 +5,20 @@ import type { OrderRow, InventoryItemRow } from '@/types/database'
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   const businessId = await getActiveBusinessId()
 
+  // Rango de "hoy" en hora local del navegador, convertido a ISO para que
+  // Supabase lo compare correctamente contra created_at (timestamptz).
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  const startOfTomorrow = new Date(startOfToday)
+  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1)
+
   const [ordersResult, inventoryResult] = await Promise.all([
     supabase
       .from('orders_cafexis')
       .select('*, order_items_cafexis(*)')
       .eq('business_id', businessId)
+      .gte('created_at', startOfToday.toISOString())
+      .lt('created_at', startOfTomorrow.toISOString())
       .returns<OrderRow[]>(),
     supabase.from('inventory_items_cafexis').select('*').eq('business_id', businessId).returns<InventoryItemRow[]>(),
   ])
