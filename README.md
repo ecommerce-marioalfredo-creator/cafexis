@@ -25,23 +25,39 @@ El detalle completo del alcance está en
 
 ## Estado actual del proyecto
 
-El frontend web (panel del negocio, rol administrador/dueño) ya está
-conectado a una base de datos real en Supabase: autenticación, negocios,
-usuarios, inventario, productos y recetas, pedidos, compras, proveedores,
-trazabilidad y reportes se leen y escriben directamente en Postgres, con
-seguridad por negocio (Row Level Security) activada.
+La plataforma web está construida de punta a punta sobre Supabase (Postgres +
+autenticación + Row Level Security por negocio): panel del negocio, vista del
+barista y experiencia web del cliente final. Lo que falta son las
+integraciones externas (pagos en línea, DIAN, suscripciones) y las apps
+móviles.
+
+El desarrollo avanza por fases; las migraciones de cada una están en
+[`supabase/migrations/`](supabase/migrations/).
+
+| Fase | Estado | Qué incluye | Migración |
+|---|---|---|---|
+| 0 · Base y ajustes | ✅ | Autenticación, negocios multi-tenant, usuarios e invitaciones por rol, productos y recetas, "Ventas de hoy" filtrado por fecha | `0001`–`0004` |
+| 1 · Datos base | ✅ | Inventario editable (alta, edición, ajuste de existencias y umbrales), datos y logo del negocio, proveedores compartidos por NIT con sucursales, lotes de café ligados a productos empacados | `0005` |
+| 2 · Operación diaria | ✅ | Punto de venta (efectivo, tarjeta, transferencia, Nequi), descuento automático de inventario al vender, propuestas de compra automáticas, órdenes manuales, recepción (suma al inventario) y cancelación | `0006` |
+| 3 · Roles y personal | ✅ | Rutas y menú según rol, vista del barista con la receta de cada pedido, supervisor técnico operando cualquier negocio desde un selector | `0007`, `0008` |
+| 4 · Inteligencia del negocio | ✅ | Historial de movimientos de inventario, los 4 reportes predefinidos con gráficas, generador de reportes personalizados, proyección de reposición en Compras | `0009` |
+| 5 · Cliente final (web) | ✅ | Página pública de trazabilidad por lote con QR real, catálogo/menú público por negocio (`/c/:slug`) con QR, pedido con carrito y mesa/referencia, historial y estado de pedidos del cliente | `0010` |
+| 6 · Integraciones externas | ⬜ | Pasarela de pagos en línea, facturación electrónica DIAN, suscripciones y período de prueba | — |
+| 7 · Plataforma y móvil | ⬜ | Consola del equipo de soporte multi-negocio, apps Android e iOS | — |
 
 | Componente | Estado |
 |---|---|
-| Frontend web · Panel del negocio | ✅ En desarrollo, ver [`src/`](src/) |
-| Frontend web · Vista barista/vendedor | ⬜ Pendiente |
-| Frontend web · Catálogo y checkout del cliente final | ⬜ Pendiente |
-| Base de datos (Supabase) | ✅ Esquema aplicado, ver [`supabase/`](supabase/) |
-| Conexión frontend ↔ Supabase | ✅ Autenticación y datos ya conectados |
+| Frontend web · Panel del negocio (administrador / supervisor) | ✅ Ver [`src/`](src/) |
+| Frontend web · Vista barista/vendedor | ✅ Tablero de pedidos con recetas |
+| Frontend web · Catálogo, pedido e historial del cliente final | ✅ Sin cobro en línea (se registra el método de pago) |
+| Base de datos (Supabase) | ✅ Migraciones `0001`–`0010`, ver [`supabase/`](supabase/) |
 | Gestión de usuarios y roles (invitaciones) | ✅ Construido, falta desplegar la Edge Function |
-| Backend / API propia | ⬜ No hace falta por ahora (Supabase + RLS la reemplaza) |
-| Apps Android / iOS | ⬜ Pendiente |
-| Facturación electrónica (DIAN) | ⬜ Pendiente |
+| Despliegue web | ✅ Configurado para Vercel ([`vercel.json`](vercel.json)) |
+| Backend / API propia | ⬜ No hace falta por ahora (Supabase + RLS + funciones SQL la reemplazan) |
+| Pagos en línea | ⬜ Pendiente (Fase 6) |
+| Facturación electrónica (DIAN) | ⬜ Pendiente (Fase 6) |
+| Suscripciones | ⬜ Pendiente (Fase 6) |
+| Apps Android / iOS | ⬜ Pendiente (Fase 7) |
 
 ## Estructura del repositorio
 
@@ -82,7 +98,9 @@ el logotipo definitivo aún está en validación):
 2. Desplegar la Edge Function `invite-user` y configurar su clave secreta
    para que el botón "Invitar usuario" funcione — ver la sección
    "Gestión de usuarios y roles" en `supabase/README.md`.
-3. Vistas para los roles barista/vendedor y cliente final.
-4. Aplicaciones Android e iOS.
-5. Integración con un proveedor de facturación electrónica autorizado por la
-   DIAN.
+3. Aplicar en Supabase las migraciones `0009` (reportes) y `0010` (cliente
+   final); sin ellas fallan los reportes y las páginas públicas.
+4. Fase 6: pasarela de pagos en línea, facturación electrónica con un
+   proveedor autorizado por la DIAN y modelo de suscripción con período de
+   prueba.
+5. Fase 7: consola del equipo de soporte y aplicaciones Android e iOS.
