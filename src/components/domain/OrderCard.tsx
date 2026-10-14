@@ -4,6 +4,7 @@ import type { Order, OrderStatus, RecipeIngredient } from '@/types/domain'
 import './OrderCard.css'
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
+  pendiente_pago: 'Pendiente de pago',
   pedido: 'Pedido',
   en_preparacion: 'En preparación',
   listo: 'Listo',
@@ -15,6 +16,10 @@ interface OrderCardProps {
   onAdvance?: (nextStatus: OrderStatus) => void
   /** Receta de cada producto (por id), para mostrarla bajo cada línea del pedido — clave para que quien prepare la bebida sepa qué lleva. */
   recipesByProductId?: Record<string, RecipeIngredient[] | undefined>
+  /** Solo en el panel interno (administrador/supervisor), y solo sobre pedidos entregados — ver OrderCard.tsx y SalesPage.tsx (Fase 6). */
+  onGenerateInvoice?: () => void
+  /** Solo en el historial del cliente final, y solo sobre pedidos pendientes de pago — reintenta el checkout de Wompi (Fase 6). */
+  onRetryPayment?: () => void
 }
 
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
@@ -23,7 +28,7 @@ const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   listo: 'entregado',
 }
 
-export function OrderCard({ order, onAdvance, recipesByProductId }: OrderCardProps) {
+export function OrderCard({ order, onAdvance, recipesByProductId, onGenerateInvoice, onRetryPayment }: OrderCardProps) {
   const next = NEXT_STATUS[order.status]
 
   return (
@@ -64,6 +69,16 @@ export function OrderCard({ order, onAdvance, recipesByProductId }: OrderCardPro
       {next && onAdvance && (
         <button className="order-card__advance" onClick={() => onAdvance(next)}>
           Marcar como “{STATUS_LABEL[next]}”
+        </button>
+      )}
+      {order.status === 'entregado' && onGenerateInvoice && (
+        <button className="order-card__invoice" onClick={onGenerateInvoice}>
+          Generar factura
+        </button>
+      )}
+      {order.status === 'pendiente_pago' && onRetryPayment && (
+        <button className="order-card__advance" onClick={onRetryPayment}>
+          Pagar ahora
         </button>
       )}
     </article>

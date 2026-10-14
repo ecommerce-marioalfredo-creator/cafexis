@@ -1,0 +1,31 @@
+.subscription-expired {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-sunken);
+  padding: var(--space-4);
+}
+
+.subscription-expired__panel {
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  max-width: 420px;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.subscription-expired__panel h1 {
+  font-family: var(--font-heading);
+  margin: 0;
+}
+
+.subscription-expired__panel p {
+  color: var(--color-text-secondary);
+}

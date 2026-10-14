@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { getBusinessOverride } from './businessOverrideStorage'
+import { IS_NATIVE } from '@/platform/appTarget'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -10,8 +11,17 @@ if (!url || !anonKey) {
   )
 }
 
-/** Cliente único de Supabase para todo el frontend (auth + tablas *_cafexis). */
-export const supabase = createClient(url, anonKey)
+/**
+ * Cliente único de Supabase para todo el frontend (auth + tablas *_cafexis).
+ * En las apps nativas (Fase 7) el login con Google vuelve por deep link con
+ * un `code` que se canjea a mano (ver platform/nativeBridge.ts): eso exige
+ * el flujo PKCE y no buscar la sesión en la URL. La web no cambia.
+ */
+export const supabase = createClient(
+  url,
+  anonKey,
+  IS_NATIVE ? { auth: { flowType: 'pkce', detectSessionInUrl: false } } : undefined,
+)
 
 /**
  * business_id del usuario autenticado actual. Los *Service lo usan para

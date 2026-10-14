@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { homePathForRole } from './roles'
 import type { UserRole } from '@/types/domain'
 
 interface RequireRoleProps {
@@ -18,7 +19,7 @@ export function RequireRole({ roles, redirectTo }: RequireRoleProps) {
   const { user } = useAuth()
 
   if (user && !roles.includes(user.role)) {
-    return <Navigate to={redirectTo ?? (user.role === 'barista' ? '/ventas' : '/')} replace />
+    return <Navigate to={redirectTo ?? homePathForRole(user.role)} replace />
   }
 
   return <Outlet />

@@ -24,6 +24,9 @@ import type {
   PublicCoffeeLotRow,
   CustomerRow,
   CustomerBusinessRow,
+  BusinessSubscriptionRow,
+  PaymentTransactionRow,
+  InvoiceRow,
 } from '@/types/database'
 import type {
   Business,
@@ -44,6 +47,10 @@ import type {
   PublicCoffeeLot,
   Customer,
   CustomerBusinessLink,
+  BusinessSubscription,
+  BusinessSubscriptionOverview,
+  PaymentTransaction,
+  Invoice,
 } from '@/types/domain'
 
 export function mapBusiness(row: BusinessRow): Business {
@@ -279,5 +286,60 @@ export function mapCustomReport(row: CustomReportRow): ReportDefinition {
     description: row.description ?? '',
     custom: true,
     config: saved.dataset ? { ...DEFAULT_REPORT_CONFIG, ...saved } : DEFAULT_REPORT_CONFIG,
+  }
+}
+
+// --- Fase 6: suscripciones, pagos en línea, facturación DIAN ---
+
+function isSubscriptionActive(row: BusinessSubscriptionRow): boolean {
+  const now = Date.now()
+  if (row.status === 'trial') {
+    return !row.trial_ends_at || new Date(row.trial_ends_at).getTime() > now
+  }
+  if (row.status === 'activa') {
+    return !row.current_period_ends_at || new Date(row.current_period_ends_at).getTime() > now
+  }
+  return false
+}
+
+export function mapBusinessSubscription(row: BusinessSubscriptionRow): BusinessSubscription {
+  return {
+    businessId: row.business_id,
+    planId: row.plan_id,
+    planName: row.subscription_plans_cafexis?.name,
+    status: row.status,
+    trialEndsAt: row.trial_ends_at ?? undefined,
+    currentPeriodEndsAt: row.current_period_ends_at ?? undefined,
+    isActive: isSubscriptionActive(row),
+  }
+}
+
+export function mapBusinessSubscriptionOverview(row: BusinessSubscriptionRow): BusinessSubscriptionOverview {
+  return {
+    ...mapBusinessSubscription(row),
+    businessName: row.businesses_cafexis?.name ?? '',
+  }
+}
+
+export function mapPaymentTransaction(row: PaymentTransactionRow): PaymentTransaction {
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    provider: row.provider,
+    status: row.status,
+    amountCents: row.amount_cents,
+    createdAt: row.created_at,
+  }
+}
+
+export function mapInvoice(row: InvoiceRow): Invoice {
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    status: row.status,
+    cufe: row.cufe ?? undefined,
+    pdfUrl: row.pdf_url ?? undefined,
+    xmlUrl: row.xml_url ?? undefined,
+    errorMessage: row.error_message ?? undefined,
   }
 }

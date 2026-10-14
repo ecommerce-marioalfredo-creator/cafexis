@@ -32,7 +32,7 @@ export interface BusinessUpdateInput {
   primaryColor: string
 }
 
-export type UserRole = 'supervisor_tecnico' | 'administrador' | 'barista' | 'cliente'
+export type UserRole = 'supervisor_tecnico' | 'soporte' | 'administrador' | 'barista' | 'cliente'
 
 export interface AppUser {
   id: string
@@ -44,7 +44,8 @@ export interface AppUser {
 }
 
 /** Rol que se puede asignar a un usuario interno invitado (nunca 'cliente' ni 'supervisor_tecnico'). */
-export type InvitableRole = 'administrador' | 'barista'
+/** 'soporte' solo lo puede invitar el supervisor técnico (lo valida la Edge Function y la base de datos). */
+export type InvitableRole = 'administrador' | 'barista' | 'soporte'
 
 export type InvitationStatus = 'pendiente' | 'aceptada' | 'expirada'
 
@@ -168,7 +169,8 @@ export interface CoffeeLotInput {
 
 // --- Ventas / pedidos ---
 
-export type OrderStatus = 'pedido' | 'en_preparacion' | 'listo' | 'entregado'
+/** 'pendiente_pago' solo ocurre en pedidos públicos del cliente final, mientras se confirma el cobro en línea (Fase 6). */
+export type OrderStatus = 'pendiente_pago' | 'pedido' | 'en_preparacion' | 'listo' | 'entregado'
 
 /** 'billetera_digital' y 'cripto' solo existen en pedidos antiguos; el punto de venta ofrece los cuatro primeros. */
 export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia' | 'nequi' | 'billetera_digital' | 'cripto'
@@ -431,4 +433,147 @@ export interface NewPublicOrderInput {
   items: Array<{ productId: string; quantity: number }>
   paymentMethod: PaymentMethod
   tableOrReference?: string
+}
+
+// --- Fase 7: plataforma y soporte ---
+
+export type SupportCaseStatus = 'abierto' | 'en_progreso' | 'esperando_cliente' | 'resuelto' | 'cerrado'
+export type SupportCasePriority = 'baja' | 'media' | 'alta' | 'urgente'
+export type SupportCaseCategory = 'inventario' | 'ventas' | 'compras' | 'usuarios' | 'reportes' | 'cuenta' | 'otro'
+
+export interface SupportCaseSummary {
+  id: string
+  code: string
+  businessId: string
+  businessName: string
+  subject: string
+  category: SupportCaseCategory
+  priority: SupportCasePriority
+  status: SupportCaseStatus
+  openedByName?: string
+  assignedTo?: string
+  assignedToName?: string
+  /** Mensajes públicos (sin eventos ni notas internas). */
+  messages: number
+  firstResponseAt?: string
+  lastActivityAt: string
+  createdAt: string
+}
+
+export interface SupportCaseMessage {
+  id: string
+  /** nota_interna solo llega al equipo de plataforma. */
+  kind: 'mensaje' | 'nota_interna' | 'evento'
+  body: string
+  authorName?: string
+  authorIsStaff: boolean
+  createdAt: string
+}
+
+export interface SupportCaseDetail extends Omit<SupportCaseSummary, 'messages'> {
+  description: string
+  resolvedAt?: string
+  closedAt?: string
+  messages: SupportCaseMessage[]
+}
+
+export interface NewSupportCaseInput {
+  subject: string
+  description: string
+  category: SupportCaseCategory
+  priority: SupportCasePriority
+  /** Solo el equipo de plataforma puede abrir casos para otro negocio. */
+  businessId?: string
+}
+
+export interface SupportStaffMember {
+  id: string
+  name: string
+  role: UserRole
+}
+
+export interface PlatformBusinessOverview {
+  id: string
+  name: string
+  type: BusinessType
+  slug?: string
+  primaryColor: string
+  logoUrl?: string
+  createdAt: string
+  activeUsers: number
+  lastSignInAt?: string
+  lastOrderAt?: string
+  ordersToday: number
+  salesToday: number
+  orders7d: number
+  sales7d: number
+  lowStock: number
+  outOfStock: number
+  openProposals: number
+  openCases: number
+  urgentCases: number
+}
+
+export interface PlatformBusinessDetail {
+  business: { id: string; name: string; type: BusinessType; country: string; slug?: string; primaryColor: string; logoUrl?: string; createdAt: string }
+  users: Array<{ id: string; name: string; email: string; role: UserRole; active: boolean; lastSignInAt?: string }>
+  pendingInvitations: number
+  inventoryAlerts: Array<{ name: string; quantity: number; unit: string; threshold: number; status: StockStatus }>
+  recentOrders: Array<{ code: string; createdAt: string; total: number; status: OrderStatus; paymentMethod: PaymentMethod; items: number }>
+  openPurchaseOrders: Array<{ code: string; status: PurchaseOrderStatus; origin: PurchaseOrderOrigin; createdAt: string }>
+  sales14d: Array<{ day: string; revenue: number; orders: number }>
+}
+
+// --- Fase 6: suscripciones, pagos en línea, facturación DIAN ---
+
+export type SubscriptionStatus = 'trial' | 'activa' | 'vencida' | 'cancelada'
+export type BillingPeriod = 'mensual' | 'anual'
+
+export interface SubscriptionPlan {
+  id: string
+  name: string
+  priceCents: number
+  billingPeriod: BillingPeriod
+  trialDays: number
+  active: boolean
+}
+
+/** Estado de suscripción de un negocio a la plataforma (no confundir con una suscripción de ese negocio a sus propios clientes). */
+export interface BusinessSubscription {
+  businessId: string
+  planId: string
+  planName?: string
+  status: SubscriptionStatus
+  trialEndsAt?: string
+  currentPeriodEndsAt?: string
+  /** true si el negocio puede operar ahora mismo (trial vigente o período activo). */
+  isActive: boolean
+}
+
+/** Fila de business_subscriptions_cafexis con el nombre del negocio, para la lista del supervisor. */
+export interface BusinessSubscriptionOverview extends BusinessSubscription {
+  businessName: string
+}
+
+export type PaymentTransactionStatus = 'pendiente' | 'aprobada' | 'declinada' | 'error'
+
+export interface PaymentTransaction {
+  id: string
+  orderId: string
+  provider: string
+  status: PaymentTransactionStatus
+  amountCents: number
+  createdAt: string
+}
+
+export type InvoiceStatus = 'pendiente' | 'emitida' | 'error'
+
+export interface Invoice {
+  id: string
+  orderId: string
+  status: InvoiceStatus
+  cufe?: string
+  pdfUrl?: string
+  xmlUrl?: string
+  errorMessage?: string
 }

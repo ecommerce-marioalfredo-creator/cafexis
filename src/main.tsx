@@ -29,8 +29,11 @@ function renderFatalError(error: unknown) {
 // Supabase — eso ocurre ANTES de que React monte nada, así que un Error
 // Boundary normal no lo atrapa. Este try/catch alrededor del import dinámico
 // es lo único que evita una pantalla en blanco sin explicación en ese caso.
-import('./App')
-  .then(({ App }) => {
+// En las apps Android/iOS (Fase 7) además se conectan los deep links y el
+// botón atrás; en la web initNativeBridge no hace nada.
+Promise.all([import('./App'), import('./router'), import('./platform/nativeBridge')])
+  .then(([{ App }, { router }, { initNativeBridge }]) => {
+    initNativeBridge(router)
     root.render(
       <React.StrictMode>
         <ErrorBoundary>

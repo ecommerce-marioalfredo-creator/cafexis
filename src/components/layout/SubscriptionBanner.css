@@ -1,0 +1,16 @@
+.subscription-banner {
+  padding: var(--space-2) var(--space-4);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.subscription-banner--trial {
+  background: rgba(29, 158, 117, 0.1);
+  color: var(--color-brand-teal);
+}
+
+.subscription-banner--warning {
+  background: rgba(232, 163, 61, 0.15);
+  color: var(--color-state-warning);
+}

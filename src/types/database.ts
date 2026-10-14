@@ -12,7 +12,7 @@ export type BusinessTypeRow = 'cafeteria' | 'grano_molido' | 'mixto'
 export type UserRoleRow = 'supervisor_tecnico' | 'administrador' | 'barista' | 'cliente'
 export type StockStatusRow = 'ok' | 'bajo' | 'agotado'
 export type CoffeeProcessRow = 'lavado' | 'honey' | 'natural' | 'otro'
-export type OrderStatusRow = 'pedido' | 'en_preparacion' | 'listo' | 'entregado'
+export type OrderStatusRow = 'pendiente_pago' | 'pedido' | 'en_preparacion' | 'listo' | 'entregado'
 export type PaymentMethodRow = 'efectivo' | 'tarjeta' | 'transferencia' | 'nequi' | 'billetera_digital' | 'cripto'
 export type PurchaseOrderOriginRow = 'sugerida_sistema' | 'manual'
 export type PurchaseOrderStatusRow = 'propuesta' | 'confirmada' | 'recibida' | 'cancelada'
@@ -236,4 +236,60 @@ export interface CustomReportRow {
   description: string | null
   config: Record<string, unknown>
   created_at: string
+}
+
+// --- Fase 6: suscripciones, pagos, facturación DIAN ---
+
+export type SubscriptionStatusRow = 'trial' | 'activa' | 'vencida' | 'cancelada'
+export type BillingPeriodRow = 'mensual' | 'anual'
+export type PaymentTransactionStatusRow = 'pendiente' | 'aprobada' | 'declinada' | 'error'
+export type InvoiceStatusRow = 'pendiente' | 'emitida' | 'error'
+
+export interface SubscriptionPlanRow {
+  id: string
+  name: string
+  price_cents: number
+  billing_period: BillingPeriodRow
+  trial_days: number
+  active: boolean
+  created_at: string
+}
+
+export interface BusinessSubscriptionRow {
+  business_id: string
+  plan_id: string
+  status: SubscriptionStatusRow
+  trial_ends_at: string | null
+  current_period_ends_at: string | null
+  created_at: string
+  updated_at: string
+  // Presente solo en el select anidado del supervisor.
+  subscription_plans_cafexis?: { name: string } | null
+  businesses_cafexis?: { name: string } | null
+}
+
+export interface PaymentTransactionRow {
+  id: string
+  order_id: string
+  provider: string
+  provider_reference: string | null
+  status: PaymentTransactionStatusRow
+  amount_cents: number
+  raw_payload: Record<string, unknown> | null
+  created_at: string
+  updated_at: string
+}
+
+export interface InvoiceRow {
+  id: string
+  order_id: string
+  business_id: string
+  provider: string
+  status: InvoiceStatusRow
+  cufe: string | null
+  pdf_url: string | null
+  xml_url: string | null
+  error_message: string | null
+  created_at: string
+  updated_at: string
 }

@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import logoOnDark from '@/assets/logo-dark.png'
 import { useBusiness } from '@/hooks/useBusiness'
 import { useAuth } from '@/context/AuthContext'
+import { ADMIN_ROLES, BUSINESS_STAFF_ROLES, HELP_ROLES, PLATFORM_ROLES } from './roles'
 import type { UserRole } from '@/types/domain'
 import './Sidebar.css'
 
@@ -11,17 +12,24 @@ import './Sidebar.css'
  * solo necesita su tablero de pedidos (con la receta de cada bebida
  * visible ahí mismo, ver OrderCard.tsx), no el resto del panel
  * administrativo. administrador y supervisor_tecnico ven todo.
+ *
+ * Fase 7: el equipo de plataforma (supervisor técnico y soporte) tiene la
+ * consola de soporte; soporte solo ve esa sección (es de solo lectura sobre
+ * los negocios). Administrador y barista abren casos desde "Ayuda".
  */
 const NAV_ITEMS: Array<{ to: string; label: string; icon: string; end?: true; roles?: UserRole[] }> = [
-  { to: '/', label: 'Dashboard', icon: '📊', end: true, roles: ['administrador', 'supervisor_tecnico'] },
-  { to: '/ventas', label: 'Ventas', icon: '🧾' },
-  { to: '/inventario', label: 'Inventario', icon: '📦', roles: ['administrador', 'supervisor_tecnico'] },
-  { to: '/productos', label: 'Productos y recetas', icon: '☕', roles: ['administrador', 'supervisor_tecnico'] },
-  { to: '/compras', label: 'Compras', icon: '🛒', roles: ['administrador', 'supervisor_tecnico'] },
-  { to: '/proveedores', label: 'Proveedores', icon: '🚚', roles: ['administrador', 'supervisor_tecnico'] },
-  { to: '/reportes', label: 'Reportes', icon: '📈', roles: ['administrador', 'supervisor_tecnico'] },
-  { to: '/trazabilidad', label: 'Trazabilidad', icon: '🌱', roles: ['administrador', 'supervisor_tecnico'] },
-  { to: '/configuracion', label: 'Configuración', icon: '⚙️', roles: ['administrador', 'supervisor_tecnico'] },
+  { to: '/soporte', label: 'Consola de soporte', icon: '🛟', roles: PLATFORM_ROLES },
+  { to: '/', label: 'Dashboard', icon: '📊', end: true, roles: ADMIN_ROLES },
+  { to: '/ventas', label: 'Ventas', icon: '🧾', roles: BUSINESS_STAFF_ROLES },
+  { to: '/inventario', label: 'Inventario', icon: '📦', roles: ADMIN_ROLES },
+  { to: '/productos', label: 'Productos y recetas', icon: '☕', roles: ADMIN_ROLES },
+  { to: '/compras', label: 'Compras', icon: '🛒', roles: ADMIN_ROLES },
+  { to: '/proveedores', label: 'Proveedores', icon: '🚚', roles: ADMIN_ROLES },
+  { to: '/reportes', label: 'Reportes', icon: '📈', roles: ADMIN_ROLES },
+  { to: '/trazabilidad', label: 'Trazabilidad', icon: '🌱', roles: ADMIN_ROLES },
+  { to: '/suscripcion', label: 'Suscripción', icon: '💳', roles: ADMIN_ROLES },
+  { to: '/configuracion', label: 'Configuración', icon: '⚙️', roles: ADMIN_ROLES },
+  { to: '/ayuda', label: 'Ayuda y soporte', icon: '💬', roles: HELP_ROLES },
 ]
 
 interface SidebarProps {

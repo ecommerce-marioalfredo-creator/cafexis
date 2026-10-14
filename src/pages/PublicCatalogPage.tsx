@@ -9,6 +9,7 @@ import { useCustomerAuth } from '@/context/CustomerAuthContext'
 import { getPublicBusiness, getPublicCatalog } from '@/services/api/publicBusinessService'
 import { linkToBusiness } from '@/services/api/customerAuthService'
 import { registerPublicOrder } from '@/services/api/publicOrdersService'
+import { createPaymentLink } from '@/services/api/paymentService'
 import { PAYMENT_LABEL, SALE_PAYMENT_METHODS, currency } from '@/components/domain/paymentMethods'
 import type { PublicBusiness, PublicProduct, PaymentMethod } from '@/types/domain'
 import './PublicCatalogPage.css'
@@ -109,14 +110,32 @@ export function PublicCatalogPage() {
     setSaveError(undefined)
     setSaving(true)
     try {
+      // El pedido nace en 'pendiente_pago' (Fase 6): hay que llevar al
+      // cliente al checkout de Wompi antes de darlo por confirmado. El
+      // webhook (supabase/functions/wompi-webhook) es quien lo mueve a
+      // 'pedido' cuando el cobro se aprueba.
       const id = await registerPublicOrder({
         businessId: business.id,
         items: cart.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
         paymentMethod,
         tableOrReference: tableOrReference.trim() || undefined,
       })
-      setOrderCode(id)
       setCart([])
+      try {
+        const checkoutUrl = await createPaymentLink(id)
+        window.location.href = checkoutUrl
+        return
+      } catch (paymentErr) {
+        // El pedido ya se registró (queda en "pendiente de pago"); si el
+        // link de cobro no se pudo generar (ej. Wompi sin configurar), se
+        // lo decimos al cliente en vez de perder la referencia del pedido.
+        setOrderCode(id)
+        setSaveError(
+          paymentErr instanceof Error
+            ? `Tu pedido quedó registrado, pero no se pudo iniciar el pago: ${paymentErr.message}`
+            : 'Tu pedido quedó registrado, pero no se pudo iniciar el pago.',
+        )
+      }
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'No se pudo registrar tu pedido.')
     } finally {
@@ -138,8 +157,11 @@ export function PublicCatalogPage() {
     return (
       <PublicLayout business={business}>
         <div className="public-catalog__confirmation">
-          <h1>¡Pedido recibido!</h1>
-          <p>Tu pedido ya está en la cocina. Puedes ver su estado en tu historial.</p>
+          <h1>Pedido registrado</h1>
+          <p>
+            Tu pedido quedó guardado, pero el pago en línea no se pudo iniciar en este momento. Puedes intentar pagar
+            de nuevo desde tu historial de pedidos.
+          </p>
           <div className="public-catalog__confirmation-actions">
             <Button variant="secondary" onClick={() => setOrderCode(undefined)}>
               Pedir algo más

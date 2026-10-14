@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { PageLoading, PageError } from '@/components/ui/PageState'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -52,6 +52,7 @@ export function CustomerBusinessesPage() {
             Iniciar sesión con Google
           </Button>
         </div>
+        <OpenBusinessForm />
       </PublicLayout>
     )
   }
@@ -91,6 +92,60 @@ export function CustomerBusinessesPage() {
           ))}
         </ul>
       )}
+
+      <OpenBusinessForm />
     </PublicLayout>
+  )
+}
+
+/** Acepta el link completo del negocio (…/c/mi-cafeteria) o solo su código. */
+export function slugFromInput(input: string): string | undefined {
+  const value = input.trim()
+  const fromUrl = value.match(/\/c\/([a-z0-9-]+)/i)?.[1]
+  const slug = (fromUrl ?? value).toLowerCase()
+  return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) ? slug : undefined
+}
+
+/**
+ * En la app de clientes (Fase 7) no hay barra de direcciones: esta es la
+ * forma de llegar a un negocio nuevo si no se abrió desde su link o QR.
+ */
+function OpenBusinessForm() {
+  const navigate = useNavigate()
+  const [value, setValue] = useState('')
+  const [error, setError] = useState<string>()
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    const slug = slugFromInput(value)
+    if (!slug) {
+      setError('Pega el link que te dio el negocio (por ejemplo …/c/mi-cafeteria) o solo su código.')
+      return
+    }
+    navigate(`/c/${slug}`)
+  }
+
+  return (
+    <form className="customer-businesses__open" onSubmit={handleSubmit}>
+      <label htmlFor="open-business">¿Tienes el link o el código de un negocio?</label>
+      <div className="customer-businesses__open-row">
+        <input
+          id="open-business"
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value)
+            setError(undefined)
+          }}
+          placeholder="mi-cafeteria"
+          autoCapitalize="none"
+          autoCorrect="off"
+          inputMode="url"
+        />
+        <Button variant="secondary" type="submit">
+          Ir
+        </Button>
+      </div>
+      {error && <span className="form-field__error">{error}</span>}
+    </form>
   )
 }

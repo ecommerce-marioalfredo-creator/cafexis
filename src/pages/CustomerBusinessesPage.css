@@ -70,3 +70,33 @@
   font-weight: 700;
   font-family: var(--font-heading);
 }
+
+/* Fase 7: abrir un negocio por link o código (la app no tiene barra de direcciones). */
+.customer-businesses__open {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 480px;
+  margin: var(--space-8) auto 0;
+  font-size: 14px;
+}
+
+.customer-businesses__open label {
+  font-weight: 700;
+}
+
+.customer-businesses__open-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.customer-businesses__open-row input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 14px;
+}

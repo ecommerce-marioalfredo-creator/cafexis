@@ -75,6 +75,10 @@ Tienes dos formas, elige la que prefieras:
    - `migrations/0008_supervisor_rpc_negocio_cafexis.sql`
    - `migrations/0009_fase4_inteligencia_cafexis.sql`
    - `migrations/0010_fase5_cliente_final_cafexis.sql`
+   - `migrations/0011_fase7_plataforma_soporte_cafexis.sql` (pendiente)
+   - `migrations/0012_fase6_integraciones_cafexis.sql` (pendiente — ver paso 11;
+     el número de archivo quedó después de la 0011 por orden de llegada, pero
+     no depende de ella)
 
 **Opción B — Supabase CLI (recomendado si seguimos iterando el esquema):**
 ```bash
@@ -255,6 +259,103 @@ credencial "OAuth 2.0 Client ID", aplicación web). En **Authorized redirect
 URIs** de Google Cloud, agrega la URL de callback que Supabase muestra en
 esa misma pantalla (termina en `/auth/v1/callback`). Sin este paso, el
 botón "Iniciar sesión con Google" del catálogo público falla.
+
+### 11. Migración de Fase 6 (pendiente — integraciones externas)
+
+`migrations/0012_fase6_integraciones_cafexis.sql`. Las tres piezas de esta
+fase dependen de cuentas con terceros que, al escribir esto, el negocio
+todavía no tiene — el código está completo y listo, pero **no se ha podido
+probar contra las APIs reales de Wompi ni de Factus** sin esas
+credenciales. Documentado con precisión abajo qué funciona ya mismo (toda
+la parte de suscripciones, sin dependencia externa) y qué queda a la
+espera de una cuenta real.
+
+- **Suscripciones (sin dependencia externa, funciona ya)**: todo negocio
+  nuevo nace con 14 días de prueba (`business_subscriptions_cafexis`,
+  trigger automático al crear el negocio); los ya existentes antes de esta
+  migración quedan en estado "activa" sin fecha de vencimiento, para no
+  bloquear ninguna cuenta real. El administrador ve su propio estado en
+  **Suscripción** (menú lateral); el supervisor técnico, además, ve y
+  cambia el de cualquier negocio ahí mismo. Si una suscripción queda
+  "vencida", el panel completo se bloquea (`/suscripcion-vencida`) hasta
+  que el supervisor técnico la reactive.
+- **Pasarela de pagos (Wompi, de referencia — requiere cuenta)**: desde
+  esta migración, el pedido público del cliente final (`/c/:slug`) nace en
+  estado `pendiente_pago`, no directo en `pedido`; el punto de venta
+  interno del empleado no cambia (sigue cobrando en efectivo/datáfono
+  físico). El checkout lo genera la Edge Function `create-payment-link`
+  (necesita `WOMPI_PRIVATE_KEY`); la confirmación la recibe
+  `wompi-webhook` (necesita `WOMPI_EVENTS_SECRET`, y debe configurarse
+  como webhook en el panel de Wompi). Sin esas credenciales, ambas
+  funciones responden con un error claro ("Falta configurar
+  WOMPI_PRIVATE_KEY...") en vez de fallar en silencio — el pedido igual
+  queda guardado, visible en **Ventas** como "Pendiente de pago", y el
+  cliente puede reintentar el pago desde su historial.
+- **Facturación electrónica DIAN (Factus, de referencia — requiere
+  cuenta)**: botón "Generar factura" en cada pedido ya `entregado`
+  (**Ventas**, solo administrador/supervisor técnico). La RPC
+  `request_invoice_cafexis` abre la solicitud; la Edge Function
+  `generate-invoice` la completa llamando a Factus (necesita
+  `FACTUS_API_TOKEN`, y una cuenta con NIT y resolución de facturación DIAN
+  vigente). Sin eso, la función responde con el mismo tipo de error claro.
+
+Para desplegar las tres Edge Functions nuevas y configurar sus secretos:
+```bash
+supabase functions deploy create-payment-link
+supabase functions deploy generate-invoice
+supabase functions deploy wompi-webhook --no-verify-jwt   # Wompi no manda un JWT de Supabase
+
+supabase secrets set WOMPI_PRIVATE_KEY=<tu-llave-privada-de-wompi>
+supabase secrets set WOMPI_EVENTS_SECRET=<tu-events-secret-de-wompi>
+supabase secrets set FACTUS_API_TOKEN=<tu-token-de-factus>
+```
+Y en el panel de Wompi (Developers → Webhooks), registra la URL pública de
+`wompi-webhook` (`https://<tu-proyecto>.supabase.co/functions/v1/wompi-webhook`)
+para que te avise cuando un pago se apruebe.
+
+### 12. Migración de Fase 7 (pendiente — consola de soporte y seguridad)
+
+`migrations/0011_fase7_plataforma_soporte_cafexis.sql` (después de la 0010;
+es compatible con la 0012 en cualquier orden). Tiene **dos pasos
+obligatorios** después de aplicarla:
+
+1. **Volver a desplegar la Edge Function** `supabase functions deploy
+   invite-user`. Ahora registra la invitación *antes* de enviar el correo, y
+   la base de datos solo crea el perfil de un usuario invitado si encuentra
+   esa invitación. Sin el redespliegue, los nuevos invitados quedan sin
+   perfil.
+2. **Redirect URL de la app de clientes**: en **Authentication → URL
+   Configuration → Redirect URLs**, agregar
+   `co.cafexis.clientes://auth-callback` (ver `mobile/README.md`).
+
+Qué incluye:
+
+- **Rol `soporte`**: ve todos los negocios desde la consola y atiende casos,
+  pero es de **solo lectura** sobre los datos de los negocios (políticas RLS
+  restrictivas + bloqueo en las RPC de venta y compra). Solo el supervisor
+  técnico puede invitar o asignar este rol.
+- **Casos de soporte** (`support_cases_cafexis`,
+  `support_case_messages_cafexis`): administradores y baristas los abren
+  desde **Ayuda y soporte**; el equipo los ve todos en la **Consola de
+  soporte**, los asigna, cambia estado/prioridad, responde y deja notas
+  internas que el negocio no ve. Todo cambio pasa por RPC y queda como
+  evento en la conversación.
+- **Consola de plataforma** (`platform_business_overview_cafexis`,
+  `platform_business_detail_cafexis`): salud de todos los negocios (ventas,
+  alertas, usuarios, casos) y diagnóstico de uno, en solo lectura.
+- **Huecos de seguridad cerrados** (existían desde antes, pero se volvieron
+  graves con los clientes que entran con Google en la Fase 5):
+  - cualquier usuario autenticado podía insertarse en `app_users_cafexis`
+    en cualquier negocio y con cualquier rol, incluso supervisor técnico;
+  - registrarse con `signUp` y metadatos `business_id`/`role` inventados
+    creaba un perfil interno sin invitación;
+  - un administrador podía ascender a alguien a supervisor técnico.
+
+**Nota para la 0012 (Fase 6)**: `request_invoice_cafexis` solo admite
+administrador y supervisor técnico activos (rechaza barista y soporte), y
+junto con `attach_payment_reference_cafexis` es `security definer`, porque
+`invoices_cafexis` y `payment_transactions_cafexis` solo tienen policy de
+lectura.
 
 ## Gestión de usuarios y roles (invitaciones)
 

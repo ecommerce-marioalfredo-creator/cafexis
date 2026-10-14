@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { RequireAuth } from '@/components/layout/RequireAuth'
 import { RequireRole } from '@/components/layout/RequireRole'
@@ -19,24 +19,36 @@ import { PublicCatalogPage } from '@/pages/PublicCatalogPage'
 import { PublicLotPage } from '@/pages/PublicLotPage'
 import { CustomerBusinessesPage } from '@/pages/CustomerBusinessesPage'
 import { CustomerOrdersPage } from '@/pages/CustomerOrdersPage'
+import { HelpPage } from '@/pages/HelpPage'
+import { SupportConsolePage } from '@/pages/SupportConsolePage'
+import { SupportBusinessPage, SupportCasePage } from '@/pages/SupportBusinessPage'
+import { SubscriptionExpiredPage } from '@/pages/SubscriptionExpiredPage'
+import { SubscriptionsPage } from '@/pages/SubscriptionsPage'
+import { APP_TARGET, type AppTarget } from '@/platform/appTarget'
+import { ADMIN_ROLES, BUSINESS_STAFF_ROLES, HELP_ROLES, PLATFORM_ROLES } from '@/components/layout/roles'
 
-// Roles que pueden ver el panel administrativo completo (todo salvo
-// Ventas). El barista solo tiene acceso a /ventas, su tablero de pedidos —
-// ver también Sidebar.tsx, que oculta estos mismos enlaces del menú.
-const ADMIN_ROLES = ['administrador', 'supervisor_tecnico'] as const
+// Grupos de roles en components/layout/roles.ts (los mismos que usa el
+// menú en Sidebar.tsx). El barista solo tiene /ventas y /ayuda; soporte
+// solo la consola (/soporte), que es de solo lectura sobre los negocios.
 
-export const router = createBrowserRouter([
+/** Panel del personal (empleados internos y equipo de plataforma). */
+const staffRoutes: RouteObject[] = [
   { path: '/ingreso', element: <LoginPage /> },
   { path: '/registro', element: <RegisterPage /> },
   {
     element: <RequireAuth />,
     children: [
+      // Fase 6: bloqueo de acceso cuando la suscripción del negocio venció.
+      // Fuera de AppShell (no necesita Sidebar/Topbar) pero dentro de
+      // RequireAuth (exige sesión de empleado) — ver la excepción de
+      // pathname en RequireAuth.tsx para no generar un bucle.
+      { path: '/suscripcion-vencida', element: <SubscriptionExpiredPage /> },
       {
         path: '/',
         element: <AppShell />,
         children: [
           {
-            element: <RequireRole roles={[...ADMIN_ROLES]} />,
+            element: <RequireRole roles={ADMIN_ROLES} />,
             children: [
               { index: true, element: <DashboardPage /> },
               { path: 'inventario', element: <InventoryPage /> },
@@ -45,20 +57,40 @@ export const router = createBrowserRouter([
               { path: 'proveedores', element: <SuppliersPage /> },
               { path: 'reportes', element: <ReportsPage /> },
               { path: 'trazabilidad', element: <TraceabilityPage /> },
+              { path: 'suscripcion', element: <SubscriptionsPage /> },
               { path: 'configuracion', element: <SettingsPage /> },
             ],
           },
-          // Ventas: accesible para todos los roles internos (administrador,
-          // supervisor_tecnico y barista).
-          { path: 'ventas', element: <SalesPage /> },
+          {
+            element: <RequireRole roles={BUSINESS_STAFF_ROLES} />,
+            children: [{ path: 'ventas', element: <SalesPage /> }],
+          },
+          {
+            element: <RequireRole roles={HELP_ROLES} />,
+            children: [
+              { path: 'ayuda', element: <HelpPage /> },
+              { path: 'ayuda/:caseId', element: <HelpPage /> },
+            ],
+          },
+          {
+            element: <RequireRole roles={PLATFORM_ROLES} />,
+            children: [
+              { path: 'soporte', element: <SupportConsolePage /> },
+              { path: 'soporte/negocios/:businessId', element: <SupportBusinessPage /> },
+              { path: 'soporte/casos/:caseId', element: <SupportCasePage /> },
+            ],
+          },
         ],
       },
     ],
   },
-  // --- Cliente final (Fase 5): rutas públicas, nunca bajo RequireAuth (ese
-  // guard es solo para empleados internos). Montan su propio
-  // CustomerAuthProvider, separado de AuthProvider — ver la nota de
-  // arquitectura en CustomerAuthContext.tsx.
+]
+
+// --- Cliente final (Fase 5): rutas públicas, nunca bajo RequireAuth (ese
+// guard es solo para empleados internos). Montan su propio
+// CustomerAuthProvider, separado de AuthProvider — ver la nota de
+// arquitectura en CustomerAuthContext.tsx.
+const customerRoutes: RouteObject[] = [
   {
     element: <CustomerAuthRoot />,
     children: [
@@ -73,4 +105,20 @@ export const router = createBrowserRouter([
       },
     ],
   },
-])
+]
+
+/**
+ * Fase 7: la web lleva todo; cada app de las tiendas solo su parte (ver
+ * platform/appTarget.ts). Cualquier ruta ajena a la app vuelve a su inicio.
+ */
+const ROUTES_BY_TARGET: Record<AppTarget, RouteObject[]> = {
+  web: [...staffRoutes, ...customerRoutes],
+  equipo: [...staffRoutes, { path: '*', element: <Navigate to="/" replace /> }],
+  clientes: [
+    { path: '/', element: <Navigate to="/mis-negocios" replace /> },
+    ...customerRoutes,
+    { path: '*', element: <Navigate to="/mis-negocios" replace /> },
+  ],
+}
+
+export const router = createBrowserRouter(ROUTES_BY_TARGET[APP_TARGET])

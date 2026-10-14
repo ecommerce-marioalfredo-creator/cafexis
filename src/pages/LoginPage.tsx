@@ -4,6 +4,7 @@ import { AuthLayout } from '@/components/layout/AuthLayout'
 import { FormField } from '@/components/ui/FormField'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
+import { APP_TARGET } from '@/platform/appTarget'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -38,9 +39,12 @@ export function LoginPage() {
         </span>
       }
     >
-      <p className="auth-layout__demo-hint">
-        Cuenta demo: <strong>laura@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
-      </p>
+      {/* Las apps de las tiendas (Fase 7) nunca muestran credenciales de prueba. */}
+      {APP_TARGET === 'web' && (
+        <p className="auth-layout__demo-hint">
+          Cuenta demo: <strong>laura@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
+        </p>
+      )}
 
       {error && <div className="form-error-banner">{error}</div>}
 

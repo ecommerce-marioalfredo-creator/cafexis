@@ -7,11 +7,14 @@ import type { InvitableRole } from '@/types/domain'
 interface InviteUserModalProps {
   onInvite: (input: { email: string; name: string; role: InvitableRole }) => Promise<void>
   onClose: () => void
+  /** Solo el supervisor técnico puede invitar al equipo de soporte. */
+  allowSupportRole?: boolean
 }
 
 const ROLE_LABEL: Record<InvitableRole, string> = {
   administrador: 'Administrador / dueño',
   barista: 'Barista / vendedor',
+  soporte: 'Soporte de plataforma (ve todos los negocios, solo lectura)',
 }
 
 /**
@@ -19,7 +22,7 @@ const ROLE_LABEL: Record<InvitableRole, string> = {
  * la persona recibe un enlace de Supabase Auth para definir su propia
  * contraseña, sin afectar la sesión de quien invita.
  */
-export function InviteUserModal({ onInvite, onClose }: InviteUserModalProps) {
+export function InviteUserModal({ onInvite, onClose, allowSupportRole = false }: InviteUserModalProps) {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [role, setRole] = useState<InvitableRole>('barista')
@@ -82,7 +85,9 @@ export function InviteUserModal({ onInvite, onClose }: InviteUserModalProps) {
 
         <FormField label="Rol" htmlFor="invite-role">
           <select id="invite-role" value={role} onChange={(e) => setRole(e.target.value as InvitableRole)}>
-            {Object.entries(ROLE_LABEL).map(([value, label]) => (
+            {Object.entries(ROLE_LABEL)
+              .filter(([value]) => allowSupportRole || value !== 'soporte')
+              .map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>

@@ -9,16 +9,12 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { InviteUserModal } from '@/components/domain/InviteUserModal'
 import { BusinessEditModal } from '@/components/domain/BusinessEditModal'
+import { ROLE_LABEL, isPlatformRole } from '@/components/layout/roles'
 import type { AppUser, InvitableRole, UserRole } from '@/types/domain'
 
-const ROLE_LABEL: Record<UserRole, string> = {
-  supervisor_tecnico: 'Supervisor técnico',
-  administrador: 'Administrador / dueño',
-  barista: 'Barista / vendedor',
-  cliente: 'Cliente final',
-}
-
 const ASSIGNABLE_ROLES: InvitableRole[] = ['administrador', 'barista']
+/** El supervisor técnico además puede asignar el rol de soporte de plataforma. */
+const SUPERVISOR_ASSIGNABLE_ROLES: InvitableRole[] = ['administrador', 'barista', 'soporte']
 
 export function SettingsPage() {
   const { users, loading, error, reload, invite, updateRole, setActive } = useUsers()
@@ -36,6 +32,7 @@ export function SettingsPage() {
   // demás roles como defensa en profundidad — RLS ya lo bloquea en el
   // servidor si alguien intenta forzarlo.
   const canManageUsers = sessionUser?.role === 'administrador' || sessionUser?.role === 'supervisor_tecnico'
+  const isSupervisor = sessionUser?.role === 'supervisor_tecnico'
 
   const handleInvite = async (input: { email: string; name: string; role: InvitableRole }) => {
     await invite(input)
@@ -125,14 +122,14 @@ export function SettingsPage() {
               <Card key={user.id} title={user.name}>
                 <p className="section-subtitle">{user.email}</p>
 
-                {canManageUsers && !isSelf && user.role !== 'supervisor_tecnico' ? (
+                {canManageUsers && !isSelf && user.role !== 'supervisor_tecnico' && (!isPlatformRole(user.role) || isSupervisor) && (!isPlatformRole(user.role) || isSupervisor) ? (
                   <select
                     className="settings-page__role-select"
                     value={user.role}
                     onChange={(e) => handleRoleChange(user, e.target.value as UserRole)}
                     aria-label={`Rol de ${user.name}`}
                   >
-                    {ASSIGNABLE_ROLES.map((role) => (
+                    {(isSupervisor ? SUPERVISOR_ASSIGNABLE_ROLES : ASSIGNABLE_ROLES).map((role) => (
                       <option key={role} value={role}>
                         {ROLE_LABEL[role]}
                       </option>
@@ -178,7 +175,7 @@ export function SettingsPage() {
         </section>
       )}
 
-      {modalOpen && <InviteUserModal onInvite={handleInvite} onClose={() => setModalOpen(false)} />}
+      {modalOpen && <InviteUserModal onInvite={handleInvite} onClose={() => setModalOpen(false)} allowSupportRole={isSupervisor} />}
 
       {editBusinessOpen && business && (
         <BusinessEditModal

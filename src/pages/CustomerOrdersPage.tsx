@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { OrderCard } from '@/components/domain/OrderCard'
 import { getPublicBusiness } from '@/services/api/publicBusinessService'
 import { listMyOrders } from '@/services/api/publicOrdersService'
+import { createPaymentLink } from '@/services/api/paymentService'
 import type { PublicBusiness, Order } from '@/types/domain'
 import './CustomerOrdersPage.css'
 
@@ -19,6 +20,8 @@ export function CustomerOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>()
+  const [payingOrderId, setPayingOrderId] = useState<string>()
+  const [payError, setPayError] = useState<string>()
 
   const load = () => {
     if (!slug) return
@@ -35,6 +38,18 @@ export function CustomerOrdersPage() {
 
   useEffect(load, [slug])
 
+  const handleRetryPayment = async (orderId: string) => {
+    setPayError(undefined)
+    setPayingOrderId(orderId)
+    try {
+      const checkoutUrl = await createPaymentLink(orderId)
+      window.location.href = checkoutUrl
+    } catch (err) {
+      setPayError(err instanceof Error ? err.message : 'No se pudo iniciar el pago.')
+      setPayingOrderId(undefined)
+    }
+  }
+
   if (loading) return <PageLoading label="Cargando tus pedidos…" />
   if (error) return <PageError message={error} onRetry={load} />
   if (!business) {
@@ -49,12 +64,22 @@ export function CustomerOrdersPage() {
     <PublicLayout business={business}>
       <h1 className="customer-orders__title">Mis pedidos en {business.name}</h1>
 
+      {payError && <div className="form-error-banner">{payError}</div>}
+
       {orders.length === 0 ? (
         <EmptyState title="Aún no has hecho ningún pedido aquí" />
       ) : (
         <div className="customer-orders__list">
           {orders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+            <OrderCard
+              key={order.id}
+              order={order}
+              onRetryPayment={
+                order.status === 'pendiente_pago' && payingOrderId !== order.id
+                  ? () => handleRetryPayment(order.id)
+                  : undefined
+              }
+            />
           ))}
         </div>
       )}

@@ -27,7 +27,7 @@ const CORS_HEADERS = {
 interface InviteUserPayload {
   email: string
   name: string
-  role: 'administrador' | 'barista'
+  role: 'administrador' | 'barista' | 'soporte'
 }
 
 function jsonResponse(body: unknown, status = 200) {
@@ -58,8 +58,8 @@ serve(async (req) => {
   if (!email || !name || !role) {
     return jsonResponse({ error: 'Faltan campos: email, name y role son obligatorios.' }, 400)
   }
-  if (role !== 'administrador' && role !== 'barista') {
-    return jsonResponse({ error: 'Rol inválido. Solo se puede invitar como administrador o barista.' }, 400)
+  if (role !== 'administrador' && role !== 'barista' && role !== 'soporte') {
+    return jsonResponse({ error: 'Rol inválido. Solo se puede invitar como administrador, barista o soporte.' }, 400)
   }
 
   // Cliente "como el llamador": identifica quién está invitando a partir de
@@ -92,32 +92,39 @@ serve(async (req) => {
   if (!isSupervisor && !isBusinessAdmin) {
     return jsonResponse({ error: 'No tienes permiso para invitar usuarios.' }, 403)
   }
+  // Soporte ve todos los negocios: solo el supervisor técnico lo invita.
+  if (role === 'soporte' && !isSupervisor) {
+    return jsonResponse({ error: 'Solo el supervisor técnico puede invitar al equipo de soporte.' }, 403)
+  }
 
   const businessId = callerProfile.business_id
+  const normalizedEmail = email.trim().toLowerCase()
 
   // Cliente con privilegios de administración: SOLO esta función lo tiene.
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
-  const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+  // La invitación se registra ANTES de enviar el correo: inviteUserByEmail
+  // crea el usuario en auth.users de inmediato, y el trigger
+  // handle_invited_user_cafexis (0011) solo crea su perfil si encuentra
+  // una invitación pendiente que coincida (negocio, correo y rol).
+  const { data: invitation, error: recordError } = await adminClient
+    .from('user_invitations_cafexis')
+    .insert({ business_id: businessId, email: normalizedEmail, name, role, invited_by: caller.id })
+    .select('id')
+    .single()
+
+  if (recordError || !invitation) {
+    return jsonResponse({ error: recordError?.message ?? 'No se pudo registrar la invitación.' }, 400)
+  }
+
+  const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(normalizedEmail, {
     data: { business_id: businessId, role, name },
   })
 
   if (inviteError) {
+    // Sin correo enviado, la invitación no debe quedar como pendiente.
+    await adminClient.from('user_invitations_cafexis').delete().eq('id', invitation.id)
     return jsonResponse({ error: inviteError.message }, 400)
-  }
-
-  const { error: recordError } = await adminClient.from('user_invitations_cafexis').insert({
-    business_id: businessId,
-    email: email.trim().toLowerCase(),
-    name,
-    role,
-    invited_by: caller.id,
-  })
-
-  if (recordError) {
-    // La invitación en Supabase Auth ya se envió; el registro es solo para
-    // mostrarla como "pendiente" en la UI, así que no revertimos el envío.
-    return jsonResponse({ warning: 'Invitación enviada, pero no se pudo registrar en el historial.' }, 200)
   }
 
   return jsonResponse({ success: true })
