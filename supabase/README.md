@@ -73,8 +73,8 @@ Tienes dos formas, elige la que prefieras:
    - `migrations/0006_fase2_operacion_diaria_cafexis.sql`
    - `migrations/0007_fase3_roles_cafexis.sql`
    - `migrations/0008_supervisor_rpc_negocio_cafexis.sql`
-   - `migrations/0009_fase4_inteligencia_cafexis.sql` (pendiente — ver paso 9)
-   - `migrations/0010_fase5_cliente_final_cafexis.sql` (pendiente — ver paso 10)
+   - `migrations/0009_fase4_inteligencia_cafexis.sql`
+   - `migrations/0010_fase5_cliente_final_cafexis.sql`
 
 **Opción B — Supabase CLI (recomendado si seguimos iterando el esquema):**
 ```bash
@@ -84,12 +84,18 @@ supabase link --project-ref <tu-project-ref>   # está en Project Settings → G
 supabase db push
 ```
 
-### 4. Crear el usuario demo (pendiente — necesario para poder iniciar sesión)
+### 4. Usuario demo (ya creado — login verificado)
 
 El seed crea el negocio "Mi Cafetería" pero no el usuario, porque las
-contraseñas las maneja Supabase Auth, no una tabla nuestra. Para poder
-iniciar sesión con la cuenta demo que ya usa el frontend (`laura@micafeteria.co`
-/ `cafexis123`):
+contraseñas las maneja Supabase Auth, no una tabla nuestra. El usuario demo
+(`laura@micafeteria.co` / `cafexis123`) ya está creado en tu proyecto: se
+verificó el login por separado (llamada REST directa a
+`/auth/v1/token?grant_type=password`), responde `200` y trae un perfil
+completo en `app_users_cafexis` (rol `administrador`, negocio "Mi
+Cafetería"). No se necesita ningún paso adicional.
+
+Si en algún momento necesitas recrearlo (por ejemplo en un proyecto de
+Supabase nuevo):
 
 1. En el panel de Supabase, ve a **Authentication → Users → Add user** y
    crea un usuario con correo `laura@micafeteria.co` y contraseña `cafexis123`
@@ -105,8 +111,9 @@ iniciar sesión con la cuenta demo que ya usa el frontend (`laura@micafeteria.co
 
 De ahí en adelante, cuando alguien se registre desde el formulario de
 Cafexis, todo este proceso (crear usuario en Auth + su fila en
-`app_users_cafexis` + su negocio en `businesses_cafexis`) lo hará el propio
-frontend automáticamente — este paso manual es solo para la cuenta demo.
+`app_users_cafexis` + su negocio en `businesses_cafexis`) lo hace el propio
+frontend automáticamente — este paso manual es solo para recrear la cuenta
+demo si hiciera falta.
 
 ### 5. Migración de Fase 1 (ya aplicada — Configuración y Lotes de café)
 
@@ -187,11 +194,12 @@ distinto al propio solo se acepta si quien llama es supervisor técnico.
 migración "Nueva venta", "Nueva orden de compra" y "Revisar inventario"
 fallan con `Could not find the function ...`.
 
-### 9. Migración de Fase 4 (pendiente — reportes y reposición)
+### 9. Migración de Fase 4 (ya aplicada — reportes y reposición)
 
-`migrations/0009_fase4_inteligencia_cafexis.sql` (después de la 0008). Sin
-ella, la sección Reportes y la "Sugerencia de reposición" de Compras fallan
-con `Could not find the function ...`.
+`migrations/0009_fase4_inteligencia_cafexis.sql` (después de la 0008). Se
+verificó directamente contra tu proyecto: `report_sales_cafexis` responde
+con datos reales, así que la sección Reportes y la "Sugerencia de
+reposición" de Compras ya funcionan.
 
 - **Historial de movimientos** (`stock_movements_cafexis`): cada cambio de
   existencia de un insumo o lote queda registrado con su motivo (venta,
@@ -209,13 +217,16 @@ con `Could not find the function ...`.
 - **Solo administrador y supervisor técnico** ven reportes, movimientos,
   proyección y reportes personalizados (el barista no, según el alcance).
 
-### 10. Migración de Fase 5 (pendiente — cliente final web)
+### 10. Migración de Fase 5 (ya aplicada — cliente final web)
 
 `migrations/0010_fase5_cliente_final_cafexis.sql` (no depende de la 0009,
-puede aplicarse antes o después de ella). Sin ella, el catálogo público, la
-trazabilidad por QR y el pedido desde el celular fallan: el panel de
-Configuración no encuentra `slug` en el negocio, y las páginas públicas
-(`/c/:slug`, `/trazabilidad/:lotId`) responden con "función no encontrada".
+se puede aplicar antes o después de ella). Se verificó directamente contra
+tu proyecto: el negocio demo ya tiene `slug` (`mi-cafeteria`), y las tres
+funciones públicas responden sin necesitar sesión —
+`get_public_business_cafexis`, `get_public_catalog_cafexis` (devuelve el
+catálogo completo de "Mi Cafetería") y `get_public_coffee_lot_cafexis`
+(probado con el lote `HUI-2026-04`). El catálogo público (`/c/mi-cafeteria`)
+y la trazabilidad por QR (`/trazabilidad/:lotId`) ya funcionan.
 
 - **`businesses_cafexis.slug`**: identificador en la URL pública
   (`/c/:slug`), generado automáticamente del nombre del negocio (único en
@@ -306,6 +317,7 @@ viven en un `.env` local (no versionado) con `VITE_SUPABASE_URL` y
 Se verificó por separado (llamada REST directa) que las políticas de RLS
 responden correctamente: sin sesión autenticada, `businesses_cafexis` no
 devuelve ninguna fila aunque exista el negocio demo, que es el comportamiento
-esperado. Falta únicamente el paso 4 de arriba (crear el usuario demo en
-Supabase Auth) para poder probar el login end-to-end con esa cuenta; registrar
-un negocio nuevo desde `/registro` ya funciona sin pasos manuales.
+esperado — las únicas tablas/funciones visibles sin sesión son las públicas
+de la Fase 5 (ver paso 10). El login end-to-end con la cuenta demo ya está
+probado y funciona (ver paso 4); registrar un negocio nuevo desde
+`/registro` también funciona sin pasos manuales.
