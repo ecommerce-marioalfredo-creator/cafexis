@@ -1,0 +1,11 @@
+.customer-orders__title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  margin: 0 0 var(--space-4);
+}
+
+.customer-orders__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

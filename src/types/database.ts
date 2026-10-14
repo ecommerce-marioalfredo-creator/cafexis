@@ -25,8 +25,60 @@ export interface BusinessRow {
   country: string
   primary_color: string
   logo_url: string | null
+  slug: string
   created_at: string
   updated_at: string
+}
+
+/** Fila devuelta por get_public_business_cafexis: solo lo que un visitante sin cuenta debe ver. */
+export interface PublicBusinessRow {
+  id: string
+  name: string
+  type: BusinessTypeRow
+  primary_color: string
+  logo_url: string | null
+  slug: string
+}
+
+/** Fila devuelta por get_public_catalog_cafexis. */
+export interface PublicProductRow {
+  id: string
+  name: string
+  category: string
+  price: number
+  image_url: string | null
+}
+
+/** Fila devuelta por get_public_coffee_lot_cafexis. */
+export interface PublicCoffeeLotRow {
+  id: string
+  business_id: string
+  business_name: string
+  code: string
+  variety: string
+  process: CoffeeProcessRow
+  origin_country: string
+  origin_region: string
+  origin_farm: string | null
+  story: string | null
+  quantity_kg: number
+  harvest_year: number
+}
+
+export interface CustomerRow {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  created_at: string
+}
+
+export interface CustomerBusinessRow {
+  customer_id: string
+  business_id: string
+  linked_at: string
+  // Presente solo en el select anidado usado por customerBusinessService.
+  businesses_cafexis?: BusinessRow | null
 }
 
 export interface AppUserRow {
@@ -131,6 +183,7 @@ export interface OrderRow {
   id: string
   business_id: string
   code: string
+  customer_id: string | null
   customer_name: string
   table_or_reference: string | null
   total: number

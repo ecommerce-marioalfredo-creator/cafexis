@@ -4,6 +4,7 @@ import { useSuppliers } from '@/hooks/useSuppliers'
 import { useInventory } from '@/hooks/useInventory'
 import { PurchaseOrderCard } from '@/components/domain/PurchaseOrderCard'
 import { PurchaseOrderModal } from '@/components/domain/PurchaseOrderModal'
+import { ReplenishmentSection } from '@/components/domain/ReplenishmentSection'
 import { PageLoading, PageError } from '@/components/ui/PageState'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Button } from '@/components/ui/Button'
@@ -64,6 +65,13 @@ export function PurchasesPage() {
       </div>
 
       {reviewMessage && <p className="section-subtitle">{reviewMessage}</p>}
+
+      <ReplenishmentSection
+        suppliers={suppliers}
+        inventoryItems={inventoryItems}
+        onCreateOrder={create}
+        version={purchaseOrders.map((o) => `${o.id}:${o.status}:${o.lines.length}`).join('|')}
+      />
 
       <section>
         <h3>Propuestas del sistema por revisar</h3>

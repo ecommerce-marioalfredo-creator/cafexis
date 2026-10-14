@@ -18,7 +18,6 @@ import type {
   Order,
   Supplier,
   PurchaseOrder,
-  ReportDefinition,
 } from '@/types/domain'
 
 export const business: Business = {
@@ -27,6 +26,7 @@ export const business: Business = {
   type: 'mixto',
   country: 'Colombia',
   branding: { primaryColor: '#D85A30' }, // colores por defecto de Cafexis; sin logo propio (demo)
+  slug: 'mi-cafeteria',
 }
 
 export const users: AppUser[] = [
@@ -269,9 +269,5 @@ export const purchaseOrders: PurchaseOrder[] = [
   },
 ]
 
-export const reportDefinitions: ReportDefinition[] = [
-  { id: 'rep-1', name: 'Bebidas y productos más vendidos', description: 'Por día, semana o mes.', custom: false },
-  { id: 'rep-2', name: 'Total de ventas en dinero', description: 'Durante un período determinado.', custom: false },
-  { id: 'rep-3', name: 'Ingredientes que se agotan más rápido', description: 'Basado en consumo histórico.', custom: false },
-  { id: 'rep-4', name: 'Movimiento y disponibilidad de lotes', description: 'Para café en grano o molido.', custom: false },
-]
+// Mismas definiciones que usa la app real.
+export { PREDEFINED_REPORTS as reportDefinitions } from '@/services/api/reportPresets'

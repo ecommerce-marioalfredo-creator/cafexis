@@ -1,0 +1,199 @@
+/*
+ * Gráficos de reportes. Una sola serie por gráfico, en el teal de marca
+ * (validado: contraste >= 3:1 sobre la superficie), sin leyenda: el título
+ * de la tarjeta dice qué se grafica. Barras de máximo 24px con extremo
+ * redondeado de 4px y base recta; cuadrícula de 1px, recesiva.
+ */
+
+.chart {
+  --chart-series: var(--color-brand-teal);
+  --chart-series-hover: var(--color-brand-teal-hover);
+  --chart-grid: var(--color-border-default);
+  position: relative;
+}
+
+/* --- Columnas (series de tiempo) --- */
+
+.column-chart {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 var(--space-2);
+}
+
+.column-chart__y-axis {
+  position: relative;
+  height: 220px;
+  min-width: 48px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.column-chart__y-tick {
+  position: absolute;
+  right: 0;
+  transform: translateY(50%);
+  white-space: nowrap;
+}
+
+.column-chart__plot {
+  position: relative;
+  height: 220px;
+  border-bottom: 1px solid var(--color-text-secondary);
+}
+
+.column-chart__grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--chart-grid);
+  pointer-events: none;
+}
+
+.column-chart__columns {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  min-width: 100%;
+}
+
+/* El tramo completo es el área de hover/foco, no solo la barra pintada. */
+.column-chart__slot {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 4px;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 1px;
+  cursor: default;
+  outline: none;
+}
+
+.column-chart__column {
+  width: 100%;
+  max-width: 24px;
+  background: var(--chart-series);
+  border-radius: 4px 4px 0 0;
+  transition: background-color 0.12s ease;
+}
+
+.column-chart__slot:hover .column-chart__column,
+.column-chart__slot:focus-visible .column-chart__column {
+  background: var(--chart-series-hover);
+}
+
+.column-chart__slot:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--color-border-focus);
+  border-radius: var(--radius-sm);
+}
+
+.column-chart__x-axis {
+  grid-column: 2;
+  display: flex;
+  padding-top: var(--space-1);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+/* Ancho 0 + centrado flex: la etiqueta se centra bajo su columna sin
+   ensanchar el gráfico (si no, empuja la página fuera de la pantalla). */
+.column-chart__x-label {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* --- Tooltip compartido --- */
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, calc(-100% - 8px));
+  background: var(--color-text-charcoal);
+  color: var(--color-text-on-dark);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+
+.chart-tooltip strong {
+  display: block;
+  font-size: 13px;
+}
+
+/* --- Barras horizontales (rankings) --- */
+
+.bar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.bar-list__row {
+  display: grid;
+  /* minmax(0, …): un nombre largo se recorta con … en vez de ensanchar la página. */
+  grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.bar-list__row:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-border-focus);
+}
+
+.bar-list__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+
+.bar-list__track {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.bar-list__bar {
+  height: 14px;
+  background: var(--chart-series);
+  border-radius: 0 4px 4px 0;
+  transition: background-color 0.12s ease;
+}
+
+.bar-list__row:hover .bar-list__bar,
+.bar-list__row:focus-visible .bar-list__bar {
+  background: var(--chart-series-hover);
+}
+
+.bar-list__value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  .bar-list__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}

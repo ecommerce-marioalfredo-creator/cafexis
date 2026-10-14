@@ -72,7 +72,9 @@ Tienes dos formas, elige la que prefieras:
    - `migrations/0005_fase1_datos_base_cafexis.sql`
    - `migrations/0006_fase2_operacion_diaria_cafexis.sql`
    - `migrations/0007_fase3_roles_cafexis.sql`
-   - `migrations/0008_supervisor_rpc_negocio_cafexis.sql` (pendiente — ver paso 8)
+   - `migrations/0008_supervisor_rpc_negocio_cafexis.sql`
+   - `migrations/0009_fase4_inteligencia_cafexis.sql` (pendiente — ver paso 9)
+   - `migrations/0010_fase5_cliente_final_cafexis.sql` (pendiente — ver paso 10)
 
 **Opción B — Supabase CLI (recomendado si seguimos iterando el esquema):**
 ```bash
@@ -172,7 +174,7 @@ receta de cada bebida visible en cada tarjeta); intentar abrir cualquier
 otra sección a mano lo redirige de vuelta. Administrador y supervisor
 técnico siguen viendo el panel completo.
 
-### 8. Supervisor operando otro negocio en ventas y compras (pendiente — aplicar antes de publicar el frontend)
+### 8. Supervisor operando otro negocio en ventas y compras (ya aplicada)
 
 `migrations/0008_supervisor_rpc_negocio_cafexis.sql` corrige que las
 funciones de Fase 2 (`register_sale_cafexis`, `create_purchase_order_cafexis`,
@@ -184,6 +186,64 @@ distinto al propio solo se acepta si quien llama es supervisor técnico.
 **Importante:** el frontend ya envía `p_business_id`, así que sin esta
 migración "Nueva venta", "Nueva orden de compra" y "Revisar inventario"
 fallan con `Could not find the function ...`.
+
+### 9. Migración de Fase 4 (pendiente — reportes y reposición)
+
+`migrations/0009_fase4_inteligencia_cafexis.sql` (después de la 0008). Sin
+ella, la sección Reportes y la "Sugerencia de reposición" de Compras fallan
+con `Could not find the function ...`.
+
+- **Historial de movimientos** (`stock_movements_cafexis`): cada cambio de
+  existencia de un insumo o lote queda registrado con su motivo (venta,
+  compra recibida, ajuste manual o existencia inicial). Lo escriben
+  triggers; nadie puede editarlo desde la app. Al aplicar la migración se
+  reconstruye el consumo de las ventas anteriores con las recetas actuales
+  (marcado como `estimated`).
+- **Reportes** calculados en la base de datos (sin el límite de 1000 filas
+  por consulta): ventas por producto, categoría, método de pago, hora, día,
+  semana o mes, y movimientos de insumos o lotes. Los 4 reportes
+  predefinidos del alcance y los personalizados usan las mismas funciones.
+- **Proyección de reposición** (`inventory_projection_cafexis`): consumo
+  diario promedio por ventas, fecha estimada de agotamiento y cantidad
+  sugerida para cubrir N días más el umbral de alerta.
+- **Solo administrador y supervisor técnico** ven reportes, movimientos,
+  proyección y reportes personalizados (el barista no, según el alcance).
+
+### 10. Migración de Fase 5 (pendiente — cliente final web)
+
+`migrations/0010_fase5_cliente_final_cafexis.sql` (no depende de la 0009,
+puede aplicarse antes o después de ella). Sin ella, el catálogo público, la
+trazabilidad por QR y el pedido desde el celular fallan: el panel de
+Configuración no encuentra `slug` en el negocio, y las páginas públicas
+(`/c/:slug`, `/trazabilidad/:lotId`) responden con "función no encontrada".
+
+- **`businesses_cafexis.slug`**: identificador en la URL pública
+  (`/c/:slug`), generado automáticamente del nombre del negocio (único en
+  toda la plataforma, con sufijo numérico si hay colisión). Se asigna solo
+  y no cambia al editar el nombre después.
+- **`customers_cafexis`**: perfil del cliente final (login con Google), sin
+  negocio fijo — a diferencia de los empleados internos
+  (`app_users_cafexis`), un cliente puede estar vinculado a varios negocios
+  (`customer_businesses_cafexis`), igual que elegir cuenta en Gmail.
+- **Catálogo y trazabilidad públicos**: `get_public_business_cafexis`,
+  `get_public_catalog_cafexis`, `get_public_coffee_lot_cafexis` — de
+  lectura, sin sesión, exponen solo lo que un visitante anónimo debe ver
+  (nunca las tablas completas).
+- **Pedido del cliente final**: `register_public_order_cafexis` (exige
+  login con Google y estar vinculado al negocio), mismo patrón que el
+  punto de venta interno — los precios los toma la base de datos, nunca el
+  cliente, y el mismo trigger de descuento de inventario ya existente
+  (0006) aplica igual.
+
+**Paso adicional, fuera de esta migración**: el login con Google requiere
+configurar ese proveedor en el panel de Supabase. Ve a **Authentication →
+Providers → Google**, actívalo, y pega el **Client ID** y **Client
+Secret** de un proyecto de [Google Cloud
+Console](https://console.cloud.google.com/apis/credentials) (tipo de
+credencial "OAuth 2.0 Client ID", aplicación web). En **Authorized redirect
+URIs** de Google Cloud, agrega la URL de callback que Supabase muestra en
+esa misma pantalla (termina en `/auth/v1/callback`). Sin este paso, el
+botón "Iniciar sesión con Google" del catálogo público falla.
 
 ## Gestión de usuarios y roles (invitaciones)
 

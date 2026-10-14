@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import { useUsers, useBusiness, useInvitations } from '@/hooks/useBusiness'
 import { useAuth } from '@/context/AuthContext'
 import { PageLoading, PageError } from '@/components/ui/PageState'
@@ -86,6 +87,27 @@ export function SettingsPage() {
           </p>
         </Card>
       </section>
+
+      {business && (
+        <section>
+          <h3>Acceso del cliente final</h3>
+          <Card>
+            <p className="section-subtitle">
+              Comparte este código o enlace con tus clientes: al escanearlo e iniciar sesión con Google, quedan
+              vinculados a tu catálogo y pueden pedir desde su celular.
+            </p>
+            <div className="settings-page__customer-qr">
+              <QRCodeSVG
+                value={`${window.location.origin}/c/${business.slug}`}
+                size={160}
+                marginSize={2}
+                title={`Código QR de acceso al catálogo de ${business.name}`}
+              />
+              <code className="settings-page__customer-link">{`${window.location.origin}/c/${business.slug}`}</code>
+            </div>
+          </Card>
+        </section>
+      )}
 
       <section>
         <div className="page-toolbar">

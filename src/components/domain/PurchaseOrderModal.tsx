@@ -10,6 +10,8 @@ interface PurchaseOrderModalProps {
   inventoryItems: InventoryItem[]
   onSave: (input: NewPurchaseOrderInput) => Promise<void>
   onClose: () => void
+  /** Borrador precargado (ej. desde la sugerencia de reposición). */
+  initial?: { supplierId?: string; reason?: string; lines: Array<{ inventoryItemId: string; quantity: number }> }
 }
 
 interface DraftLine {
@@ -25,10 +27,14 @@ const EMPTY_LINE = (): DraftLine => ({ key: crypto.randomUUID(), inventoryItemId
  * queda lista para "Recibir". La unidad de cada línea es la del insumo en
  * Inventario, para que al recibir se sume sin conversiones.
  */
-export function PurchaseOrderModal({ suppliers, inventoryItems, onSave, onClose }: PurchaseOrderModalProps) {
-  const [supplierId, setSupplierId] = useState('')
-  const [reason, setReason] = useState('')
-  const [lines, setLines] = useState<DraftLine[]>([EMPTY_LINE()])
+export function PurchaseOrderModal({ suppliers, inventoryItems, onSave, onClose, initial }: PurchaseOrderModalProps) {
+  const [supplierId, setSupplierId] = useState(initial?.supplierId ?? '')
+  const [reason, setReason] = useState(initial?.reason ?? '')
+  const [lines, setLines] = useState<DraftLine[]>(() =>
+    initial && initial.lines.length > 0
+      ? initial.lines.map((l) => ({ key: crypto.randomUUID(), inventoryItemId: l.inventoryItemId, quantity: String(l.quantity) }))
+      : [EMPTY_LINE()],
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saveError, setSaveError] = useState<string>()
   const [saving, setSaving] = useState(false)

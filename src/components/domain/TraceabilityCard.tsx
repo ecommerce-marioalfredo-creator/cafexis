@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import type { CoffeeLot } from '@/types/domain'
@@ -53,8 +54,14 @@ export function TraceabilityCard({ lot, onEdit }: TraceabilityCardProps) {
           </Button>
         )}
         {showQr && (
-          <div className="trace-card__qr" role="img" aria-label={`Código QR de trazabilidad para el lote ${lot.code}`}>
-            QR
+          <div className="trace-card__qr">
+            <QRCodeSVG
+              value={`${window.location.origin}/trazabilidad/${lot.id}`}
+              size={160}
+              marginSize={2}
+              title={`Código QR de trazabilidad para el lote ${lot.code}`}
+            />
+            <span className="trace-card__qr-hint">Escanéalo o compártelo para ver esta historia desde el celular.</span>
           </div>
         )}
       </footer>

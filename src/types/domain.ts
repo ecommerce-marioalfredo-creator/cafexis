@@ -20,6 +20,8 @@ export interface Business {
   type: BusinessType
   country: string
   branding: BusinessBranding
+  /** Identificador en la URL pública (/c/:slug), único en toda la plataforma. */
+  slug: string
 }
 
 /** Datos editables del negocio desde Configuración (el logo se sube aparte, ver uploadBusinessLogo). */
@@ -259,9 +261,174 @@ export interface DashboardSummary {
   inventoryAlerts: Array<{ itemName: string; remaining: string }>
 }
 
+/** De dónde salen los datos del reporte. */
+export type ReportDataset = 'ventas' | 'insumos' | 'lotes'
+
+/**
+ * Cómo se agrupan las filas. 'auto' elige la escala de tiempo según el
+ * período (hora para un día, día para semana/mes). 'elemento' = por insumo
+ * o por lote.
+ */
+export type ReportGroupBy =
+  | 'auto'
+  | 'producto'
+  | 'categoria'
+  | 'metodo_pago'
+  | 'elemento'
+  | 'hora'
+  | 'dia'
+  | 'semana'
+  | 'mes'
+
+export type ReportTimeGroupBy = 'hora' | 'dia' | 'semana' | 'mes'
+
+/** Período: día/semana/mes navegables, ventanas móviles o un rango fijo. */
+export type ReportPeriodKind = 'dia' | 'semana' | 'mes' | 'ultimos_7' | 'ultimos_30' | 'rango'
+
+/** Dato que grafica el reporte. Ventas: dinero/unidades/pedidos; inventario: el resto. */
+export type ReportMetric = 'dinero' | 'unidades' | 'pedidos' | 'vendido' | 'entradas' | 'ajustes' | 'existencia' | 'cobertura'
+
+export interface ReportFilters {
+  productIds?: string[]
+  categories?: string[]
+  paymentMethods?: PaymentMethod[]
+  /** Insumos (dataset 'insumos') o lotes (dataset 'lotes'). */
+  elementIds?: string[]
+}
+
+/** Lo que guarda custom_reports_cafexis.config; los predefinidos usan la misma forma. */
+export interface ReportConfig {
+  dataset: ReportDataset
+  groupBy: ReportGroupBy
+  metric: ReportMetric
+  chart: 'barras' | 'tabla'
+  period: ReportPeriodKind
+  /** Solo con period = 'rango' (yyyy-mm-dd, ambos inclusive). */
+  rangeFrom?: string
+  rangeTo?: string
+  filters?: ReportFilters
+  /** Tabla secundaria (ej. ventas por método de pago en "Total de ventas"). */
+  breakdown?: 'metodo_pago'
+}
+
 export interface ReportDefinition {
   id: string
   name: string
   description: string
   custom: boolean
+  config: ReportConfig
+}
+
+export type ReportDefinitionInput = Pick<ReportDefinition, 'name' | 'description' | 'config'>
+
+export interface SalesReportRow {
+  key: string
+  label: string
+  units: number
+  revenue: number
+  orders: number
+}
+
+export interface StockReportRow {
+  key: string
+  label: string
+  unit: string
+  /** Salidas por ventas (positivo). */
+  sold: number
+  /** Entradas por compras recibidas o existencia inicial. */
+  received: number
+  /** Ajustes manuales netos (con signo). */
+  adjusted: number
+  currentQuantity?: number
+  threshold?: number
+  /** Consumo diario promedio del período. */
+  dailyRate?: number
+  /** Días que dura la existencia actual a ese ritmo (vacío si no hubo ventas). */
+  daysCoverage?: number
+}
+
+/** Período ya resuelto a fechas, listo para consultar. */
+export interface ResolvedPeriod {
+  from: Date
+  /** Exclusivo. */
+  to: Date
+  label: string
+}
+
+export interface ReplenishmentProjection {
+  inventoryItemId: string
+  name: string
+  unit: string
+  quantity: number
+  lowStockThreshold: number
+  status: StockStatus
+  dailyConsumption: number
+  /** Días de historial realmente usados (menos que la ventana si el negocio es nuevo). */
+  historyDays: number
+  daysUntilOut?: number
+  depletesAt?: string
+  daysUntilThreshold?: number
+  suggestedQuantity: number
+  preferredSupplierId?: string
+  inOpenOrder: boolean
+}
+
+// --- Cliente final (Fase 5): catálogo público, trazabilidad por QR, pedido ---
+
+/** Lo mínimo que un visitante sin cuenta puede ver de un negocio (get_public_business_cafexis). */
+export interface PublicBusiness {
+  id: string
+  name: string
+  type: BusinessType
+  branding: BusinessBranding
+  slug: string
+}
+
+/** Producto del catálogo público (sin receta ni datos internos del negocio). */
+export interface PublicProduct {
+  id: string
+  name: string
+  category: string
+  price: number
+  imageUrl?: string
+}
+
+/** Lote de café mostrado en la página pública de trazabilidad (/trazabilidad/:lotId). */
+export interface PublicCoffeeLot {
+  id: string
+  businessId: string
+  businessName: string
+  code: string
+  variety: string
+  process: CoffeeProcess
+  origin: {
+    country: string
+    region: string
+    farm?: string
+  }
+  story?: string
+  quantityKg: number
+  harvestYear: number
+}
+
+/** Perfil del cliente final (login con Google), sin negocio fijo. */
+export interface Customer {
+  id: string
+  name: string
+  email: string
+  phone?: string
+}
+
+/** Un negocio al que el cliente ya está vinculado (pantalla "Mis negocios"). */
+export interface CustomerBusinessLink {
+  business: PublicBusiness
+  linkedAt: string
+}
+
+/** Pedido hecho por el cliente desde /c/:slug. */
+export interface NewPublicOrderInput {
+  businessId: string
+  items: Array<{ productId: string; quantity: number }>
+  paymentMethod: PaymentMethod
+  tableOrReference?: string
 }

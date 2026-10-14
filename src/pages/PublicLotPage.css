@@ -1,0 +1,52 @@
+.public-lot {
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.public-lot__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.public-lot__business {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-1);
+}
+
+.public-lot__header h1 {
+  font-family: var(--font-heading);
+  margin: 0;
+}
+
+.public-lot__variety {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+}
+
+.public-lot__origin {
+  font-weight: 500;
+}
+
+.public-lot__story {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.public-lot__not-found {
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--color-text-secondary);
+}

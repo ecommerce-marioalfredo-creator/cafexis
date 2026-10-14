@@ -19,6 +19,11 @@ import type {
   PurchaseOrderRow,
   CustomReportRow,
   UserInvitationRow,
+  PublicBusinessRow,
+  PublicProductRow,
+  PublicCoffeeLotRow,
+  CustomerRow,
+  CustomerBusinessRow,
 } from '@/types/database'
 import type {
   Business,
@@ -32,7 +37,13 @@ import type {
   OrderItem,
   PurchaseOrder,
   ReportDefinition,
+  ReportConfig,
   UserInvitation,
+  PublicBusiness,
+  PublicProduct,
+  PublicCoffeeLot,
+  Customer,
+  CustomerBusinessLink,
 } from '@/types/domain'
 
 export function mapBusiness(row: BusinessRow): Business {
@@ -42,6 +53,71 @@ export function mapBusiness(row: BusinessRow): Business {
     type: row.type,
     country: row.country,
     branding: { primaryColor: row.primary_color, logoUrl: row.logo_url ?? undefined },
+    slug: row.slug,
+  }
+}
+
+export function mapPublicBusiness(row: PublicBusinessRow): PublicBusiness {
+  return {
+    id: row.id,
+    name: row.name,
+    type: row.type,
+    branding: { primaryColor: row.primary_color, logoUrl: row.logo_url ?? undefined },
+    slug: row.slug,
+  }
+}
+
+export function mapPublicProduct(row: PublicProductRow): PublicProduct {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    price: Number(row.price),
+    imageUrl: row.image_url ?? undefined,
+  }
+}
+
+export function mapPublicCoffeeLot(row: PublicCoffeeLotRow): PublicCoffeeLot {
+  return {
+    id: row.id,
+    businessId: row.business_id,
+    businessName: row.business_name,
+    code: row.code,
+    variety: row.variety,
+    process: row.process,
+    origin: {
+      country: row.origin_country,
+      region: row.origin_region,
+      farm: row.origin_farm ?? undefined,
+    },
+    story: row.story ?? undefined,
+    quantityKg: Number(row.quantity_kg),
+    harvestYear: row.harvest_year,
+  }
+}
+
+export function mapCustomer(row: CustomerRow): Customer {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone ?? undefined,
+  }
+}
+
+export function mapCustomerBusinessLink(row: CustomerBusinessRow): CustomerBusinessLink {
+  const b = row.businesses_cafexis
+  return {
+    business: b
+      ? {
+          id: b.id,
+          name: b.name,
+          type: b.type,
+          branding: { primaryColor: b.primary_color, logoUrl: b.logo_url ?? undefined },
+          slug: b.slug,
+        }
+      : { id: row.business_id, name: '', type: 'cafeteria', branding: { primaryColor: '#D85A30' }, slug: '' },
+    linkedAt: row.linked_at,
   }
 }
 
@@ -186,11 +262,22 @@ export function mapPurchaseOrder(row: PurchaseOrderRow): PurchaseOrder {
   }
 }
 
+/** Reportes guardados antes de la Fase 4 (config vacía) se abren como "más vendidos". */
+const DEFAULT_REPORT_CONFIG: ReportConfig = {
+  dataset: 'ventas',
+  groupBy: 'producto',
+  metric: 'unidades',
+  chart: 'barras',
+  period: 'semana',
+}
+
 export function mapCustomReport(row: CustomReportRow): ReportDefinition {
+  const saved = row.config as Partial<ReportConfig>
   return {
     id: row.id,
     name: row.name,
     description: row.description ?? '',
     custom: true,
+    config: saved.dataset ? { ...DEFAULT_REPORT_CONFIG, ...saved } : DEFAULT_REPORT_CONFIG,
   }
 }
