@@ -8,16 +8,10 @@
  * el cobro y mueve el pedido a 'pedido' — nada de esto pasa por el
  * frontend directamente.
  */
-import { supabase } from './supabaseClient'
+import { invokeEdgeFunction } from './edgeFunctions'
 
 export async function createPaymentLink(orderId: string): Promise<string> {
-  const { data, error } = await supabase.functions.invoke<{ checkoutUrl?: string; error?: string }>(
-    'create-payment-link',
-    { body: { orderId } },
-  )
-
-  if (error) throw new Error(error.message)
-  if (data?.error) throw new Error(data.error)
-  if (!data?.checkoutUrl) throw new Error('No se pudo generar el link de pago.')
-  return data.checkoutUrl
+  const { checkoutUrl } = await invokeEdgeFunction<{ checkoutUrl?: string }>('create-payment-link', { orderId })
+  if (!checkoutUrl) throw new Error('No se pudo generar el link de pago.')
+  return checkoutUrl
 }

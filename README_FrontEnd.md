@@ -28,8 +28,8 @@ error explícito al arrancar.
 
 ## Stack
 
-- React 18 + TypeScript + Vite
-- React Router
+- React 18 + TypeScript + Vite 7 (requiere Node 20.19 o superior)
+- React Router 7
 - Supabase (`@supabase/supabase-js`) para datos y autenticación
 - CSS plano con tokens de marca en `src/styles/tokens.css` (colores,
   tipografía Poppins/Manrope, espaciado), según el Manual de Marca y el
@@ -70,10 +70,16 @@ src/
 
 ## Pendiente para siguientes etapas
 
-- Vistas para los roles Barista/Vendedor y Cliente final (catálogo, carrito,
-  estado de pedido), ya contempladas en el modelo de dominio pero no
-  maquetadas en esta entrega.
-- Generación real de código QR de trazabilidad (hoy es un placeholder visual).
-- Vector maestro definitivo del logo (hoy se usan los PNG provistos).
-- Subida de logos de negocio a Supabase Storage (hoy el registro guarda el
-  logo como data URL en `logo_url`, útil para probar pero pesado a escala).
+- Vector maestro definitivo del logo de Cafexis (hoy se usan los PNG provistos).
+
+Ya resuelto desde la primera entrega: vistas de barista y de cliente final,
+QR reales de trazabilidad y de acceso al catálogo, y logos de negocio en
+Supabase Storage (bucket `business-logos`; el registro ya no los guarda como
+data URL).
+
+## Calidad
+
+```bash
+npm run lint    # ESLint (.eslintrc.cjs)
+npm run build   # typecheck + build de producción
+```

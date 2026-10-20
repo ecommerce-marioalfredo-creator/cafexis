@@ -135,7 +135,7 @@ export const coffeeLots: CoffeeLot[] = [
 const now = Date.now()
 const hoursAgo = (h: number) => new Date(now - h * 3600_000).toISOString()
 
-export const orders: Order[] = [
+export const orders: Order[] = ([
   {
     id: 'ord-1',
     code: 'A-101',
@@ -225,7 +225,7 @@ export const orders: Order[] = [
     paymentMethod: 'transferencia',
     createdAt: hoursAgo(0.3),
   },
-]
+] satisfies Array<Omit<Order, 'updatedAt'>>).map((order) => ({ ...order, updatedAt: order.createdAt }))
 
 export const suppliers: Supplier[] = [
   { id: 'sup-1', nit: '900123456-1', name: 'Distribuidora Café del Sur', location: 'Neiva, Huila', branches: ['Neiva', 'Pitalito'] },

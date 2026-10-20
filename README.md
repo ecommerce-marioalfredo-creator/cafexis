@@ -28,8 +28,13 @@ El detalle completo del alcance está en
 **Las 8 fases de desarrollo (0 a 7) están terminadas a nivel de código.** La
 plataforma web, la vista del barista, la experiencia del cliente final, las
 integraciones y las apps móviles están programadas sobre Supabase (Postgres +
-autenticación + Row Level Security por negocio + Edge Functions). El
-proyecto compila sin errores (`npm run build`).
+autenticación + Row Level Security por negocio + Edge Functions).
+
+Después de las fases se hizo una **auditoría de seguridad y operación**
+(migraciones `0013` y `0014`), que cerró huecos entre negocios y por rol y
+completó el ciclo de los pedidos (cobro en caja y cancelación). El proyecto
+compila sin errores (`npm run build`), pasa el lint sin avisos
+(`npm run lint`) y `npm audit` no reporta vulnerabilidades.
 
 Lo que queda para salir a producción **no es programación**: son trámites
 legales y comerciales con terceros (pasarela de pagos, DIAN y tiendas de
@@ -49,21 +54,38 @@ Las migraciones de cada fase están en
 | 5 · Cliente final (web) | ✅ | Página pública de trazabilidad por lote con QR real, catálogo/menú público por negocio (`/c/:slug`) con QR, pedido con carrito y mesa/referencia, historial y estado de pedidos del cliente | `0010` |
 | 6 · Integraciones externas | ✅ Código terminado · ⚠️ requiere trámites | Suscripciones con 14 días de prueba y bloqueo al vencer (**funciona ya**). Pagos en línea con Wompi (link de pago + webhook con verificación de firma) y facturación electrónica DIAN con Factus (botón "Generar factura" en pedidos entregados): **programados, pero sin probar contra las APIs reales hasta tener las cuentas** | `0012` |
 | 7 · Plataforma y móvil | ✅ Código terminado · ⚠️ requiere publicación | Consola de soporte multi-negocio con casos (tickets) y rol de soporte de solo lectura, cierre de huecos de seguridad en roles, apps Android e iOS con Capacitor (**Cafexis** para clientes y **Cafexis Equipo** para el personal) | `0011` |
+| Auditoría · Seguridad y operación | ✅ `0013` aplicada · ⚠️ `0014` por aplicar | Usuarios desactivados sin acceso, pedidos solo por RPC (sin inserts directos del cliente), validación de que productos, recetas, lotes y compras sean del mismo negocio, registro atómico de negocio, pagos con monto validado, facturas que nunca se emiten dos veces, cobro en caja, cancelación con reposición de inventario, máquina de estados de pedidos y permisos por rol en el servidor | `0013`, `0014` |
 
 | Componente | Estado |
 |---|---|
 | Frontend web · Panel del negocio (administrador / supervisor) | ✅ Ver [`src/`](src/) |
-| Frontend web · Vista barista/vendedor | ✅ Tablero de pedidos con recetas |
-| Frontend web · Catálogo, pedido e historial del cliente final | ✅ |
+| Frontend web · Vista barista/vendedor | ✅ Tablero de pedidos con recetas, cobro en caja y filtro por período |
+| Frontend web · Catálogo, pedido e historial del cliente final | ✅ Pago en línea o en caja (efectivo) |
 | Consola de soporte y casos | ✅ Rutas `/soporte` (equipo) y `/ayuda` (negocios) |
-| Base de datos (Supabase) | ✅ Migraciones `0001`–`0012`, ver [`supabase/`](supabase/) |
-| Gestión de usuarios y roles (invitaciones) | ✅ Construido; hay que volver a desplegar la Edge Function `invite-user` |
+| Base de datos (Supabase) | ✅ Migraciones `0001`–`0014`, ver [`supabase/`](supabase/) |
+| Gestión de usuarios y roles (invitaciones) | ✅ Construido; la Edge Function `invite-user` debe estar desplegada en su versión posterior a la `0013` |
 | Despliegue web | ✅ Configurado para Vercel ([`vercel.json`](vercel.json)) |
 | Backend / API propia | ✅ No hace falta (Supabase + RLS + funciones SQL + Edge Functions la reemplazan) |
 | Suscripciones y período de prueba | ✅ Funciona sin terceros; el cobro de la suscripción es manual (el supervisor técnico la activa) |
 | Pagos en línea (Wompi) | ⚠️ Código listo; falta cuenta de comercio aprobada y llaves de producción |
 | Facturación electrónica DIAN (Factus) | ⚠️ Código listo; falta habilitación ante la DIAN, resolución de numeración y contrato con el proveedor |
 | Apps Android / iOS | ⚠️ Proyectos nativos creados en [`mobile/`](mobile/); falta ícono definitivo, cuentas de desarrollador y publicación en tiendas |
+
+## Roles y permisos
+
+Los permisos se aplican en la base de datos (RLS, triggers y funciones SQL),
+no solo ocultando opciones del menú: aunque alguien llame la API
+directamente, no puede hacer más de lo que su rol permite.
+
+| Rol | Qué puede hacer |
+|---|---|
+| Supervisor técnico | Todo, en cualquier negocio (selector de negocio); asigna roles de plataforma y activa suscripciones |
+| Soporte | Consola de soporte y casos de todos los negocios, en **solo lectura** sobre sus datos |
+| Administrador / dueño | Todo en su negocio: inventario, productos y recetas, lotes, compras, proveedores, reportes, usuarios, datos y logo; cancela pedidos y emite facturas |
+| Barista / vendedor | Vende desde el punto de venta (a precios del catálogo), avanza los pedidos, confirma cobros en caja y abre casos de soporte; no edita inventario, catálogo ni datos de pedidos |
+| Cliente final | Entra con Google, ve el catálogo, pide (solo a través de la función de pedidos) y consulta su historial |
+
+Un usuario desactivado desde Configuración pierde el acceso de inmediato.
 
 ## Pasos fuera de la programación (pagos y DIAN)
 
@@ -73,8 +95,9 @@ Las migraciones de cada fase están en
 > código. Son esos trámites los que entregan las APIs, llaves y
 > complementos que el sistema necesita. Mientras tanto, las funciones
 > responden con un mensaje claro ("Falta configurar…"), el pedido queda
-> guardado como "Pendiente de pago" y el resto de la plataforma sigue
-> operando normalmente.
+> guardado como "Pendiente de pago" (el personal puede confirmarlo como
+> pagado en caja, o cancelarlo y reponer el inventario, desde Ventas) y el
+> resto de la plataforma sigue operando normalmente.
 
 ### Decisión previa: quién cobra y quién factura
 
@@ -150,9 +173,10 @@ Cafexis/
 ```
 
 El código del frontend vive directamente en la raíz del repositorio (no en una
-subcarpeta separada). Para correrlo y ver el detalle de su arquitectura (modelo
-de datos, capa de servicios, componentes, cómo conectar el futuro backend), ve
-a [`README_FrontEnd.md`](README_FrontEnd.md).
+subcarpeta separada). Stack: React 18, TypeScript, Vite 7, React Router 7 y
+Capacitor 8; requiere **Node 20.19 o superior**. Para correrlo y ver el
+detalle de su arquitectura (modelo de datos, capa de servicios, componentes),
+ve a [`README_FrontEnd.md`](README_FrontEnd.md).
 
 Para la base de datos —qué contiene, cómo aplicarla en un proyecto de
 Supabase y qué necesitas entregar para conectarla— ve a
@@ -177,11 +201,12 @@ el logotipo definitivo aún está en validación):
 
 **Técnicos (configuración, sin programar):**
 
-1. Aplicar en Supabase las migraciones `0011` (soporte y seguridad) y
-   `0012` (integraciones).
-2. Desplegar las Edge Functions: volver a desplegar `invite-user`
-   (obligatorio después de la `0011`) y desplegar `create-payment-link`,
-   `generate-invoice` y `wompi-webhook`.
+1. Aplicar en Supabase la migración `0014` (cobro en caja, cancelación de
+   pedidos y permisos por rol — ver [`supabase/README.md`](supabase/README.md),
+   paso 14). Las `0011`–`0013` ya están aplicadas.
+2. Desplegar las Edge Functions si aún no se hizo tras la `0013`:
+   `invite-user`, `create-payment-link`, `generate-invoice` y
+   `wompi-webhook`. Publicar el frontend junto con la `0014`.
 3. Agregar `co.cafexis.clientes://auth-callback` en las Redirect URLs de
    Supabase Auth para el login con Google de la app de clientes.
 

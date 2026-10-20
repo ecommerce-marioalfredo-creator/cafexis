@@ -93,3 +93,49 @@
   border-color: var(--color-text-secondary);
   color: var(--color-text-primary);
 }
+
+.order-card__invoice:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.order-card--cancelled {
+  opacity: 0.75;
+}
+
+.order-card--cancelled .order-card__total {
+  text-decoration: line-through;
+}
+
+.order-card__notice {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.order-card__invoice-status {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.order-card__invoice-status--ok {
+  color: var(--color-state-success);
+}
+
+.order-card__invoice-status--error {
+  color: var(--color-state-error);
+}
+
+.order-card__cancel {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--color-state-error);
+  font-size: 12px;
+  font-weight: 700;
+  padding: var(--space-1) 0;
+  cursor: pointer;
+}
+
+.order-card__cancel:hover {
+  text-decoration: underline;
+}

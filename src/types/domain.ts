@@ -74,7 +74,8 @@ export interface RegisterInput {
   email: string
   password: string
   primaryColor: string
-  logoUrl?: string
+  /** Se sube al bucket business-logos tras crear el negocio (no se guarda como data URL). */
+  logoFile?: File
 }
 
 export interface LoginInput {
@@ -169,8 +170,11 @@ export interface CoffeeLotInput {
 
 // --- Ventas / pedidos ---
 
-/** 'pendiente_pago' solo ocurre en pedidos públicos del cliente final, mientras se confirma el cobro en línea (Fase 6). */
-export type OrderStatus = 'pendiente_pago' | 'pedido' | 'en_preparacion' | 'listo' | 'entregado'
+/**
+ * 'pendiente_pago' solo ocurre en pedidos públicos del cliente final, hasta que se confirma el cobro (en línea o en
+ * caja). 'cancelado' es final y repone el inventario (0014_pedidos_y_permisos_por_rol_cafexis.sql).
+ */
+export type OrderStatus = 'pendiente_pago' | 'pedido' | 'en_preparacion' | 'listo' | 'entregado' | 'cancelado'
 
 /** 'billetera_digital' y 'cripto' solo existen en pedidos antiguos; el punto de venta ofrece los cuatro primeros. */
 export type PaymentMethod = 'efectivo' | 'tarjeta' | 'transferencia' | 'nequi' | 'billetera_digital' | 'cripto'
@@ -192,6 +196,11 @@ export interface Order {
   status: OrderStatus
   paymentMethod: PaymentMethod
   createdAt: string
+  /** Último cambio (por ejemplo, cuándo se entregó o se canceló). */
+  updatedAt: string
+  cancellationReason?: string
+  /** Factura electrónica del pedido, si se solicitó (solo en el tablero interno de ventas). */
+  invoice?: Invoice
 }
 
 /** Venta registrada desde el punto de venta. Los precios los toma la base de datos, no el cliente. */

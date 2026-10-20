@@ -2,10 +2,11 @@
 //
 // Genera la factura electrónica DIAN de un pedido ya entregado, usando
 // Factus (https://developers.factus.com.co/) como proveedor tecnológico
-// autorizado de referencia. El frontend llama primero a la RPC
-// request_invoice_cafexis (migración 0012), que valida permisos y crea la
-// fila 'pendiente' en invoices_cafexis; luego llama a esta función con el
-// mismo orderId para que la complete.
+// autorizado de referencia. Valida permisos con la RPC
+// request_invoice_cafexis (migración 0012) llamada como el usuario, que
+// crea o reutiliza la fila en invoices_cafexis, y la reclama con
+// claim_invoice_generation_cafexis (0013) antes de llamar a Factus, para
+// que nunca se emita dos veces la misma factura.
 //
 // Requiere credenciales de Factus, que solo viven aquí (variables de
 // entorno), nunca en el frontend ni en el repositorio. Mismo patrón que
@@ -78,22 +79,35 @@ serve(async (req) => {
     return jsonResponse({ error: 'No se pudo verificar tu sesión.' }, 401)
   }
 
-  // La fila 'pendiente' ya debe existir: la crea request_invoice_cafexis,
-  // que también valida que el pedido esté entregado y sea del negocio de
-  // quien llama (o que quien llama sea supervisor técnico).
-  const { data: invoice, error: invoiceError } = await callerClient
+  // Permisos: request_invoice_cafexis, llamada COMO el usuario, exige
+  // administrador o supervisor técnico activo, pedido entregado y del
+  // negocio de quien llama, y crea (o reutiliza) la fila de la factura. Poder
+  // LEER la factura no basta: un barista o el rol soporte también pueden
+  // leerla, pero no deben poder emitirla.
+  const { data: invoiceId, error: requestError } = await callerClient.rpc('request_invoice_cafexis', { p_order_id: orderId })
+  if (requestError || !invoiceId) {
+    return jsonResponse({ error: requestError?.message ?? 'No tienes permiso para facturar este pedido.' }, 403)
+  }
+
+  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+
+  const { data: invoice, error: invoiceError } = await adminClient
     .from('invoices_cafexis')
-    .select('id, order_id, business_id, status')
-    .eq('order_id', orderId)
+    .select('id, status, cufe')
+    .eq('id', invoiceId)
     .single()
 
   if (invoiceError || !invoice) {
-    return jsonResponse({ error: 'No se encontró una solicitud de factura para este pedido. Llama primero a request_invoice_cafexis.' }, 404)
+    return jsonResponse({ error: 'No se encontró la solicitud de factura de este pedido.' }, 404)
+  }
+
+  // Idempotente: una factura ya emitida no se vuelve a enviar a la DIAN.
+  if (invoice.status === 'emitida') {
+    return jsonResponse({ success: true, cufe: invoice.cufe })
   }
 
   if (!FACTUS_API_TOKEN) {
     // Estado explícito, no un fallo silencioso: falta la cuenta de Factus.
-    const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
     await adminClient
       .from('invoices_cafexis')
       .update({ status: 'error', error_message: 'Falta configurar FACTUS_API_TOKEN en esta función.' })
@@ -104,7 +118,16 @@ serve(async (req) => {
     )
   }
 
-  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+  // Reclamo atómico (0013): si dos llamadas llegan a la vez, solo una emite.
+  const { data: claimed, error: claimError } = await adminClient.rpc('claim_invoice_generation_cafexis', {
+    p_invoice_id: invoice.id,
+  })
+  if (claimError) {
+    return jsonResponse({ error: claimError.message }, 500)
+  }
+  if (!claimed) {
+    return jsonResponse({ error: 'Esta factura ya se está generando. Espera un momento y vuelve a consultar.' }, 409)
+  }
 
   const { data: order } = await adminClient
     .from('orders_cafexis')
@@ -128,21 +151,34 @@ serve(async (req) => {
     })),
   }
 
-  const factusResponse = await fetch(`${FACTUS_API_BASE}/bills/validate`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${FACTUS_API_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(factusPayload),
-  })
+  let factusResponse: Response
+  try {
+    factusResponse = await fetch(`${FACTUS_API_BASE}/bills/validate`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${FACTUS_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(factusPayload),
+    })
+  } catch {
+    await adminClient
+      .from('invoices_cafexis')
+      .update({ status: 'error', error_message: 'No se pudo conectar con Factus.', processing_started_at: null })
+      .eq('id', invoice.id)
+    return jsonResponse({ error: 'No se pudo conectar con Factus. Intenta de nuevo en unos minutos.' }, 502)
+  }
 
   const factusData = await factusResponse.json().catch(() => null)
 
   if (!factusResponse.ok) {
     await adminClient
       .from('invoices_cafexis')
-      .update({ status: 'error', error_message: factusData?.message ?? 'Factus rechazó la solicitud de factura.' })
+      .update({
+        status: 'error',
+        error_message: factusData?.message ?? 'Factus rechazó la solicitud de factura.',
+        processing_started_at: null,
+      })
       .eq('id', invoice.id)
     return jsonResponse({ error: 'No se pudo generar la factura con Factus.', details: factusData }, 502)
   }
@@ -155,6 +191,7 @@ serve(async (req) => {
       pdf_url: factusData?.data?.bill?.public_url_pdf ?? null,
       xml_url: factusData?.data?.bill?.public_url_xml ?? null,
       error_message: null,
+      processing_started_at: null,
     })
     .eq('id', invoice.id)
 

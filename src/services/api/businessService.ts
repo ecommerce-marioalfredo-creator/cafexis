@@ -25,12 +25,23 @@ export async function updateBusiness(businessId: string, input: BusinessUpdateIn
   return mapBusiness(data)
 }
 
+/** Formatos y tamaño que acepta el bucket business-logos (0013_auditoria_seguridad_cafexis.sql). */
+export const LOGO_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+export const LOGO_MAX_BYTES = 2 * 1024 * 1024
+export const LOGO_FORMAT_ERROR = 'El logo debe ser PNG, JPG o WebP de máximo 2 MB.'
+
+export function isValidLogoFile(file: File): boolean {
+  return LOGO_MIME_TYPES.includes(file.type) && file.size <= LOGO_MAX_BYTES
+}
+
 /**
  * Sube el logo al bucket público "business-logos" (ver migración
  * 0005_fase1_datos_base_cafexis.sql) bajo "<businessId>/logo.<ext>" y
  * guarda la URL pública resultante en businesses_cafexis.logo_url.
  */
 export async function uploadBusinessLogo(businessId: string, file: File): Promise<Business> {
+  if (!isValidLogoFile(file)) throw new Error(LOGO_FORMAT_ERROR)
+
   const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
   const path = `${businessId}/logo.${ext}`
 

@@ -28,6 +28,8 @@ interface InviteUserPayload {
   email: string
   name: string
   role: 'administrador' | 'barista' | 'soporte'
+  /** Negocio al que se invita. Solo el supervisor técnico puede indicar uno distinto del suyo (el que opera desde el selector). */
+  businessId?: string
 }
 
 function jsonResponse(body: unknown, status = 200) {
@@ -79,12 +81,16 @@ serve(async (req) => {
 
   const { data: callerProfile, error: callerProfileError } = await callerClient
     .from('app_users_cafexis')
-    .select('business_id, role')
+    .select('business_id, role, active')
     .eq('id', caller.id)
     .single()
 
   if (callerProfileError || !callerProfile) {
     return jsonResponse({ error: 'No se pudo verificar tu perfil de negocio.' }, 403)
+  }
+  // Desde 0013 cada usuario puede leer su propio perfil aunque esté inactivo.
+  if (!callerProfile.active) {
+    return jsonResponse({ error: 'Tu usuario está desactivado.' }, 403)
   }
 
   const isSupervisor = callerProfile.role === 'supervisor_tecnico'
@@ -97,11 +103,30 @@ serve(async (req) => {
     return jsonResponse({ error: 'Solo el supervisor técnico puede invitar al equipo de soporte.' }, 403)
   }
 
-  const businessId = callerProfile.business_id
   const normalizedEmail = email.trim().toLowerCase()
 
   // Cliente con privilegios de administración: SOLO esta función lo tiene.
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+
+  // El supervisor técnico invita al negocio que está operando desde el
+  // selector; el administrador, solo al suyo. El equipo de soporte siempre
+  // queda en el negocio de plataforma del supervisor, no en el de un cliente.
+  let businessId: string = callerProfile.business_id
+  const requestedBusinessId = payload.businessId
+  if (role !== 'soporte' && requestedBusinessId && requestedBusinessId !== businessId) {
+    if (!isSupervisor) {
+      return jsonResponse({ error: 'Solo puedes invitar usuarios a tu propio negocio.' }, 403)
+    }
+    const { data: targetBusiness } = await adminClient
+      .from('businesses_cafexis')
+      .select('id')
+      .eq('id', requestedBusinessId)
+      .maybeSingle()
+    if (!targetBusiness) {
+      return jsonResponse({ error: 'Negocio no encontrado.' }, 404)
+    }
+    businessId = targetBusiness.id
+  }
 
   // La invitación se registra ANTES de enviar el correo: inviteUserByEmail
   // crea el usuario en auth.users de inmediato, y el trigger
