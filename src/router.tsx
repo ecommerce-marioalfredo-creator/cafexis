@@ -94,6 +94,8 @@ const customerRoutes: RouteObject[] = [
   {
     element: <CustomerAuthRoot />,
     children: [
+      // Alias corto para compartir directamente el catálogo del negocio demo.
+      { path: '/mi-cafeteria', element: <Navigate to="/c/mi-cafeteria" replace /> },
       { path: '/trazabilidad/:lotId', element: <PublicLotPage /> },
       { path: '/c/:slug', element: <PublicCatalogPage /> },
       // "Mis negocios" ya resuelve el caso sin sesión mostrando el botón de
