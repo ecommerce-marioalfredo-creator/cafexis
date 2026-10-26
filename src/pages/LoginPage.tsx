@@ -42,7 +42,13 @@ export function LoginPage() {
       {/* Las apps de las tiendas (Fase 7) nunca muestran credenciales de prueba. */}
       {APP_TARGET === 'web' && (
         <p className="auth-layout__demo-hint">
-          Cuenta demo: <strong>laura@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
+          Cuentas demo:
+          <br />
+          Administrador: <strong>laura@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
+          <br />
+          Barista: <strong>barista@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
+          <br />
+          Soporte: <strong>soporte@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
         </p>
       )}
 
