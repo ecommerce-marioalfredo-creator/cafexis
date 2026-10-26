@@ -48,7 +48,11 @@ export function LoginPage() {
     >
       {SHOW_DEMO_ACCOUNT && (
         <p className="auth-layout__demo-hint">
-          Cuentas demo: <br>Administrador: <strong>laura@micafeteria.co</strong> · contraseña <strong>cafexis123</strong> <br>Barista: <strong>barista@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
+          Cuentas demo:
+          <br />
+          Administrador: <strong>laura@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
+          <br />
+          Barista: <strong>barista@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
         </p>
       )}
 
