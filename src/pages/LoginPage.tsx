@@ -6,6 +6,13 @@ import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 import { APP_TARGET } from '@/platform/appTarget'
 
+// La cuenta demo es un administrador real del negocio demo: publicar su
+// contraseña en producción le da ese acceso a cualquiera. Solo se muestra
+// en desarrollo o si se pide explícitamente con VITE_SHOW_DEMO_ACCOUNT.
+// Las apps de las tiendas (Fase 7) nunca la muestran.
+const SHOW_DEMO_ACCOUNT =
+  APP_TARGET === 'web' && (import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_ACCOUNT === 'true')
+
 export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -39,10 +46,13 @@ export function LoginPage() {
         </span>
       }
     >
-      {/* Las apps de las tiendas (Fase 7) nunca muestran credenciales de prueba. */}
-      {APP_TARGET === 'web' && (
+      {SHOW_DEMO_ACCOUNT && (
         <p className="auth-layout__demo-hint">
-          Cuenta demo: <strong>laura@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
+          Cuentas demo:
+          <br />
+          Administrador: <strong>laura@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
+          <br />
+          Barista: <strong>barista@micafeteria.co</strong> · contraseña <strong>cafexis123</strong>
         </p>
       )}
 

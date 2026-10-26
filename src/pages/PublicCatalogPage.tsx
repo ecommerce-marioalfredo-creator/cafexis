@@ -44,7 +44,9 @@ export function PublicCatalogPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string>()
-  const [orderCode, setOrderCode] = useState<string>()
+  // Pedido ya registrado que no sigue al checkout en línea: se paga en caja,
+  // o el link de pago no se pudo generar (paymentError dice por qué).
+  const [placedOrder, setPlacedOrder] = useState<{ payAtCounter: boolean; paymentError?: string }>()
   const [linking, setLinking] = useState(false)
 
   const load = () => {
@@ -110,10 +112,10 @@ export function PublicCatalogPage() {
     setSaveError(undefined)
     setSaving(true)
     try {
-      // El pedido nace en 'pendiente_pago' (Fase 6): hay que llevar al
-      // cliente al checkout de Wompi antes de darlo por confirmado. El
-      // webhook (supabase/functions/wompi-webhook) es quien lo mueve a
-      // 'pedido' cuando el cobro se aprueba.
+      // El pedido nace en 'pendiente_pago' (Fase 6). Pago en línea: se lleva
+      // al cliente al checkout de Wompi y el webhook lo pasa a 'pedido'
+      // cuando el cobro se aprueba. Efectivo: paga en caja y el personal
+      // confirma el cobro desde Ventas (0014).
       const id = await registerPublicOrder({
         businessId: business.id,
         items: cart.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
@@ -121,6 +123,10 @@ export function PublicCatalogPage() {
         tableOrReference: tableOrReference.trim() || undefined,
       })
       setCart([])
+      if (paymentMethod === 'efectivo') {
+        setPlacedOrder({ payAtCounter: true })
+        return
+      }
       try {
         const checkoutUrl = await createPaymentLink(id)
         window.location.href = checkoutUrl
@@ -129,12 +135,10 @@ export function PublicCatalogPage() {
         // El pedido ya se registró (queda en "pendiente de pago"); si el
         // link de cobro no se pudo generar (ej. Wompi sin configurar), se
         // lo decimos al cliente en vez de perder la referencia del pedido.
-        setOrderCode(id)
-        setSaveError(
-          paymentErr instanceof Error
-            ? `Tu pedido quedó registrado, pero no se pudo iniciar el pago: ${paymentErr.message}`
-            : 'Tu pedido quedó registrado, pero no se pudo iniciar el pago.',
-        )
+        setPlacedOrder({
+          payAtCounter: false,
+          paymentError: paymentErr instanceof Error ? paymentErr.message : undefined,
+        })
       }
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'No se pudo registrar tu pedido.')
@@ -153,17 +157,24 @@ export function PublicCatalogPage() {
     )
   }
 
-  if (orderCode) {
+  if (placedOrder) {
     return (
       <PublicLayout business={business}>
         <div className="public-catalog__confirmation">
           <h1>Pedido registrado</h1>
-          <p>
-            Tu pedido quedó guardado, pero el pago en línea no se pudo iniciar en este momento. Puedes intentar pagar
-            de nuevo desde tu historial de pedidos.
-          </p>
+          {placedOrder.payAtCounter ? (
+            <p>Paga en caja: el negocio empezará a prepararlo en cuanto confirme tu pago.</p>
+          ) : (
+            <>
+              <p>
+                Tu pedido quedó guardado, pero el pago en línea no se pudo iniciar en este momento. Puedes intentar
+                pagar de nuevo desde tu historial de pedidos, o pagar en caja.
+              </p>
+              {placedOrder.paymentError && <p className="section-subtitle">Detalle: {placedOrder.paymentError}</p>}
+            </>
+          )}
           <div className="public-catalog__confirmation-actions">
-            <Button variant="secondary" onClick={() => setOrderCode(undefined)}>
+            <Button variant="secondary" onClick={() => setPlacedOrder(undefined)}>
               Pedir algo más
             </Button>
             <Button variant="primary" onClick={() => navigate(`/c/${slug}/pedidos`)}>
@@ -276,6 +287,11 @@ export function PublicCatalogPage() {
                     </button>
                   ))}
                 </div>
+                <span className="section-subtitle public-catalog__payment-hint">
+                  {paymentMethod === 'efectivo'
+                    ? 'Pagas en caja; el negocio confirma tu pago para empezar a prepararlo.'
+                    : 'Te llevaremos a la pasarela de pago para pagar en línea.'}
+                </span>
               </div>
 
               {saveError && <div className="form-error-banner">{saveError}</div>}

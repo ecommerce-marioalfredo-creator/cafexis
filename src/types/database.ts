@@ -12,7 +12,7 @@ export type BusinessTypeRow = 'cafeteria' | 'grano_molido' | 'mixto'
 export type UserRoleRow = 'supervisor_tecnico' | 'administrador' | 'barista' | 'cliente'
 export type StockStatusRow = 'ok' | 'bajo' | 'agotado'
 export type CoffeeProcessRow = 'lavado' | 'honey' | 'natural' | 'otro'
-export type OrderStatusRow = 'pendiente_pago' | 'pedido' | 'en_preparacion' | 'listo' | 'entregado'
+export type OrderStatusRow = 'pendiente_pago' | 'pedido' | 'en_preparacion' | 'listo' | 'entregado' | 'cancelado'
 export type PaymentMethodRow = 'efectivo' | 'tarjeta' | 'transferencia' | 'nequi' | 'billetera_digital' | 'cripto'
 export type PurchaseOrderOriginRow = 'sugerida_sistema' | 'manual'
 export type PurchaseOrderStatusRow = 'propuesta' | 'confirmada' | 'recibida' | 'cancelada'
@@ -73,12 +73,9 @@ export interface CustomerRow {
   created_at: string
 }
 
-export interface CustomerBusinessRow {
-  customer_id: string
-  business_id: string
+/** Fila devuelta por list_my_businesses_cafexis: datos públicos del negocio + fecha del vínculo. */
+export interface CustomerBusinessRow extends PublicBusinessRow {
   linked_at: string
-  // Presente solo en el select anidado usado por customerBusinessService.
-  businesses_cafexis?: BusinessRow | null
 }
 
 export interface AppUserRow {
@@ -191,8 +188,14 @@ export interface OrderRow {
   payment_method: PaymentMethodRow
   created_at: string
   updated_at: string
+  cancelled_at: string | null
+  cancelled_by: string | null
+  cancellation_reason: string | null
   // Presente solo en el select anidado usado por salesService/dashboardService.
   order_items_cafexis?: OrderItemRow[]
+  // Presente solo en el tablero de ventas. invoices_cafexis.order_id es único,
+  // así que PostgREST lo devuelve como objeto (se acepta también arreglo).
+  invoices_cafexis?: InvoiceRow | InvoiceRow[] | null
 }
 
 export interface OrderItemRow {

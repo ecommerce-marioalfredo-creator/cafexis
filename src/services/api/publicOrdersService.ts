@@ -15,7 +15,7 @@
  * list_my_orders_cafexis, que solo devuelve orders_cafexis sin sus líneas):
  * la policy orders_cafexis_customer_select (0010) ya deja al cliente leer
  * sus propios pedidos con el mismo ORDER_SELECT anidado que usa
- * salesService.listOrders, así el pedido llega completo con sus items.
+ * el tablero de salesService, así el pedido llega completo con sus items.
  */
 import { supabase } from './supabaseClient'
 import { mapOrder } from './mappers'

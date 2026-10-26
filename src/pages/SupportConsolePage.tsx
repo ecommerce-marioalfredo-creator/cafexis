@@ -16,7 +16,7 @@ import '@/components/support/support.css'
 const DAY_MS = 86_400_000
 
 /** Señales de atención de un negocio: color + texto, nunca solo color. */
-export function businessHealth(b: PlatformBusinessOverview): Array<{ label: string; tone: BadgeTone }> {
+function businessHealth(b: PlatformBusinessOverview): Array<{ label: string; tone: BadgeTone }> {
   const issues: Array<{ label: string; tone: BadgeTone }> = []
   const ageDays = (Date.now() - new Date(b.createdAt).getTime()) / DAY_MS
   if (b.urgentCases > 0) issues.push({ label: `${b.urgentCases} caso${b.urgentCases === 1 ? '' : 's'} urgente${b.urgentCases === 1 ? '' : 's'}`, tone: 'error' })

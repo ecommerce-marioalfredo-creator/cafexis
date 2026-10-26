@@ -1,4 +1,5 @@
 import { supabase, getActiveBusinessId } from './supabaseClient'
+import { countsAsSale } from './salesService'
 import type { DashboardSummary } from '@/types/domain'
 import type { OrderRow, InventoryItemRow } from '@/types/database'
 
@@ -26,7 +27,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   if (ordersResult.error) throw new Error(ordersResult.error.message)
   if (inventoryResult.error) throw new Error(inventoryResult.error.message)
 
-  const orders = ordersResult.data ?? []
+  // Un pedido 'pendiente_pago' aún no está cobrado y uno 'cancelado' se anuló: ninguno es venta.
+  const orders = (ordersResult.data ?? []).filter((o) => countsAsSale(o.status))
   const inventoryItems = inventoryResult.data ?? []
 
   const salesToday = orders.reduce((sum, o) => sum + Number(o.total), 0)

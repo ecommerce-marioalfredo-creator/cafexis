@@ -70,17 +70,21 @@ export function CustomerOrdersPage() {
         <EmptyState title="Aún no has hecho ningún pedido aquí" />
       ) : (
         <div className="customer-orders__list">
-          {orders.map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              onRetryPayment={
-                order.status === 'pendiente_pago' && payingOrderId !== order.id
-                  ? () => handleRetryPayment(order.id)
-                  : undefined
-              }
-            />
-          ))}
+          {orders.map((order) => {
+            const pending = order.status === 'pendiente_pago'
+            // En efectivo se paga en caja y el negocio confirma el cobro: no hay checkout en línea.
+            const payAtCounter = pending && order.paymentMethod === 'efectivo'
+            return (
+              <OrderCard
+                key={order.id}
+                order={order}
+                notice={payAtCounter ? 'Paga en caja: lo preparan en cuanto el negocio confirme tu pago.' : undefined}
+                onRetryPayment={
+                  pending && !payAtCounter && payingOrderId !== order.id ? () => handleRetryPayment(order.id) : undefined
+                }
+              />
+            )
+          })}
         </div>
       )}
     </PublicLayout>

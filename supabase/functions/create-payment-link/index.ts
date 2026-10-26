@@ -104,6 +104,21 @@ serve(async (req) => {
     return jsonResponse({ error: 'Este pedido no está pendiente de pago.' }, 400)
   }
 
+  // Reintento ("Pagar ahora" desde el historial): se reutiliza el link ya
+  // creado. Uno nuevo reemplazaría provider_reference, y si el cliente luego
+  // pagaba en la pestaña del link anterior el webhook no encontraría la
+  // transacción y el pedido quedaría cobrado pero "pendiente de pago".
+  const { data: existingTx } = await callerClient
+    .from('payment_transactions_cafexis')
+    .select('provider_reference, status')
+    .eq('order_id', order.id)
+    .eq('provider', 'wompi')
+    .maybeSingle()
+
+  if (existingTx?.provider_reference && existingTx.status === 'pendiente') {
+    return jsonResponse({ checkoutUrl: `https://checkout.wompi.co/l/${existingTx.provider_reference}` })
+  }
+
   const amountInCents = Math.round(Number(order.total) * 100)
   const reference = `${order.id}`
 

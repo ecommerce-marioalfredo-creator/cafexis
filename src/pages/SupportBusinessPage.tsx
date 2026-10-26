@@ -9,6 +9,7 @@ import { formatDateTime, formatRelative } from '@/components/support/supportLabe
 import { ROLE_LABEL } from '@/components/layout/roles'
 import { ColumnChart } from '@/components/reports/ColumnChart'
 import { PAYMENT_LABEL, currency } from '@/components/domain/paymentMethods'
+import { ORDER_STATUS_META } from '@/components/domain/orderStatus'
 import { formatBucket } from '@/services/api/reportPeriods'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -163,7 +164,8 @@ export function SupportBusinessPage() {
                     <strong>{o.code}</strong> · {o.items} producto{o.items === 1 ? '' : 's'}
                     <br />
                     <span className="console-detail__muted">
-                      {formatDateTime(o.createdAt)} · {PAYMENT_LABEL[o.paymentMethod] ?? o.paymentMethod} · {o.status}
+                      {formatDateTime(o.createdAt)} · {PAYMENT_LABEL[o.paymentMethod] ?? o.paymentMethod} ·{' '}
+                      {ORDER_STATUS_META[o.status]?.label ?? o.status}
                     </span>
                   </span>
                   <strong>{currency.format(o.total)}</strong>
