@@ -2,12 +2,17 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useReports } from '@/hooks/useReports'
 import { ReportViewer } from '@/components/reports/ReportViewer'
+import { OrderHistoryReport } from '@/components/reports/OrderHistoryReport'
 import { CustomReportModal } from '@/components/reports/CustomReportModal'
 import { PageLoading, PageError } from '@/components/ui/PageState'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import type { ReportDefinition } from '@/types/domain'
+
+/** No es un reporte de cifras como los demás: es la lista de pedidos, incluidos los cancelados. */
+const ORDER_HISTORY_ID = 'historico-pedidos'
+const ORDER_HISTORY_DESCRIPTION = 'Todos los pedidos del período con su estado, incluidos los cancelados y quién los canceló.'
 
 export function ReportsPage() {
   const { reports, loading, error, reload, create, update, remove } = useReports()
@@ -42,6 +47,23 @@ export function ReportsPage() {
       onClose={() => setEditing(undefined)}
     />
   )
+
+  if (openId === ORDER_HISTORY_ID) {
+    return (
+      <div className="section-stack">
+        <div className="page-toolbar report-page__header">
+          <div>
+            <Button variant="tertiary" onClick={() => openReport()}>
+              ← Todos los reportes
+            </Button>
+            <h3>Histórico de pedidos</h3>
+            <p className="section-subtitle">{ORDER_HISTORY_DESCRIPTION}</p>
+          </div>
+        </div>
+        <OrderHistoryReport />
+      </div>
+    )
+  }
 
   if (open) {
     return (
@@ -83,6 +105,12 @@ export function ReportsPage() {
               </Button>
             </Card>
           ))}
+          <Card title="Histórico de pedidos">
+            <p className="section-subtitle">{ORDER_HISTORY_DESCRIPTION}</p>
+            <Button variant="secondary" onClick={() => openReport(ORDER_HISTORY_ID)}>
+              Consultar
+            </Button>
+          </Card>
         </div>
       </section>
 

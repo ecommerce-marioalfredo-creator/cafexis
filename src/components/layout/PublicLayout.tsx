@@ -1,5 +1,8 @@
 import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { NotificationBell } from '@/components/domain/NotificationBell'
+import { useCustomerAuth } from '@/context/CustomerAuthContext'
+import { listCustomerNotifications } from '@/services/api/notificationsService'
 import { applyBrandTheme } from '@/styles/applyBrandTheme'
 import type { PublicBusiness } from '@/types/domain'
 import './PublicLayout.css'
@@ -18,6 +21,8 @@ interface PublicLayoutProps {
  * color de marca del negocio igual que AppShell, cuando hay uno.
  */
 export function PublicLayout({ business, children, headerRight }: PublicLayoutProps) {
+  const { customer } = useCustomerAuth()
+
   useEffect(() => {
     applyBrandTheme(business?.branding)
     return () => applyBrandTheme(undefined)
@@ -36,7 +41,10 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
           )}
           <span className="public-layout__name">{business?.name ?? 'Cafexis'}</span>
         </Link>
-        {headerRight}
+        <div className="public-layout__actions">
+          {headerRight}
+          {customer && <NotificationBell load={listCustomerNotifications} />}
+        </div>
       </header>
       <main className="public-layout__content">{children}</main>
     </div>

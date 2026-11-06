@@ -1,11 +1,12 @@
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { useOrders } from '@/hooks/useOrders'
-import { StaffOrderCard } from '@/components/domain/StaffOrderCard'
+import { OrderCard } from '@/components/domain/OrderCard'
+import { useStaffOrderActions } from '@/components/domain/useStaffOrderActions'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { Card } from '@/components/ui/Card'
 import { PageLoading, PageError } from '@/components/ui/PageState'
 import { EmptyState } from '@/components/ui/EmptyState'
-import type { OrderStatus, PaymentMethod } from '@/types/domain'
+import type { OrderStatus } from '@/types/domain'
 
 const currency = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 
@@ -27,6 +28,12 @@ export function DashboardPage() {
     }
   }
 
+  const { cardProps, actionError, modals } = useStaffOrderActions({
+    setStatus: (id, next) => refreshingSummary(() => setStatus(id, next)),
+    confirmPayment: (id, method) => refreshingSummary(() => confirmPayment(id, method)),
+    cancel: (id, reason) => refreshingSummary(() => cancel(id, reason)),
+  })
+
   if (loading && !data) return <PageLoading label="Cargando el resumen del negocio…" />
   if (error) return <PageError message={error} onRetry={reload} />
   if (!data) return null
@@ -35,7 +42,7 @@ export function DashboardPage() {
     <div className="dashboard-page">
       <section className="dashboard-page__metrics">
         <MetricCard label="Ventas de hoy" value={currency.format(data.salesToday)} icon="💰" />
-        <MetricCard label="Pedidos activos" value={String(data.activeOrders)} icon="🧾" />
+        <MetricCard label="Pedidos activos" value={String(activeOrders.length)} icon="🧾" />
         <MetricCard
           label="Alertas de inventario"
           value={String(data.lowStockAlerts)}
@@ -46,6 +53,7 @@ export function DashboardPage() {
 
       <Card title="Comandas activas">
         {ordersError && <div className="form-error-banner">{ordersError}</div>}
+        {actionError && <div className="form-error-banner">{actionError}</div>}
         {loadingOrders ? (
           <PageLoading label="Cargando comandas…" />
         ) : activeOrders.length === 0 ? (
@@ -53,18 +61,12 @@ export function DashboardPage() {
         ) : (
           <div className="dashboard-page__orders">
             {activeOrders.map((order) => (
-              <div className="dashboard-page__order" key={order.id}>
-                <StaffOrderCard
-                  order={order}
-                  setStatus={(id: string, next: OrderStatus) => refreshingSummary(() => setStatus(id, next))}
-                  confirmPayment={(id: string, method: PaymentMethod) => refreshingSummary(() => confirmPayment(id, method))}
-                  cancel={(id: string, reason?: string) => refreshingSummary(() => cancel(id, reason))}
-                />
-              </div>
+              <OrderCard key={order.id} order={order} {...cardProps(order)} />
             ))}
           </div>
         )}
       </Card>
+      {modals}
 
       <section className="dashboard-page__grid">
         <Card title="Bebidas y productos más vendidos">

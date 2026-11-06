@@ -1,8 +1,9 @@
 import { supabase, getActiveBusinessId } from './supabaseClient'
-import { mapCustomReport } from './mappers'
+import { mapCustomReport, mapOrder } from './mappers'
 import { PREDEFINED_REPORTS } from './reportPresets'
 import { browserTimeZone } from './reportPeriods'
 import type {
+  OrderHistoryPage,
   ReplenishmentProjection,
   ReportConfig,
   ReportDefinition,
@@ -12,7 +13,7 @@ import type {
   SalesReportRow,
   StockReportRow,
 } from '@/types/domain'
-import type { CustomReportRow } from '@/types/database'
+import type { CustomReportRow, OrderRow } from '@/types/database'
 
 /**
  * Reportes predefinidos (reportPresets.ts) + personalizados
@@ -63,6 +64,55 @@ export async function updateCustomReport(id: string, input: ReportDefinitionInpu
 export async function deleteCustomReport(id: string): Promise<void> {
   const { error } = await supabase.from('custom_reports_cafexis').delete().eq('id', id)
   if (error) throw new Error(error.message)
+}
+
+/** Embebe a quien canceló; llega vacío si canceló el cliente, que no está en app_users_cafexis. */
+const ORDER_HISTORY_SELECT = '*, order_items_cafexis(*), canceller:app_users_cafexis!cancelled_by(name)'
+
+/**
+ * Histórico de pedidos por fecha de creación, incluidos los cancelados. Es lista
+ * paginada, no agregado: PostgREST corta en 1000 filas, así que se pide por partes.
+ */
+export async function listOrderHistory(
+  period: ResolvedPeriod,
+  onlyCancelled: boolean,
+  offset: number,
+  limit: number,
+): Promise<OrderHistoryPage> {
+  const businessId = await getActiveBusinessId()
+  const from = period.from.toISOString()
+  const to = period.to.toISOString()
+
+  let ordersQuery = supabase
+    .from('orders_cafexis')
+    .select(ORDER_HISTORY_SELECT, { count: 'exact' })
+    .eq('business_id', businessId)
+    .gte('created_at', from)
+    .lt('created_at', to)
+  if (onlyCancelled) ordersQuery = ordersQuery.eq('status', 'cancelado')
+
+  const [orders, cancelled] = await Promise.all([
+    ordersQuery
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+      .returns<OrderRow[]>(),
+    supabase
+      .from('orders_cafexis')
+      .select('id', { count: 'exact', head: true })
+      .eq('business_id', businessId)
+      .eq('status', 'cancelado')
+      .gte('created_at', from)
+      .lt('created_at', to),
+  ])
+
+  if (orders.error) throw new Error(orders.error.message)
+  if (cancelled.error) throw new Error(cancelled.error.message)
+
+  return {
+    orders: (orders.data ?? []).map(mapOrder),
+    total: orders.count ?? 0,
+    cancelled: cancelled.count ?? 0,
+  }
 }
 
 const nonEmpty = <T,>(values: T[] | undefined) => (values && values.length > 0 ? values : null)

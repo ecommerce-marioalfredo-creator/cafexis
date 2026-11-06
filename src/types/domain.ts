@@ -290,7 +290,6 @@ export interface NewPurchaseOrderInput {
 
 export interface DashboardSummary {
   salesToday: number
-  activeOrders: number
   lowStockAlerts: number
   topProducts: Array<{ productName: string; unitsSold: number }>
   inventoryAlerts: Array<{ itemName: string; remaining: string }>

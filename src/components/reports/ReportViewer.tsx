@@ -1,17 +1,6 @@
-import { useMemo, useState } from 'react'
 import { useAsync } from '@/hooks/useAsync'
 import { runSalesReport, runStockReport } from '@/services/api/reportsService'
-import {
-  NAVIGABLE_PERIODS,
-  PERIOD_LABEL,
-  canGoForward,
-  formatBucket,
-  isTimeGroupBy,
-  resolveGroupBy,
-  resolvePeriod,
-  shiftAnchor,
-  toDateInput,
-} from '@/services/api/reportPeriods'
+import { formatBucket, isTimeGroupBy, resolveGroupBy } from '@/services/api/reportPeriods'
 import { PAYMENT_LABEL, currency } from '@/components/domain/paymentMethods'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { Card } from '@/components/ui/Card'
@@ -21,18 +10,17 @@ import { PageLoading, PageError } from '@/components/ui/PageState'
 import { ColumnChart, type ChartPoint } from './ColumnChart'
 import { BarList } from './BarList'
 import { METRIC_LABEL } from './reportLabels'
+import { ReportPeriodFilters, useReportPeriod } from './ReportPeriodFilters'
 import type {
   PaymentMethod,
   ReportDefinition,
   ReportGroupBy,
   ReportMetric,
-  ReportPeriodKind,
   SalesReportRow,
   StockReportRow,
 } from '@/types/domain'
 import './ReportViewer.css'
 
-const PERIOD_KINDS: ReportPeriodKind[] = ['dia', 'semana', 'mes', 'ultimos_7', 'ultimos_30', 'rango']
 const BAR_LIST_LIMIT = 12
 
 const GROUP_HEADER: Record<Exclude<ReportGroupBy, 'auto'>, string> = {
@@ -87,18 +75,9 @@ interface ReportViewerProps {
 
 export function ReportViewer({ report }: ReportViewerProps) {
   const { config } = report
-  const [periodKind, setPeriodKind] = useState<ReportPeriodKind>(config.period)
-  const [anchor, setAnchor] = useState(() => new Date())
-  const [rangeFrom, setRangeFrom] = useState(config.rangeFrom ?? toDateInput(new Date(Date.now() - 6 * 86_400_000)))
-  const [rangeTo, setRangeTo] = useState(config.rangeTo ?? toDateInput(new Date()))
-
-  const period = useMemo(
-    () => resolvePeriod(periodKind, anchor, { rangeFrom, rangeTo }),
-    [periodKind, anchor, rangeFrom, rangeTo],
-  )
+  const { period, rangeInvalid, controls } = useReportPeriod(config.period, { from: config.rangeFrom, to: config.rangeTo })
   const groupBy = resolveGroupBy(config, period)
   const isSales = config.dataset === 'ventas'
-  const rangeInvalid = periodKind === 'rango' && rangeFrom > rangeTo
 
   const { data, loading, error, reload } = useAsync(async () => {
     if (rangeInvalid) return undefined
@@ -114,7 +93,6 @@ export function ReportViewer({ report }: ReportViewerProps) {
     return { stock, sales: undefined, summary: undefined, breakdown: undefined }
   }, [report.id, JSON.stringify(config), period.from.getTime(), period.to.getTime(), rangeInvalid])
 
-  const navigable = NAVIGABLE_PERIODS.includes(periodKind)
   const timeGroup = isTimeGroupBy(groupBy) ? groupBy : undefined
   const unit = data?.stock?.[0]?.unit ?? ''
 
@@ -157,57 +135,7 @@ export function ReportViewer({ report }: ReportViewerProps) {
 
   return (
     <div className="section-stack">
-      <div className="report-viewer__filters">
-        <div className="page-toolbar__filters" role="group" aria-label="Período">
-          {PERIOD_KINDS.map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              className={['filter-chip', kind === periodKind ? 'filter-chip--active' : ''].join(' ')}
-              aria-pressed={kind === periodKind}
-              onClick={() => {
-                setPeriodKind(kind)
-                setAnchor(new Date())
-              }}
-            >
-              {PERIOD_LABEL[kind]}
-            </button>
-          ))}
-        </div>
-
-        <div className="report-viewer__period">
-          {navigable && (
-            <button
-              type="button"
-              className="report-viewer__nav"
-              onClick={() => setAnchor((a) => shiftAnchor(periodKind, a, -1))}
-              aria-label="Período anterior"
-            >
-              ‹
-            </button>
-          )}
-          {periodKind === 'rango' ? (
-            <span className="report-viewer__range">
-              <input type="date" value={rangeFrom} max={rangeTo} onChange={(e) => setRangeFrom(e.target.value)} aria-label="Desde" />
-              <span>a</span>
-              <input type="date" value={rangeTo} min={rangeFrom} onChange={(e) => setRangeTo(e.target.value)} aria-label="Hasta" />
-            </span>
-          ) : (
-            <strong className="report-viewer__period-label">{period.label}</strong>
-          )}
-          {navigable && (
-            <button
-              type="button"
-              className="report-viewer__nav"
-              onClick={() => setAnchor((a) => shiftAnchor(periodKind, a, 1))}
-              disabled={!canGoForward(periodKind, anchor)}
-              aria-label="Período siguiente"
-            >
-              ›
-            </button>
-          )}
-        </div>
-      </div>
+      <ReportPeriodFilters controls={controls} />
 
       {rangeInvalid && <div className="form-error-banner">La fecha inicial debe ser anterior a la final.</div>}
 

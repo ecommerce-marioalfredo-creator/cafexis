@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { useOrders, type ClosedOrdersPeriod } from '@/hooks/useOrders'
 import { useProducts } from '@/hooks/useProducts'
 import { useAuth } from '@/context/AuthContext'
-import { StaffOrderCard } from '@/components/domain/StaffOrderCard'
+import { OrderCard } from '@/components/domain/OrderCard'
+import { useStaffOrderActions } from '@/components/domain/useStaffOrderActions'
 import { PointOfSaleModal } from '@/components/domain/PointOfSaleModal'
 import { ORDER_STATUS_META } from '@/components/domain/orderStatus'
 import { PageLoading, PageError } from '@/components/ui/PageState'
@@ -38,16 +39,17 @@ export function SalesPage() {
     useOrders(period)
   const { products } = useProducts()
   const { user } = useAuth()
+  const { cardProps, actionError, modals } = useStaffOrderActions({ setStatus, confirmPayment, cancel })
   const [posOpen, setPosOpen] = useState(false)
   const [invoicingOrderId, setInvoicingOrderId] = useState<string>()
-  const [actionError, setActionError] = useState<string>()
+  const [invoiceError, setInvoiceError] = useState<string>()
   const [actionMessage, setActionMessage] = useState<string>()
 
   // Facturar: solo quien administra el negocio (la base de datos lo exige igual).
   const canInvoice = user?.role === 'administrador' || user?.role === 'supervisor_tecnico'
 
   const handleGenerateInvoice = async (orderId: string) => {
-    setActionError(undefined)
+    setInvoiceError(undefined)
     setActionMessage(undefined)
     setInvoicingOrderId(orderId)
     try {
@@ -55,10 +57,10 @@ export function SalesPage() {
       if (invoice.status === 'emitida') {
         setActionMessage(`Factura electrónica emitida${invoice.cufe ? ` · CUFE ${invoice.cufe}` : ''}.`)
       } else if (invoice.status === 'error') {
-        setActionError(invoice.errorMessage ?? 'No se pudo emitir la factura.')
+        setInvoiceError(invoice.errorMessage ?? 'No se pudo emitir la factura.')
       }
     } catch (err) {
-      setActionError(errorMessage(err, 'No se pudo generar la factura.'))
+      setInvoiceError(errorMessage(err, 'No se pudo generar la factura.'))
     } finally {
       setInvoicingOrderId(undefined)
       // El estado de la factura llega con los pedidos del tablero.
@@ -120,6 +122,7 @@ export function SalesPage() {
       )}
       {actionMessage && <div className="form-success-banner">{actionMessage}</div>}
       {actionError && <div className="form-error-banner">{actionError}</div>}
+      {invoiceError && <div className="form-error-banner">{invoiceError}</div>}
 
       <div className="orders-board">
         {columns.map((column) => (
@@ -130,12 +133,10 @@ export function SalesPage() {
             </span>
             {column.orders.length === 0 && <EmptyState title="Sin pedidos aquí" />}
             {column.orders.map((order) => (
-              <StaffOrderCard
+              <OrderCard
                 key={order.id}
                 order={order}
-                setStatus={setStatus}
-                confirmPayment={confirmPayment}
-                cancel={cancel}
+                {...cardProps(order)}
                 recipesByProductId={recipesByProductId}
                 onGenerateInvoice={canInvoice ? () => handleGenerateInvoice(order.id) : undefined}
                 generatingInvoice={invoicingOrderId === order.id}
@@ -146,6 +147,7 @@ export function SalesPage() {
       </div>
 
       {posOpen && <PointOfSaleModal onRegister={register} onClose={() => setPosOpen(false)} />}
+      {modals}
     </div>
   )
 }
