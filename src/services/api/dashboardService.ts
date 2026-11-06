@@ -1,4 +1,5 @@
 import { supabase, getActiveBusinessId } from './supabaseClient'
+import { countsAsSale } from './salesService'
 import type { DashboardSummary } from '@/types/domain'
 import type { OrderRow, InventoryItemRow } from '@/types/database'
 
@@ -29,11 +30,11 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   const orders = ordersResult.data ?? []
   const inventoryItems = inventoryResult.data ?? []
 
-  // Un pedido por confirmar ya es trabajo pendiente, pero todavía no es una venta.
-  const confirmedOrders = orders.filter((o) => o.status !== 'pendiente_pago')
+  // Un pedido por confirmar ya es trabajo pendiente, pero todavía no es venta; uno cancelado no es ninguna de las dos.
+  const confirmedOrders = orders.filter((o) => countsAsSale(o.status))
 
   const salesToday = confirmedOrders.reduce((sum, o) => sum + Number(o.total), 0)
-  const activeOrders = orders.filter((o) => o.status !== 'entregado').length
+  const activeOrders = orders.filter((o) => o.status !== 'entregado' && o.status !== 'cancelado').length
   const lowStockAlerts = inventoryItems.filter((i) => i.status !== 'ok').length
 
   const soldByProduct = new Map<string, number>()

@@ -82,16 +82,16 @@ export async function getCurrentCustomer(): Promise<Customer | undefined> {
   return mapCustomer(created)
 }
 
-/** Negocios a los que el cliente ya está vinculado (pantalla "Mis negocios"). */
+/**
+ * Negocios a los que el cliente ya está vinculado (pantalla "Mis negocios").
+ * RPC security definer (0013): el cliente no puede leer businesses_cafexis
+ * directamente por RLS, así que un select anidado le llegaría vacío.
+ */
 export async function listMyBusinesses(): Promise<CustomerBusinessLink[]> {
-  const { data, error } = await supabase
-    .from('customer_businesses_cafexis')
-    .select('*, businesses_cafexis(*)')
-    .order('linked_at', { ascending: false })
-    .returns<CustomerBusinessRow[]>()
+  const { data, error } = await supabase.rpc('list_my_businesses_cafexis')
 
   if (error) throw new Error(error.message)
-  return (data ?? []).map(mapCustomerBusinessLink)
+  return ((data ?? []) as CustomerBusinessRow[]).map(mapCustomerBusinessLink)
 }
 
 /** Vincula al cliente autenticado con un negocio (idempotente). */

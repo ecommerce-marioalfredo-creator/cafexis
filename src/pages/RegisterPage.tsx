@@ -4,6 +4,7 @@ import { AuthLayout } from '@/components/layout/AuthLayout'
 import { FormField } from '@/components/ui/FormField'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
+import { LOGO_FORMAT_ERROR, LOGO_MIME_TYPES, isValidLogoFile } from '@/services/api/businessService'
 import type { BusinessType } from '@/types/domain'
 import './RegisterPage.css'
 
@@ -26,14 +27,21 @@ export function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [primaryColor, setPrimaryColor] = useState('#D85A30')
-  const [logoUrl, setLogoUrl] = useState('')
+  const [logoFile, setLogoFile] = useState<File>()
+  const [logoPreview, setLogoPreview] = useState('')
   const [error, setError] = useState<string>()
   const [submitting, setSubmitting] = useState(false)
 
   const handleLogoFile = (file: File | undefined) => {
     if (!file) return
+    if (!isValidLogoFile(file)) {
+      setError(LOGO_FORMAT_ERROR)
+      return
+    }
+    setError(undefined)
+    setLogoFile(file)
     const reader = new FileReader()
-    reader.onload = () => setLogoUrl(String(reader.result))
+    reader.onload = () => setLogoPreview(String(reader.result))
     reader.readAsDataURL(file)
   }
 
@@ -50,7 +58,7 @@ export function RegisterPage() {
         email,
         password,
         primaryColor,
-        logoUrl: logoUrl || undefined,
+        logoFile,
       })
       navigate('/', { replace: true })
     } catch (err) {
@@ -136,12 +144,12 @@ export function RegisterPage() {
         </FormField>
 
         <FormField label="Logo de tu negocio (opcional)" htmlFor="reg-logo" hint="Se mostrará junto al logo de Cafexis en tu panel">
-          <input id="reg-logo" type="file" accept="image/*" onChange={(e) => handleLogoFile(e.target.files?.[0])} />
+          <input id="reg-logo" type="file" accept={LOGO_MIME_TYPES.join(',')} onChange={(e) => handleLogoFile(e.target.files?.[0])} />
         </FormField>
 
-        {logoUrl && (
+        {logoPreview && (
           <div className="register-page__preview">
-            <img src={logoUrl} alt="Vista previa del logo" />
+            <img src={logoPreview} alt="Vista previa del logo" />
             <span>Vista previa de tu logo</span>
           </div>
         )}

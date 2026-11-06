@@ -1,4 +1,5 @@
-import { supabase } from './supabaseClient'
+import { supabase, getActiveBusinessId } from './supabaseClient'
+import { invokeEdgeFunction } from './edgeFunctions'
 import { mapAppUser, mapUserInvitation } from './mappers'
 import type { AppUser, InvitableRole, UserInvitation, UserRole } from '@/types/domain'
 import type { AppUserRow, UserInvitationRow } from '@/types/database'
@@ -33,15 +34,13 @@ export async function listInvitations(businessId: string): Promise<UserInvitatio
  * eso autenticaría como el usuario invitado y cerraría la sesión de quien
  * invita. La Edge Function usa la service_role key (solo en el servidor)
  * para enviar la invitación sin tocar la sesión activa en el navegador.
+ *
+ * Se envía el negocio activo: para el supervisor técnico puede ser el que
+ * eligió en el selector (la Edge Function rechaza cualquier otro caso).
  */
 export async function inviteUser(input: { email: string; name: string; role: InvitableRole }): Promise<void> {
-  const { data, error } = await supabase.functions.invoke<{ success?: boolean; error?: string; warning?: string }>(
-    'invite-user',
-    { body: input },
-  )
-
-  if (error) throw new Error(error.message)
-  if (data?.error) throw new Error(data.error)
+  const businessId = await getActiveBusinessId()
+  await invokeEdgeFunction<{ success?: boolean }>('invite-user', { ...input, businessId })
 }
 
 export async function updateUserRole(userId: string, role: UserRole): Promise<void> {

@@ -7,7 +7,7 @@ import { useInventory } from '@/hooks/useInventory'
 import { useTraceability } from '@/hooks/useTraceability'
 import { PAYMENT_LABEL, SALE_PAYMENT_METHODS } from '@/components/domain/paymentMethods'
 import { PERIOD_LABEL, toDateInput } from '@/services/api/reportPeriods'
-import { METRIC_LABEL } from './ReportViewer'
+import { METRIC_LABEL } from './reportLabels'
 import type {
   PaymentMethod,
   ReportConfig,

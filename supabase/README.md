@@ -79,7 +79,10 @@ Tienes dos formas, elige la que prefieras:
    - `migrations/0012_fase6_integraciones_cafexis.sql` (pendiente — ver paso 11;
      el número de archivo quedó después de la 0011 por orden de llegada, pero
      no depende de ella)
-   - `migrations/0015_fotos_producto_cafexis.sql` (pendiente — ver paso 13)
+   - `migrations/0013_auditoria_seguridad_cafexis.sql` (ya aplicada — ver paso 13)
+   - `migrations/0014_pedidos_y_permisos_por_rol_cafexis.sql` (ya aplicada — ver paso 14)
+   - `migrations/0015_fotos_producto_cafexis.sql` (ver paso 15)
+   - `migrations/0016_cancelacion_y_avisos_cafexis.sql` (pendiente — ver paso 16)
 
 **Opción B — Supabase CLI (recomendado si seguimos iterando el esquema):**
 ```bash
@@ -362,12 +365,109 @@ junto con `attach_payment_reference_cafexis` es `security definer`, porque
 `invoices_cafexis` y `payment_transactions_cafexis` solo tienen policy de
 lectura.
 
-### 13. Fotos de producto (pendiente)
+### 13. Auditoría de seguridad (ya aplicada)
+
+`migrations/0013_auditoria_seguridad_cafexis.sql`. Después de aplicarla:
+
+1. **Volver a desplegar cuatro Edge Functions**:
+   `supabase functions deploy generate-invoice`,
+   `supabase functions deploy create-payment-link`,
+   `supabase functions deploy invite-user` y
+   `supabase functions deploy wompi-webhook --no-verify-jwt`.
+2. **Publicar el frontend del mismo commit**: el registro de negocios ahora
+   usa la RPC `register_business_cafexis`, y la migración quita el permiso de
+   insertar negocios y perfiles directamente desde el navegador.
+
+Qué corrige:
+
+- **Usuarios desactivados** con el botón "Desactivar" de Configuración
+  seguían teniendo acceso completo; ahora RLS y el login los bloquean.
+- **Pedidos del cliente final**: cualquier cuenta de Google podía insertar
+  pedidos y líneas directo por la API (con el estado, total y precios que
+  quisiera, sin pasar por el pago). Ahora solo se pide con
+  `register_public_order_cafexis`.
+- **Referencias entre negocios**: con el id de un producto o lote de otro
+  negocio (son públicos en el catálogo y el QR) se podía descontar su
+  inventario. Un trigger valida ahora que producto, receta, lote y líneas de
+  compra sean del mismo negocio.
+- **Supervisor técnico** vuelve a poder crear productos en el negocio que
+  opera (la 0012 lo había quitado) e invitar usuarios a ese negocio.
+- **Pagos**: solo se aprueba si el monto cobrado coincide con el del
+  pedido, y una transacción aprobada ya no cambia con eventos tardíos.
+- **Facturas**: `generate-invoice` valida el rol de quien la pide y nunca
+  emite dos veces la misma factura.
+- **Reportes y panel**: los pedidos "pendiente de pago" ya no cuentan como
+  venta.
+- **"Mis negocios"** del cliente mostraba los negocios vacíos (el cliente no
+  puede leer `businesses_cafexis`); ahora usa `list_my_businesses_cafexis`.
+- **Registro**: negocio y administrador se crean juntos en una transacción.
+  Si el proyecto exige confirmar el correo, el negocio se termina de crear
+  en el primer login.
+- **Logos**: el bucket solo acepta PNG, JPG o WebP de hasta 2 MB.
+
+### 14. Pedidos y permisos por rol (ya aplicada)
+
+`migrations/0014_pedidos_y_permisos_por_rol_cafexis.sql`. No requiere
+redesplegar Edge Functions; sí publicar el frontend del mismo commit (usa
+las RPC nuevas y el estado `cancelado`).
+
+Qué incluye:
+
+- **Cobro en caja** (`confirm_order_payment_cafexis`): cualquier persona
+  activa del negocio confirma que el cliente pagó un pedido "pendiente de
+  pago" (por ejemplo, eligió efectivo en el catálogo, que ya no lo envía a
+  Wompi) y puede corregir el método con el que pagó.
+- **Cancelar pedidos** (`cancel_order_cafexis`; la 0016 amplía quién puede):
+  cualquier pedido no entregado. Repone exactamente el inventario que
+  descontó (según el historial de movimientos), guarda motivo, fecha y quién
+  canceló, y anula el cobro en línea pendiente. Nuevo estado `cancelado`,
+  fuera de las cifras de reportes, panel y consola.
+- **Máquina de estados**: pendiente de pago → pedido → en preparación →
+  listo → entregado, validada en la base de datos; cancelar solo con la RPC.
+- **Permisos por rol en el servidor**: el barista vende (con la RPC, a
+  precios del catálogo) y avanza pedidos, pero ya no puede editar
+  inventario, productos, recetas, lotes, compras, proveedores, datos o logo
+  del negocio, ni el total, el método de pago o las líneas de un pedido. El
+  directorio de proveedores deja de ser visible y editable para los clientes
+  finales.
+- **Suscripción vencida**: `register_sale_cafexis` también bloquea la venta en
+  el servidor.
+- **Consola de plataforma**: ventas de hoy, 7 y 14 días sin pedidos no
+  cobrados ni cancelados.
+
+### 15. Fotos de producto
 
 `migrations/0015_fotos_producto_cafexis.sql` crea el bucket público
-`product-images` (máximo 5 MB; JPG, PNG o WebP) y sus políticas. Sin esta
-migración, guardar un producto con foto falla con un error de Storage; el
-resto del catálogo sigue funcionando. Solo depende de la 0002.
+`product-images` (máximo 5 MB; JPG, PNG o WebP) y sus políticas: las fotos las
+ve cualquiera y solo las sube quien administra el negocio. Sin esta migración,
+guardar un producto con foto falla con un error de Storage; el resto del
+catálogo sigue funcionando.
+
+Esta migración se llamó antes `0013_fotos_producto_cafexis.sql`. Si ya la
+aplicaste con ese nombre, vuelve a ejecutarla: es segura de repetir y ajusta
+los permisos a las reglas de la 0014.
+
+### 16. Cancelación y avisos (pendiente — aplicar después de la 0015)
+
+`migrations/0016_cancelacion_y_avisos_cafexis.sql`. No requiere redesplegar
+Edge Functions; sí publicar el frontend del mismo commit.
+
+Qué incluye:
+
+- **Quién cancela** (`cancel_order_cafexis`): el personal activo del negocio,
+  incluido el barista, en cualquier pedido no entregado; el cliente, solo sus
+  propios pedidos y mientras no hayan empezado a prepararse. Soporte sigue sin
+  poder. El pedido nunca se borra.
+- **Quién canceló**: `cancelled_by_side` dice si fue el cliente o el negocio.
+  `cancelled_by` guarda la persona del negocio (queda vacío si fue el cliente).
+- **Avisos** (`order_notifications_cafexis`): cada cancelación deja un aviso
+  para el negocio y otro para el cliente, si pidió desde el catálogo. Se ven en
+  la campana del panel y del catálogo. Solo los crea la base de datos; los
+  avisos del negocio se comparten entre todo su personal, así que marcarlos
+  como leídos aplica para todos.
+- **Dónde se ven los cancelados**: en el historial del cliente y en
+  **Reportes → Histórico de pedidos**. No aparecen en el dashboard ni en el
+  tablero de Ventas, y no cuentan en las cifras de ventas.
 
 ## Gestión de usuarios y roles (invitaciones)
 

@@ -16,6 +16,7 @@ import type {
   BusinessSupplierRow,
   OrderRow,
   OrderItemRow,
+  OrderNotificationRow,
   PurchaseOrderRow,
   CustomReportRow,
   UserInvitationRow,
@@ -38,6 +39,7 @@ import type {
   Supplier,
   Order,
   OrderItem,
+  OrderNotification,
   PurchaseOrder,
   ReportDefinition,
   ReportConfig,
@@ -113,19 +115,7 @@ export function mapCustomer(row: CustomerRow): Customer {
 }
 
 export function mapCustomerBusinessLink(row: CustomerBusinessRow): CustomerBusinessLink {
-  const b = row.businesses_cafexis
-  return {
-    business: b
-      ? {
-          id: b.id,
-          name: b.name,
-          type: b.type,
-          branding: { primaryColor: b.primary_color, logoUrl: b.logo_url ?? undefined },
-          slug: b.slug,
-        }
-      : { id: row.business_id, name: '', type: 'cafeteria', branding: { primaryColor: '#D85A30' }, slug: '' },
-    linkedAt: row.linked_at,
-  }
+  return { business: mapPublicBusiness(row), linkedAt: row.linked_at }
 }
 
 export function mapUserInvitation(row: UserInvitationRow): UserInvitation {
@@ -246,7 +236,28 @@ export function mapOrder(row: OrderRow): Order {
     status: row.status,
     paymentMethod: row.payment_method,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    cancelledAt: row.cancelled_at ?? undefined,
+    cancelledBySide: row.cancelled_by_side ?? undefined,
+    cancelledByName: row.canceller?.name,
+    cancellationReason: row.cancellation_reason ?? undefined,
+    invoice: mapEmbeddedInvoice(row.invoices_cafexis),
   }
+}
+
+export function mapOrderNotification(row: OrderNotificationRow): OrderNotification {
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    message: row.message,
+    readAt: row.read_at ?? undefined,
+    createdAt: row.created_at,
+  }
+}
+
+function mapEmbeddedInvoice(embedded: OrderRow['invoices_cafexis']): Invoice | undefined {
+  const row = Array.isArray(embedded) ? embedded[0] : embedded
+  return row ? mapInvoice(row) : undefined
 }
 
 export function mapPurchaseOrder(row: PurchaseOrderRow): PurchaseOrder {

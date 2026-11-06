@@ -122,7 +122,7 @@ export function SettingsPage() {
               <Card key={user.id} title={user.name}>
                 <p className="section-subtitle">{user.email}</p>
 
-                {canManageUsers && !isSelf && user.role !== 'supervisor_tecnico' && (!isPlatformRole(user.role) || isSupervisor) && (!isPlatformRole(user.role) || isSupervisor) ? (
+                {canManageUsers && !isSelf && user.role !== 'supervisor_tecnico' && (!isPlatformRole(user.role) || isSupervisor) ? (
                   <select
                     className="settings-page__role-select"
                     value={user.role}

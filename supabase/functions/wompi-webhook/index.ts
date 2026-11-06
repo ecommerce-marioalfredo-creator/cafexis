@@ -55,7 +55,16 @@ async function verifyWompiSignature(event: Record<string, unknown>, secret: stri
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
 
-  return hex === signature.checksum
+  // Wompi envía el checksum en hexadecimal mayúscula; digest da minúscula.
+  return timingSafeEqual(hex, signature.checksum.toLowerCase())
+}
+
+/** Comparación en tiempo constante, para no filtrar el checksum por tiempos de respuesta. */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
 }
 
 serve(async (req) => {
@@ -112,6 +121,8 @@ serve(async (req) => {
     return jsonResponse({ received: true })
   }
 
+  // confirm_payment_cafexis (0013) compara transaction.amount_in_cents del
+  // evento con el monto del pedido antes de aprobarlo.
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
   const { error } = await adminClient.rpc('confirm_payment_cafexis', {
     p_provider: 'wompi',

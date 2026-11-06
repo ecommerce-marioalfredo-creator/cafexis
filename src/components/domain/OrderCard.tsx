@@ -1,46 +1,45 @@
-import { Badge, type BadgeTone } from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/Badge'
 import { PAYMENT_LABEL, currency } from './paymentMethods'
+import { NEXT_ORDER_STATUS, ORDER_STATUS_META } from './orderStatus'
 import type { Order, OrderStatus, RecipeIngredient } from '@/types/domain'
 import './OrderCard.css'
-
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  pendiente_pago: 'Por confirmar',
-  pedido: 'Pedido',
-  en_preparacion: 'En preparación',
-  listo: 'Listo',
-  entregado: 'Entregado',
-}
 
 interface OrderCardProps {
   order: Order
   onAdvance?: (nextStatus: OrderStatus) => void
   /** Receta de cada producto (por id), para mostrarla bajo cada línea del pedido — clave para que quien prepare la bebida sepa qué lleva. */
   recipesByProductId?: Record<string, RecipeIngredient[] | undefined>
-  /** Solo en el panel interno (administrador/supervisor), y solo sobre pedidos entregados — ver OrderCard.tsx y SalesPage.tsx (Fase 6). */
+  /** Solo en el panel interno (administrador/supervisor), y solo sobre pedidos entregados (Fase 6). */
   onGenerateInvoice?: () => void
+  /** Mientras se emite la factura de este pedido. */
+  generatingInvoice?: boolean
+  /** Panel interno: confirmar que el cliente pagó un pedido por confirmar. */
+  onConfirmPayment?: () => void
+  /** Cancelar el pedido: el personal, o el cliente mientras no se esté preparando. */
+  onCancel?: () => void
+  /** Aviso corto bajo el pedido (por ejemplo, "Paga en caja"). */
+  notice?: string
 }
 
-const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
-  pendiente_pago: 'en_preparacion',
-  pedido: 'en_preparacion',
-  en_preparacion: 'listo',
-  listo: 'entregado',
-}
-
-function badgeTone(status: OrderStatus): BadgeTone {
-  if (status === 'entregado') return 'success'
-  if (status === 'pendiente_pago') return 'warning'
-  return 'info'
-}
-
-export function OrderCard({ order, onAdvance, recipesByProductId, onGenerateInvoice }: OrderCardProps) {
-  const next = NEXT_STATUS[order.status]
+export function OrderCard({
+  order,
+  onAdvance,
+  recipesByProductId,
+  onGenerateInvoice,
+  generatingInvoice,
+  onConfirmPayment,
+  onCancel,
+  notice,
+}: OrderCardProps) {
+  const next = NEXT_ORDER_STATUS[order.status]
+  const status = ORDER_STATUS_META[order.status]
+  const invoice = order.invoice
 
   return (
-    <article className="order-card">
+    <article className={['order-card', order.status === 'cancelado' ? 'order-card--cancelled' : ''].join(' ')}>
       <header className="order-card__header">
         <strong>{order.code}</strong>
-        <Badge tone={badgeTone(order.status)}>{STATUS_LABEL[order.status]}</Badge>
+        <Badge tone={status.tone}>{status.label}</Badge>
       </header>
       <p className="order-card__customer">
         {order.customerName}
@@ -71,14 +70,55 @@ export function OrderCard({ order, onAdvance, recipesByProductId, onGenerateInvo
         <span className="order-card__total">{currency.format(order.total)}</span>
         <span className="order-card__payment">Pago: {PAYMENT_LABEL[order.paymentMethod]}</span>
       </footer>
+
+      {order.status === 'cancelado' && order.cancelledBySide && (
+        <p className="order-card__notice">
+          {order.cancelledBySide === 'cliente' ? 'Cancelaste este pedido.' : 'El negocio canceló este pedido.'}
+        </p>
+      )}
+      {order.status === 'cancelado' && order.cancellationReason && (
+        <p className="order-card__notice">Motivo: {order.cancellationReason}</p>
+      )}
+      {notice && <p className="order-card__notice">{notice}</p>}
+
       {next && onAdvance && (
         <button className="order-card__advance" onClick={() => onAdvance(next)}>
-          {next === 'en_preparacion' ? 'Confirmar y pasar a preparación' : `Marcar como “${STATUS_LABEL[next]}”`}
+          Marcar como “{ORDER_STATUS_META[next].label}”
         </button>
       )}
-      {order.status === 'entregado' && onGenerateInvoice && (
-        <button className="order-card__invoice" onClick={onGenerateInvoice}>
-          Generar factura
+      {order.status === 'pendiente_pago' && onConfirmPayment && (
+        <button className="order-card__advance" onClick={onConfirmPayment}>
+          Confirmar y pasar a preparación
+        </button>
+      )}
+
+      {order.status === 'entregado' && invoice?.status === 'emitida' && (
+        <p className="order-card__invoice-status order-card__invoice-status--ok">
+          Factura electrónica emitida
+          {invoice.pdfUrl && (
+            <>
+              {' · '}
+              <a href={invoice.pdfUrl} target="_blank" rel="noopener noreferrer">
+                Ver PDF
+              </a>
+            </>
+          )}
+        </p>
+      )}
+      {order.status === 'entregado' && invoice?.status === 'error' && (
+        <p className="order-card__invoice-status order-card__invoice-status--error">
+          No se pudo emitir la factura{invoice.errorMessage ? `: ${invoice.errorMessage}` : '.'}
+        </p>
+      )}
+      {order.status === 'entregado' && onGenerateInvoice && invoice?.status !== 'emitida' && (
+        <button className="order-card__invoice" onClick={onGenerateInvoice} disabled={generatingInvoice}>
+          {generatingInvoice ? 'Generando factura…' : invoice ? 'Reintentar factura' : 'Generar factura'}
+        </button>
+      )}
+
+      {onCancel && (
+        <button className="order-card__cancel" onClick={onCancel}>
+          Cancelar pedido
         </button>
       )}
     </article>

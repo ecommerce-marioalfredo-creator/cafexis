@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { FormField } from '@/components/ui/FormField'
 import { Button } from '@/components/ui/Button'
+import { LOGO_FORMAT_ERROR, LOGO_MIME_TYPES, isValidLogoFile } from '@/services/api/businessService'
 import type { Business, BusinessType, BusinessUpdateInput } from '@/types/domain'
 import './BusinessEditModal.css'
 
@@ -31,6 +32,11 @@ export function BusinessEditModal({ business, onSave, onUploadLogo, onClose }: B
   const [saving, setSaving] = useState(false)
 
   const handleLogoFile = (file: File | undefined) => {
+    if (file && !isValidLogoFile(file)) {
+      setErrors((prev) => ({ ...prev, logo: LOGO_FORMAT_ERROR }))
+      return
+    }
+    setErrors((prev) => ({ ...prev, logo: '' }))
     setLogoFile(file)
     if (!file) return
     const reader = new FileReader()
@@ -103,8 +109,13 @@ export function BusinessEditModal({ business, onSave, onUploadLogo, onClose }: B
           <input id="business-color" type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} />
         </FormField>
 
-        <FormField label="Logo" htmlFor="business-logo" hint="Se guarda en tu panel de inmediato al cambiarlo.">
-          <input id="business-logo" type="file" accept="image/*" onChange={(e) => handleLogoFile(e.target.files?.[0])} />
+        <FormField label="Logo" htmlFor="business-logo" hint="PNG, JPG o WebP de máximo 2 MB." error={errors.logo}>
+          <input
+            id="business-logo"
+            type="file"
+            accept={LOGO_MIME_TYPES.join(',')}
+            onChange={(e) => handleLogoFile(e.target.files?.[0])}
+          />
         </FormField>
 
         {logoPreview && (

@@ -99,7 +99,7 @@ export function CustomerBusinessesPage() {
 }
 
 /** Acepta el link completo del negocio (…/c/mi-cafeteria) o solo su código. */
-export function slugFromInput(input: string): string | undefined {
+function slugFromInput(input: string): string | undefined {
   const value = input.trim()
   const fromUrl = value.match(/\/c\/([a-z0-9-]+)/i)?.[1]
   const slug = (fromUrl ?? value).toLowerCase()

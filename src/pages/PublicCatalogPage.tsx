@@ -144,7 +144,7 @@ export function PublicCatalogPage() {
           <p>
             Elegiste pagar <strong>{currency.format(submittedOrder.total)}</strong> con{' '}
             <strong>{PAYMENT_LABEL[submittedOrder.paymentMethod]}</strong>. El equipo de {business.name} confirmará tu
-            pedido y empezará a prepararlo.
+            pedido y empezará a prepararlo. Puedes cancelarlo desde “Mis pedidos” mientras no hayan empezado.
           </p>
           <div className="public-catalog__confirmation-actions">
             <Button variant="secondary" onClick={() => setSubmittedOrder(undefined)}>
@@ -266,6 +266,9 @@ export function PublicCatalogPage() {
                     </button>
                   ))}
                 </div>
+                <span className="section-subtitle public-catalog__payment-hint">
+                  Pagas en el negocio; el equipo confirma tu pago y empieza a prepararlo.
+                </span>
               </div>
 
               {saveError && <div className="form-error-banner">{saveError}</div>}

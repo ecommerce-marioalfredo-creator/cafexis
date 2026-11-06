@@ -9,7 +9,11 @@
 -- JPG, PNG o WebP. Se deja SVG por fuera porque puede ejecutar scripts y este
 -- bucket se sirve público.
 --
--- Requiere 0002 (auth_business_id_cafexis, auth_is_supervisor_cafexis).
+-- Se puede ejecutar más de una vez. Antes se llamó
+-- 0013_fotos_producto_cafexis.sql; volver a correrla sobre esa versión ajusta
+-- los permisos a las reglas de la 0014.
+--
+-- Requiere 0001-0014 aplicadas.
 -- =============================================================================
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -20,8 +24,8 @@ on conflict (id) do update set
   allowed_mime_types = excluded.allowed_mime_types;
 
 -- Convención de path: "<business_id>/<uuid>.<ext>" (ver uploadProductImage en
--- productsService.ts). Igual que business-logos (0005), pero también admite al
--- supervisor técnico, que puede estar operando otro negocio desde el selector.
+-- productsService.ts). Mismo criterio que el logo del negocio en la 0014: solo
+-- quien administra el negocio, o el supervisor técnico que lo está operando.
 
 drop policy if exists product_images_public_read on storage.objects;
 create policy product_images_public_read on storage.objects
@@ -31,19 +35,34 @@ drop policy if exists product_images_insert on storage.objects;
 create policy product_images_insert on storage.objects
   for insert with check (
     bucket_id = 'product-images'
-    and ((storage.foldername(name))[1] = auth_business_id_cafexis()::text or auth_is_supervisor_cafexis())
+    and not auth_is_support_cafexis()
+    and (
+      auth_is_supervisor_cafexis()
+      or ((storage.foldername(name))[1] = auth_business_id_cafexis()::text
+          and auth_can_manage_business_cafexis(auth_business_id_cafexis()))
+    )
   );
 
 drop policy if exists product_images_update on storage.objects;
 create policy product_images_update on storage.objects
   for update using (
     bucket_id = 'product-images'
-    and ((storage.foldername(name))[1] = auth_business_id_cafexis()::text or auth_is_supervisor_cafexis())
+    and not auth_is_support_cafexis()
+    and (
+      auth_is_supervisor_cafexis()
+      or ((storage.foldername(name))[1] = auth_business_id_cafexis()::text
+          and auth_can_manage_business_cafexis(auth_business_id_cafexis()))
+    )
   );
 
 drop policy if exists product_images_delete on storage.objects;
 create policy product_images_delete on storage.objects
   for delete using (
     bucket_id = 'product-images'
-    and ((storage.foldername(name))[1] = auth_business_id_cafexis()::text or auth_is_supervisor_cafexis())
+    and not auth_is_support_cafexis()
+    and (
+      auth_is_supervisor_cafexis()
+      or ((storage.foldername(name))[1] = auth_business_id_cafexis()::text
+          and auth_can_manage_business_cafexis(auth_business_id_cafexis()))
+    )
   );

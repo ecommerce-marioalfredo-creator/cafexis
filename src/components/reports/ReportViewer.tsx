@@ -20,6 +20,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { PageLoading, PageError } from '@/components/ui/PageState'
 import { ColumnChart, type ChartPoint } from './ColumnChart'
 import { BarList } from './BarList'
+import { METRIC_LABEL } from './reportLabels'
 import type {
   PaymentMethod,
   ReportDefinition,
@@ -43,17 +44,6 @@ const GROUP_HEADER: Record<Exclude<ReportGroupBy, 'auto'>, string> = {
   dia: 'Día',
   semana: 'Semana',
   mes: 'Mes',
-}
-
-export const METRIC_LABEL: Record<ReportMetric, string> = {
-  dinero: 'Ventas en dinero',
-  unidades: 'Unidades vendidas',
-  pedidos: 'Pedidos',
-  vendido: 'Consumo por ventas',
-  entradas: 'Entradas',
-  ajustes: 'Ajustes',
-  existencia: 'Existencia actual',
-  cobertura: 'Días de cobertura',
 }
 
 const number = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 })

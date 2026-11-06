@@ -56,6 +56,7 @@ async function handleDeepLink(rawUrl: string, router: NavigableRouter): Promise<
   }
 
   // co.cafexis.clientes://app/c/mi-cafeteria -> /c/mi-cafeteria
+  // Solo rutas internas: "//host" o "/\host" se interpretarían como otro origen.
   const path = `${url.pathname}${url.search}`
-  if (path.startsWith('/')) router.navigate(path)
+  if (path.startsWith('/') && !path.startsWith('//') && !path.includes('\\')) router.navigate(path)
 }
