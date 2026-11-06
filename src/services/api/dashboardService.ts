@@ -29,12 +29,15 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   const orders = ordersResult.data ?? []
   const inventoryItems = inventoryResult.data ?? []
 
-  const salesToday = orders.reduce((sum, o) => sum + Number(o.total), 0)
-  const activeOrders = orders.filter((o) => o.status === 'pedido' || o.status === 'en_preparacion' || o.status === 'listo').length
+  // Un pedido por confirmar ya es trabajo pendiente, pero todavía no es una venta.
+  const confirmedOrders = orders.filter((o) => o.status !== 'pendiente_pago')
+
+  const salesToday = confirmedOrders.reduce((sum, o) => sum + Number(o.total), 0)
+  const activeOrders = orders.filter((o) => o.status !== 'entregado').length
   const lowStockAlerts = inventoryItems.filter((i) => i.status !== 'ok').length
 
   const soldByProduct = new Map<string, number>()
-  for (const order of orders) {
+  for (const order of confirmedOrders) {
     for (const item of order.order_items_cafexis ?? []) {
       soldByProduct.set(item.product_name, (soldByProduct.get(item.product_name) ?? 0) + Number(item.quantity))
     }

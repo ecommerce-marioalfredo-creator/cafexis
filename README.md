@@ -56,12 +56,12 @@ Las migraciones de cada fase están en
 | Frontend web · Vista barista/vendedor | ✅ Tablero de pedidos con recetas |
 | Frontend web · Catálogo, pedido e historial del cliente final | ✅ |
 | Consola de soporte y casos | ✅ Rutas `/soporte` (equipo) y `/ayuda` (negocios) |
-| Base de datos (Supabase) | ✅ Migraciones `0001`–`0012`, ver [`supabase/`](supabase/) |
+| Base de datos (Supabase) | ✅ Migraciones `0001`–`0015`, ver [`supabase/`](supabase/) |
 | Gestión de usuarios y roles (invitaciones) | ✅ Construido; hay que volver a desplegar la Edge Function `invite-user` |
 | Despliegue web | ✅ Configurado para Vercel ([`vercel.json`](vercel.json)) |
 | Backend / API propia | ✅ No hace falta (Supabase + RLS + funciones SQL + Edge Functions la reemplazan) |
 | Suscripciones y período de prueba | ✅ Funciona sin terceros; el cobro de la suscripción es manual (el supervisor técnico la activa) |
-| Pagos en línea (Wompi) | ⚠️ Código listo; falta cuenta de comercio aprobada y llaves de producción |
+| Pagos en línea (Wompi) | ⚠️ Código listo pero sin usar en el catálogo: mientras no haya cuenta de comercio aprobada, el personal cobra y confirma cada comanda |
 | Facturación electrónica DIAN (Factus) | ⚠️ Código listo; falta habilitación ante la DIAN, resolución de numeración y contrato con el proveedor |
 | Apps Android / iOS | ⚠️ Proyectos nativos creados en [`mobile/`](mobile/); falta ícono definitivo, cuentas de desarrollador y publicación en tiendas |
 
@@ -71,10 +71,10 @@ Las migraciones de cada fase están en
 > electrónica ya están programadas, pero **no pueden funcionar en producción
 > hasta completar trámites legales y comerciales** que no dependen del
 > código. Son esos trámites los que entregan las APIs, llaves y
-> complementos que el sistema necesita. Mientras tanto, las funciones
-> responden con un mensaje claro ("Falta configurar…"), el pedido queda
-> guardado como "Pendiente de pago" y el resto de la plataforma sigue
-> operando normalmente.
+> complementos que el sistema necesita. Mientras tanto, los pedidos del
+> catálogo llegan a la comanda como "Por confirmar", el personal los cobra y
+> los pasa a preparación, y el resto de la plataforma sigue operando
+> normalmente.
 
 ### Decisión previa: quién cobra y quién factura
 
@@ -177,8 +177,8 @@ el logotipo definitivo aún está en validación):
 
 **Técnicos (configuración, sin programar):**
 
-1. Aplicar en Supabase las migraciones `0011` (soporte y seguridad) y
-   `0012` (integraciones).
+1. Aplicar en Supabase las migraciones `0011` (soporte y seguridad), `0012`
+   (integraciones) y `0013` (fotos de producto).
 2. Desplegar las Edge Functions: volver a desplegar `invite-user`
    (obligatorio después de la `0011`) y desplegar `create-payment-link`,
    `generate-invoice` y `wompi-webhook`.

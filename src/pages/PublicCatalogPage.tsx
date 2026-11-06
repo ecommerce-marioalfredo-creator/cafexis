@@ -9,7 +9,6 @@ import { useCustomerAuth } from '@/context/CustomerAuthContext'
 import { getPublicBusiness, getPublicCatalog } from '@/services/api/publicBusinessService'
 import { linkToBusiness } from '@/services/api/customerAuthService'
 import { registerPublicOrder } from '@/services/api/publicOrdersService'
-import { createPaymentLink } from '@/services/api/paymentService'
 import { PAYMENT_LABEL, SALE_PAYMENT_METHODS, currency } from '@/components/domain/paymentMethods'
 import type { PublicBusiness, PublicProduct, PaymentMethod } from '@/types/domain'
 import './PublicCatalogPage.css'
@@ -44,7 +43,7 @@ export function PublicCatalogPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string>()
-  const [orderCode, setOrderCode] = useState<string>()
+  const [submittedOrder, setSubmittedOrder] = useState<{ paymentMethod: PaymentMethod; total: number }>()
   const [linking, setLinking] = useState(false)
 
   const load = () => {
@@ -110,32 +109,16 @@ export function PublicCatalogPage() {
     setSaveError(undefined)
     setSaving(true)
     try {
-      // El pedido nace en 'pendiente_pago' (Fase 6): hay que llevar al
-      // cliente al checkout de Wompi antes de darlo por confirmado. El
-      // webhook (supabase/functions/wompi-webhook) es quien lo mueve a
-      // 'pedido' cuando el cobro se aprueba.
-      const id = await registerPublicOrder({
+      // El pedido nace en 'pendiente_pago' y aparece en la comanda del personal
+      // con la forma de pago elegida; quien lo atiende cobra y lo confirma.
+      await registerPublicOrder({
         businessId: business.id,
         items: cart.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
         paymentMethod,
         tableOrReference: tableOrReference.trim() || undefined,
       })
+      setSubmittedOrder({ paymentMethod, total })
       setCart([])
-      try {
-        const checkoutUrl = await createPaymentLink(id)
-        window.location.href = checkoutUrl
-        return
-      } catch (paymentErr) {
-        // El pedido ya se registró (queda en "pendiente de pago"); si el
-        // link de cobro no se pudo generar (ej. Wompi sin configurar), se
-        // lo decimos al cliente en vez de perder la referencia del pedido.
-        setOrderCode(id)
-        setSaveError(
-          paymentErr instanceof Error
-            ? `Tu pedido quedó registrado, pero no se pudo iniciar el pago: ${paymentErr.message}`
-            : 'Tu pedido quedó registrado, pero no se pudo iniciar el pago.',
-        )
-      }
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'No se pudo registrar tu pedido.')
     } finally {
@@ -153,17 +136,18 @@ export function PublicCatalogPage() {
     )
   }
 
-  if (orderCode) {
+  if (submittedOrder) {
     return (
       <PublicLayout business={business}>
         <div className="public-catalog__confirmation">
-          <h1>Pedido registrado</h1>
+          <h1>¡Pedido enviado!</h1>
           <p>
-            Tu pedido quedó guardado, pero el pago en línea no se pudo iniciar en este momento. Puedes intentar pagar
-            de nuevo desde tu historial de pedidos.
+            Elegiste pagar <strong>{currency.format(submittedOrder.total)}</strong> con{' '}
+            <strong>{PAYMENT_LABEL[submittedOrder.paymentMethod]}</strong>. El equipo de {business.name} confirmará tu
+            pedido y empezará a prepararlo.
           </p>
           <div className="public-catalog__confirmation-actions">
-            <Button variant="secondary" onClick={() => setOrderCode(undefined)}>
+            <Button variant="secondary" onClick={() => setSubmittedOrder(undefined)}>
               Pedir algo más
             </Button>
             <Button variant="primary" onClick={() => navigate(`/c/${slug}/pedidos`)}>
@@ -209,7 +193,13 @@ export function PublicCatalogPage() {
             const inCart = cart.find((l) => l.product.id === product.id)?.quantity
             return (
               <button type="button" key={product.id} className="public-catalog__product" onClick={() => addProduct(product)}>
-                {product.imageUrl && <img src={product.imageUrl} alt={product.name} />}
+                {product.imageUrl ? (
+                  <img src={product.imageUrl} alt="" loading="lazy" className="public-catalog__product-image" />
+                ) : (
+                  <span className="public-catalog__product-image public-catalog__product-image--empty" aria-hidden="true">
+                    ☕
+                  </span>
+                )}
                 <span className="public-catalog__product-name">{product.name}</span>
                 <span className="public-catalog__product-price">{currency.format(product.price)}</span>
                 {inCart && <span className="public-catalog__product-count">{inCart}</span>}

@@ -1,13 +1,27 @@
 import { useDashboardData } from '@/hooks/useDashboardData'
+import { useOrders } from '@/hooks/useOrders'
+import { OrderCard } from '@/components/domain/OrderCard'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { Card } from '@/components/ui/Card'
 import { PageLoading, PageError } from '@/components/ui/PageState'
 import { EmptyState } from '@/components/ui/EmptyState'
+import type { OrderStatus } from '@/types/domain'
 
 const currency = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 
+/** Estados con trabajo pendiente, en el orden en que se atienden: lo que falta confirmar va primero. */
+const ACTIVE_STATUSES: OrderStatus[] = ['pendiente_pago', 'pedido', 'en_preparacion', 'listo']
+
 export function DashboardPage() {
-  const { data, loading, error, reload } = useDashboardData()
+  const { data, loading, error, reload, refresh } = useDashboardData()
+  const { orders, loading: loadingOrders, error: ordersError, setStatus, statusError } = useOrders()
+
+  const activeOrders = ACTIVE_STATUSES.flatMap((status) => orders.filter((o) => o.status === status))
+
+  const handleAdvance = async (orderId: string, next: OrderStatus) => {
+    await setStatus(orderId, next)
+    await refresh() // Confirmar un pedido cambia las ventas del día y los más vendidos.
+  }
 
   if (loading) return <PageLoading label="Cargando el resumen del negocio…" />
   if (error) return <PageError message={error} onRetry={reload} />
@@ -25,6 +39,22 @@ export function DashboardPage() {
           icon="⚠️"
         />
       </section>
+
+      <Card title="Comandas activas">
+        {ordersError && <div className="form-error-banner">{ordersError}</div>}
+        {statusError && <div className="form-error-banner">{statusError}</div>}
+        {loadingOrders ? (
+          <PageLoading label="Cargando comandas…" />
+        ) : activeOrders.length === 0 ? (
+          <EmptyState title="No hay comandas activas" />
+        ) : (
+          <div className="dashboard-page__orders">
+            {activeOrders.map((order) => (
+              <OrderCard key={order.id} order={order} onAdvance={(next) => handleAdvance(order.id, next)} />
+            ))}
+          </div>
+        )}
+      </Card>
 
       <section className="dashboard-page__grid">
         <Card title="Bebidas y productos más vendidos">

@@ -79,6 +79,7 @@ Tienes dos formas, elige la que prefieras:
    - `migrations/0012_fase6_integraciones_cafexis.sql` (pendiente — ver paso 11;
      el número de archivo quedó después de la 0011 por orden de llegada, pero
      no depende de ella)
+   - `migrations/0015_fotos_producto_cafexis.sql` (pendiente — ver paso 13)
 
 **Opción B — Supabase CLI (recomendado si seguimos iterando el esquema):**
 ```bash
@@ -288,9 +289,13 @@ espera de una cuenta real.
   `wompi-webhook` (necesita `WOMPI_EVENTS_SECRET`, y debe configurarse
   como webhook en el panel de Wompi). Sin esas credenciales, ambas
   funciones responden con un error claro ("Falta configurar
-  WOMPI_PRIVATE_KEY...") en vez de fallar en silencio — el pedido igual
-  queda guardado, visible en **Ventas** como "Pendiente de pago", y el
-  cliente puede reintentar el pago desde su historial.
+  WOMPI_PRIVATE_KEY...") en vez de fallar en silencio.
+  **Hoy el catálogo no usa Wompi**: el pedido llega a **Ventas** y al
+  dashboard como "Por confirmar", con la forma de pago elegida, y el personal
+  lo cobra y lo pasa a preparación. Las funciones siguen en el repositorio
+  para retomar el pago en línea cuando la cuenta esté aprobada; habrá que
+  volver a llamar a `createPaymentLink` (`paymentService.ts`) desde
+  `PublicCatalogPage.tsx`.
 - **Facturación electrónica DIAN (Factus, de referencia — requiere
   cuenta)**: botón "Generar factura" en cada pedido ya `entregado`
   (**Ventas**, solo administrador/supervisor técnico). La RPC
@@ -356,6 +361,13 @@ administrador y supervisor técnico activos (rechaza barista y soporte), y
 junto con `attach_payment_reference_cafexis` es `security definer`, porque
 `invoices_cafexis` y `payment_transactions_cafexis` solo tienen policy de
 lectura.
+
+### 13. Fotos de producto (pendiente)
+
+`migrations/0015_fotos_producto_cafexis.sql` crea el bucket público
+`product-images` (máximo 5 MB; JPG, PNG o WebP) y sus políticas. Sin esta
+migración, guardar un producto con foto falla con un error de Storage; el
+resto del catálogo sigue funcionando. Solo depende de la 0002.
 
 ## Gestión de usuarios y roles (invitaciones)
 

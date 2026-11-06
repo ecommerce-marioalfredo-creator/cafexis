@@ -1,17 +1,26 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useAsync } from './useAsync'
 import { listOrders, registerSale, updateOrderStatus } from '@/services/api/salesService'
 import type { NewSaleInput, OrderStatus } from '@/types/domain'
 
+/** Los pedidos del catálogo llegan sin que nadie en el negocio haga nada: las comandas se revisan solas. */
+export const ORDERS_POLL_MS = 15_000
+
 export function useOrders() {
-  const { data, loading, error, reload } = useAsync(listOrders, [])
+  const { data, loading, error, reload, refresh } = useAsync(listOrders, [], { pollMs: ORDERS_POLL_MS })
+  const [statusError, setStatusError] = useState<string>()
 
   const setStatus = useCallback(
     async (orderId: string, status: OrderStatus) => {
-      await updateOrderStatus(orderId, status)
-      reload()
+      setStatusError(undefined)
+      try {
+        await updateOrderStatus(orderId, status)
+        await refresh()
+      } catch (err) {
+        setStatusError(err instanceof Error ? err.message : 'No se pudo actualizar el pedido.')
+      }
     },
-    [reload],
+    [refresh],
   )
 
   const register = useCallback(
@@ -23,5 +32,5 @@ export function useOrders() {
     [reload],
   )
 
-  return { orders: data ?? [], loading, error, reload, setStatus, register }
+  return { orders: data ?? [], loading, error, reload, setStatus, statusError, register }
 }

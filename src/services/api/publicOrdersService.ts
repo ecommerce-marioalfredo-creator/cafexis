@@ -6,10 +6,9 @@
  * ver 0010_fase5_cliente_final_cafexis.sql, recreada en
  * 0012_fase6_integraciones_cafexis.sql) — igual que registerSale en
  * salesService.ts, los precios los toma la base de datos, nunca el cliente.
- * Desde la Fase 6, el pedido nace en 'pendiente_pago' (no 'pedido'): el
- * llamador debe encadenar paymentService.createPaymentLink(orderId) con el
- * id devuelto para llevar al cliente al checkout de Wompi; el pedido solo
- * pasa a 'pedido' cuando el webhook confirma el cobro.
+ * El pedido nace en 'pendiente_pago' (Fase 6) y aparece en la comanda del
+ * personal con la forma de pago elegida; quien lo atiende cobra y lo confirma,
+ * lo que lo pasa a 'en_preparacion' (salesService.updateOrderStatus).
  *
  * El historial sí se lee con un select directo (no con la RPC
  * list_my_orders_cafexis, que solo devuelve orders_cafexis sin sus líneas):

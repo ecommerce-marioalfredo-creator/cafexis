@@ -28,6 +28,13 @@
   gap: var(--space-4);
 }
 
+.dashboard-page__orders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
 .dashboard-page__ranking,
 .dashboard-page__alerts {
   list-style: none;
@@ -95,7 +102,7 @@
 /* Ventas: tablero por estado */
 .orders-board {
   display: grid;
-  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  grid-template-columns: repeat(5, minmax(190px, 1fr));
   gap: var(--space-4);
   overflow-x: auto;
 }
@@ -104,7 +111,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  min-width: 220px;
+  min-width: 190px;
 }
 
 .orders-board__column-title {

@@ -11,6 +11,7 @@ interface RecipeCardProps {
 export function RecipeCard({ product, onEdit }: RecipeCardProps) {
   return (
     <article className="recipe-card">
+      {product.imageUrl && <img src={product.imageUrl} alt="" loading="lazy" className="recipe-card__image" />}
       <header className="recipe-card__header">
         <div>
           <strong>{product.name}</strong>

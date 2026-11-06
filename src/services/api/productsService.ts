@@ -47,6 +47,25 @@ async function replaceRecipe(productId: string, recipe: Product['recipe']): Prom
   if (insertError) throw new Error(insertError.message)
 }
 
+/**
+ * Sube la foto al bucket público "product-images" (ver migración
+ * 0015_fotos_producto_cafexis.sql) bajo "<businessId>/<uuid>.<ext>" y devuelve
+ * su URL pública. El nombre es único en cada subida, así que el navegador
+ * nunca muestra una foto anterior cacheada bajo la misma URL.
+ */
+export async function uploadProductImage(file: File): Promise<string> {
+  const businessId = await getActiveBusinessId()
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const path = `${businessId}/${crypto.randomUUID()}.${ext}`
+
+  const { error } = await supabase.storage.from('product-images').upload(path, file, {
+    contentType: file.type || undefined,
+  })
+  if (error) throw new Error(error.message)
+
+  return supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl
+}
+
 export async function createProduct(input: Omit<Product, 'id'>): Promise<Product> {
   const businessId = await getActiveBusinessId()
 

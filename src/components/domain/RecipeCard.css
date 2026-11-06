@@ -6,6 +6,15 @@
   box-shadow: var(--shadow-sm);
 }
 
+.recipe-card__image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+}
+
 .recipe-card__header {
   display: flex;
   align-items: flex-start;

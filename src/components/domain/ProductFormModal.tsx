@@ -4,8 +4,13 @@ import { FormField } from '@/components/ui/FormField'
 import { Button } from '@/components/ui/Button'
 import { useInventory } from '@/hooks/useInventory'
 import { useTraceability } from '@/hooks/useTraceability'
+import { uploadProductImage } from '@/services/api/productsService'
 import type { Product, RecipeIngredient } from '@/types/domain'
 import './ProductFormModal.css'
+
+/** Mismos límites que el bucket "product-images" (0015_fotos_producto_cafexis.sql). */
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 interface ProductFormModalProps {
   product?: Product
@@ -40,11 +45,31 @@ export function ProductFormModal({ product, onSave, onClose }: ProductFormModalP
       ? product.recipe.map((r) => ({ key: crypto.randomUUID(), inventoryItemId: r.inventoryItemId, quantity: String(r.quantity) }))
       : [],
   )
+  const [imageFile, setImageFile] = useState<File>()
+  const [imagePreview, setImagePreview] = useState(product?.imageUrl)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saveError, setSaveError] = useState<string>()
   const [saving, setSaving] = useState(false)
 
   const isEditing = Boolean(product)
+
+  const handleImageFile = (file: File | undefined) => {
+    if (!file) return
+    if (!IMAGE_TYPES.includes(file.type) || file.size > IMAGE_MAX_BYTES) {
+      setErrors((prev) => ({ ...prev, image: 'La foto debe ser JPG, PNG o WebP y pesar máximo 5 MB.' }))
+      return
+    }
+    setErrors(({ image: _image, ...rest }) => rest)
+    setImageFile(file)
+    const reader = new FileReader()
+    reader.onload = () => setImagePreview(String(reader.result))
+    reader.readAsDataURL(file)
+  }
+
+  const removeImage = () => {
+    setImageFile(undefined)
+    setImagePreview(undefined)
+  }
 
   const addLine = () => setLines((prev) => [...prev, EMPTY_LINE()])
   const removeLine = (key: string) => setLines((prev) => prev.filter((l) => l.key !== key))
@@ -80,10 +105,12 @@ export function ProductFormModal({ product, onSave, onClose }: ProductFormModalP
 
     setSaving(true)
     try {
+      const imageUrl = imageFile ? await uploadProductImage(imageFile) : imagePreview
       await onSave({
         name: name.trim(),
         category: category.trim() || 'Bebidas',
         price: Number(price),
+        imageUrl,
         recipe: recipe.length > 0 ? recipe : undefined,
         coffeeLotId: coffeeLotId || undefined,
         lotKgPerUnit: coffeeLotId && lotKgPerUnit !== '' ? Number(lotKgPerUnit) : undefined,
@@ -131,6 +158,32 @@ export function ProductFormModal({ product, onSave, onClose }: ProductFormModalP
             placeholder="9500"
           />
         </FormField>
+
+        <FormField
+          label="Foto (opcional)"
+          htmlFor="product-image"
+          error={errors.image}
+          hint="Es la que ve el cliente en el catálogo. JPG, PNG o WebP, máximo 5 MB."
+        >
+          <input
+            id="product-image"
+            type="file"
+            accept={IMAGE_TYPES.join(',')}
+            onChange={(e) => {
+              handleImageFile(e.target.files?.[0])
+              e.target.value = '' // Permite volver a elegir el mismo archivo después de quitarlo.
+            }}
+          />
+        </FormField>
+
+        {imagePreview && (
+          <div className="product-form__image-preview">
+            <img src={imagePreview} alt="Vista previa de la foto del producto" />
+            <button type="button" className="product-form__remove-image" onClick={removeImage}>
+              Quitar foto
+            </button>
+          </div>
+        )}
 
         <FormField
           label="Lote de origen (opcional)"

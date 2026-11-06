@@ -15,13 +15,12 @@ import type { OrderStatus, RecipeIngredient } from '@/types/domain'
  * "en preparación" y "listo" como columnas intermedias, ya anticipadas en
  * el Design System (sección 13) como ampliación futura del mismo esquema.
  *
- * "Pendiente de pago" (Fase 6) solo ocurre en pedidos públicos del cliente
- * final mientras se confirma el cobro en línea; se muestra primero para que
- * el negocio sepa que hay un pedido esperando pago, aunque no pueda
- * avanzarlo manualmente (lo mueve el webhook de la pasarela).
+ * "Por confirmar" (estado pendiente_pago) solo ocurre en pedidos públicos del
+ * cliente final: la comanda llega con la forma de pago que eligió, y el
+ * personal la confirma para pasarla directo a preparación.
  */
 const COLUMNS: Array<{ status: OrderStatus; title: string }> = [
-  { status: 'pendiente_pago', title: 'Pendiente de pago' },
+  { status: 'pendiente_pago', title: 'Por confirmar' },
   { status: 'pedido', title: 'Pedido' },
   { status: 'en_preparacion', title: 'En preparación' },
   { status: 'listo', title: 'Listo' },
@@ -29,7 +28,7 @@ const COLUMNS: Array<{ status: OrderStatus; title: string }> = [
 ]
 
 export function SalesPage() {
-  const { orders, loading, error, reload, setStatus, register } = useOrders()
+  const { orders, loading, error, reload, setStatus, statusError, register } = useOrders()
   const { products } = useProducts()
   const { user } = useAuth()
   const [posOpen, setPosOpen] = useState(false)
@@ -76,6 +75,7 @@ export function SalesPage() {
       </div>
 
       {invoiceError && <div className="form-error-banner">{invoiceError}</div>}
+      {statusError && <div className="form-error-banner">{statusError}</div>}
 
       <div className="orders-board">
         {COLUMNS.map((column) => {
