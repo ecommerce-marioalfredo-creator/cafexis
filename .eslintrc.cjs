@@ -7,7 +7,8 @@ module.exports = {
   parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
   plugins: ['react-refresh'],
   // supabase/functions corre en Deno (imports por URL) y mobile/ es código nativo generado.
-  // vite.config.js/.d.ts los emite `tsc -b` (tsconfig.node.json) y están en .gitignore.
+  // vite.config.js/.d.ts los emitía `tsc -b` antes de que tsconfig.node.json llevara su salida a
+  // node_modules/.tmp; siguen ignorados (aquí y en .gitignore) por si queda una copia vieja.
   ignorePatterns: [
     'dist',
     'dist-clientes',

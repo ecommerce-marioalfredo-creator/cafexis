@@ -53,7 +53,6 @@ Registrar un negocio nuevo desde `/registro` funciona sin pasos manuales.
 src/
   types/domain.ts       Modelo de dominio (Order, InventoryItem, CoffeeLot, etc.)
   types/database.ts     Tipos de fila de Supabase (snake_case, espejo del esquema SQL)
-  services/mock/        Datos de ejemplo (ya no los usa ningún *Service; solo referencia)
   services/api/
     supabaseClient.ts     Cliente único de Supabase + resolución del negocio activo
     mappers.ts            Traduce filas de Supabase (snake_case) a tipos de dominio
