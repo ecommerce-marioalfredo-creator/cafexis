@@ -9,7 +9,7 @@
 
 .error-boundary__panel {
   max-width: 520px;
-  background: #fff;
+  background: var(--color-surface-default, #fff);
   border: 1px solid var(--color-border-default, #e4e0d6);
   border-radius: var(--radius-lg, 16px);
   padding: var(--space-8, 32px);

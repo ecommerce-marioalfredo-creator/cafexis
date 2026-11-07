@@ -17,7 +17,7 @@
 }
 .badge--warning {
   background: rgba(232, 163, 61, 0.15);
-  color: #8a5a12;
+  color: var(--color-state-warning-text);
 }
 .badge--error {
   background: rgba(214, 69, 69, 0.12);
@@ -28,6 +28,6 @@
   color: var(--color-brand-teal);
 }
 .badge--neutral {
-  background: #ece9de;
+  background: var(--color-surface-muted);
   color: var(--color-text-secondary);
 }

@@ -24,7 +24,7 @@ h2,
 h3 {
   font-family: var(--font-heading);
   margin: 0;
-  color: var(--color-text-charcoal);
+  color: var(--color-text-primary);
 }
 
 h1 {
@@ -59,6 +59,13 @@ img {
   display: block;
 }
 
+/* Al cambiar de tema todo cambia a la vez (styles/colorTheme.ts). */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
+}
+
 /* Foco visible en toda la app (Design System, sección 18 Accesibilidad) */
 :focus-visible {
   outline: 2px solid var(--color-border-focus);
@@ -71,6 +78,6 @@ img {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d8d4c8;
+  background: var(--color-scrollbar);
   border-radius: var(--radius-sm);
 }

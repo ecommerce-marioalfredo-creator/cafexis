@@ -4,8 +4,16 @@
   Cafexis_Design_System_UI_Guidelines_V1 (secciones 4, 5, 6, 22).
   Estado: colores de marca y semánticos son definitivos; las escalas 50-900
   quedan marcadas como pendientes en los documentos de origen.
+
+  Modo oscuro: el bloque [data-theme='dark'] del final redefine solo los
+  tokens que cambian. Lo activa styles/colorTheme.ts (y el script de
+  index.html antes de cargar la app). Los componentes deben usar los tokens
+  semánticos (text-primary, surface-*), no los de marca, para el texto y los
+  fondos: --color-text-charcoal es el carbón de la marca y no cambia.
 */
 :root {
+  color-scheme: light;
+
   /* Color de marca */
   --color-brand-orange: #d85a30;
   --color-brand-orange-hover: #c04d26;
@@ -19,16 +27,30 @@
   --color-state-warning: #e8a33d;
   --color-state-error: #d64545;
   --color-state-info: var(--color-brand-teal);
+  /* Para fondos con texto blanco encima: no se aclaran en modo oscuro. */
+  --color-state-error-solid: #d64545;
+  /* El amarillo de advertencia no se lee como texto sobre fondo claro. */
+  --color-state-warning-text: #8a5a12;
 
   /* Superficies derivadas */
   --color-surface-default: #ffffff;
   --color-surface-raised: #ffffff;
   --color-surface-sunken: var(--color-surface-cream);
+  --color-surface-muted: #ece9de;
+  /* Menú lateral: oscuro en los dos temas. */
+  --color-surface-sidebar: var(--color-text-charcoal);
+  /* Contraste invertido (tooltips de gráficas). */
+  --color-surface-inverse: var(--color-text-charcoal);
+  --color-text-on-inverse: #f1efe8;
   --color-border-default: #e4e0d6;
   --color-border-focus: var(--color-brand-teal);
+  --color-scrollbar: #d8d4c8;
+  /* Velo detrás de las ventanas modales. */
+  --color-overlay: rgba(44, 44, 42, 0.5);
 
   --color-text-primary: var(--color-text-charcoal);
   --color-text-secondary: #6b6a63;
+  /* Texto sobre el menú lateral u otro fondo que es oscuro en los dos temas. */
   --color-text-on-dark: #f1efe8;
 
   /* Tipografía */
@@ -54,4 +76,35 @@
 
   --sidebar-width: 264px;
   --topbar-height: 64px;
+}
+
+/*
+  Superficies cálidas cercanas al #262626 del logo para fondo oscuro
+  (assets/logo-dark.png), que así no se ve como un recuadro. Los colores de
+  marca y el del negocio no cambian; el rojo y el verde se aclaran para que
+  se lean como texto sobre fondo oscuro.
+*/
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-state-success: #5cb860;
+  --color-state-error: #f07a7a;
+  --color-state-warning-text: #f0b45a;
+
+  --color-surface-default: #262624;
+  --color-surface-raised: #2e2d2a;
+  --color-surface-sunken: #1b1a18;
+  --color-surface-muted: #363431;
+  --color-surface-sidebar: #262624;
+  --color-surface-inverse: #ece9e1;
+  --color-text-on-inverse: #2c2c2a;
+  --color-border-default: #3b3935;
+  --color-scrollbar: #4a4843;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+
+  --color-text-primary: #ece9e1;
+  --color-text-secondary: #a9a59a;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
 }

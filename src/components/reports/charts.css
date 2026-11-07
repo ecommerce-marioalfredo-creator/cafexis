@@ -115,8 +115,8 @@
   position: absolute;
   z-index: 5;
   transform: translate(-50%, calc(-100% - 8px));
-  background: var(--color-text-charcoal);
-  color: var(--color-text-on-dark);
+  background: var(--color-surface-inverse);
+  color: var(--color-text-on-inverse);
   border-radius: var(--radius-sm);
   padding: var(--space-1) var(--space-2);
   font-size: 12px;

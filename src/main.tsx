@@ -4,6 +4,9 @@ import './styles/global.css'
 import './styles/pages.css'
 import './components/ui/ErrorBoundary.css'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
+import { initColorTheme } from './styles/colorTheme'
+
+initColorTheme()
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 

@@ -6,7 +6,7 @@
 
 .inventory-row__name {
   font-weight: 700;
-  color: var(--color-text-charcoal);
+  color: var(--color-text-primary);
 }
 
 .inventory-row__edit {
@@ -17,7 +17,7 @@
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
-  color: var(--color-text-charcoal);
+  color: var(--color-text-primary);
 }
 
 .inventory-row__edit:hover {

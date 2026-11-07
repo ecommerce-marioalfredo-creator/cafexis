@@ -34,7 +34,7 @@
   font-family: var(--font-heading);
   font-size: 32px;
   font-weight: 700;
-  color: var(--color-text-charcoal);
+  color: var(--color-text-primary);
 }
 
 .metric-card__hint {

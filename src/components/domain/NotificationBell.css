@@ -26,7 +26,7 @@
   height: 18px;
   padding: 0 4px;
   border-radius: 999px;
-  background: var(--color-state-error);
+  background: var(--color-state-error-solid);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -44,7 +44,7 @@
   max-height: 60vh;
   overflow-y: auto;
   padding: var(--space-3);
-  background: var(--color-surface-default);
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
@@ -93,7 +93,7 @@
   width: 340px;
   max-width: calc(100vw - 32px);
   padding: var(--space-3) var(--space-4);
-  background: var(--color-surface-default);
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-state-error);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);

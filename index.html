@@ -5,6 +5,15 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cafexis · Panel del negocio</title>
+    <script>
+      // Tema antes de pintar, para que el modo oscuro no arranque con un destello claro.
+      // Misma lógica que src/styles/colorTheme.ts, que toma el control al cargar la app.
+      try {
+        var theme = localStorage.getItem('cafexis-theme')
+        var dark = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

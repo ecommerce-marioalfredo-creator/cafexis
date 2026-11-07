@@ -8,7 +8,7 @@
 .form-field label {
   font-size: 14px;
   font-weight: 500;
-  color: var(--color-text-charcoal);
+  color: var(--color-text-primary);
 }
 
 .form-field input,

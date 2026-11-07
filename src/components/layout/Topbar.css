@@ -47,7 +47,7 @@
   width: 16px;
   height: 2px;
   border-radius: 2px;
-  background: var(--color-text-charcoal);
+  background: var(--color-text-primary);
 }
 
 .topbar__menu-btn:hover {
@@ -69,7 +69,7 @@
 .topbar__business-select {
   font-size: 14px;
   font-weight: 700;
-  color: var(--color-text-charcoal);
+  color: var(--color-text-primary);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
   padding: var(--space-1) var(--space-2);
@@ -120,8 +120,10 @@
   .topbar {
     padding: 0 var(--space-4);
   }
+  /* El avatar es decorativo: cede su espacio al título junto al selector de tema. */
   .topbar__business,
-  .topbar__business-select {
+  .topbar__business-select,
+  .topbar__avatar {
     display: none;
   }
 }

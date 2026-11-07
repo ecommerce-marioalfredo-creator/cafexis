@@ -1,7 +1,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(44, 44, 42, 0.5);
+  background: var(--color-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,7 +10,7 @@
 }
 
 .modal-panel {
-  background: var(--color-surface-default);
+  background: var(--color-surface-raised);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   width: 100%;

@@ -1,13 +1,18 @@
 .sidebar {
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
-  background: var(--color-text-charcoal);
+  background: var(--color-surface-sidebar);
   color: var(--color-text-on-dark);
   display: flex;
   flex-direction: column;
   height: 100vh;
   position: sticky;
   top: 0;
+}
+
+/* En oscuro el menú tiene el mismo tono que las tarjetas: el borde lo separa del contenido. */
+:root[data-theme='dark'] .sidebar {
+  border-right: 1px solid var(--color-border-default);
 }
 
 .sidebar__overlay {

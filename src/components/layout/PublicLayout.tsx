@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { NotificationBell } from '@/components/domain/NotificationBell'
+import { ThemeMenu } from '@/components/ui/ThemeMenu'
 import { useCustomerAuth } from '@/context/CustomerAuthContext'
 import { listCustomerNotifications } from '@/services/api/notificationsService'
 import { applyBrandTheme } from '@/styles/applyBrandTheme'
@@ -43,6 +44,7 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
         </Link>
         <div className="public-layout__actions">
           {headerRight}
+          <ThemeMenu />
           {customer && <NotificationBell load={listCustomerNotifications} />}
         </div>
       </header>

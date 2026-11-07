@@ -193,6 +193,11 @@ el logotipo definitivo aún está en validación):
 - **Colores:** naranja tueste `#D85A30`, teal tecnológico `#1D9E75`, crema
   cálido `#F1EFE8`, carbón `#2C2C2A`.
 - **Tipografía:** Poppins (títulos) + Manrope (cuerpo).
+- **Tema claro / oscuro:** el panel y el catálogo del cliente tienen un
+  selector Claro / Oscuro / Sistema en el encabezado. Se guarda por
+  dispositivo y por defecto sigue al sistema operativo. La paleta oscura está
+  en `src/styles/tokens.css`; los componentes usan los tokens semánticos
+  (`--color-text-primary`, `--color-surface-*`) para que cambien solos.
 - **Tono:** amigable y cercano (tutea al usuario), educativo, cafetero y
   profesional — nunca frío ni excesivamente técnico.
 

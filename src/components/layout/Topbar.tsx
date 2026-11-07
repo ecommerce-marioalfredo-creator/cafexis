@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext'
 import { listAllBusinesses } from '@/services/api/businessOverride'
 import { listBusinessNotifications } from '@/services/api/notificationsService'
 import { NotificationBell } from '@/components/domain/NotificationBell'
+import { ThemeMenu } from '@/components/ui/ThemeMenu'
 import { BUSINESS_STAFF_ROLES } from './roles'
 import type { Business } from '@/types/domain'
 import './Topbar.css'
@@ -80,6 +81,7 @@ export function Topbar({ title, onOpenMenu }: TopbarProps) {
         ) : (
           <span className="topbar__business">{business?.name ?? 'Mi negocio'}</span>
         )}
+        <ThemeMenu />
         {user && BUSINESS_STAFF_ROLES.includes(user.role) && (
           // key: el supervisor técnico puede cambiar de negocio, y cada uno tiene sus avisos.
           <NotificationBell key={business?.id} load={listBusinessNotifications} />

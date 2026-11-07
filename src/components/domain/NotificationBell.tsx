@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAsync } from '@/hooks/useAsync'
+import { useDismiss } from '@/hooks/useDismiss'
 import { ORDERS_POLL_MS } from '@/hooks/useOrders'
 import { markNotificationsRead, onNotificationsChanged } from '@/services/api/notificationsService'
 import type { OrderNotification } from '@/types/domain'
@@ -47,21 +48,7 @@ export function NotificationBell({ load }: NotificationBellProps) {
     return () => clearTimeout(timer)
   }, [toast])
 
-  useEffect(() => {
-    if (!open) return
-    const closeOnOutside = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    const closeOnEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('mousedown', closeOnOutside)
-    document.addEventListener('keydown', closeOnEscape)
-    return () => {
-      document.removeEventListener('mousedown', closeOnOutside)
-      document.removeEventListener('keydown', closeOnEscape)
-    }
-  }, [open])
+  useDismiss(rootRef, open, setOpen)
 
   const toggle = async () => {
     const opening = !open

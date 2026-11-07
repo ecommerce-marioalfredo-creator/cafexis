@@ -1,6 +1,8 @@
 .cancellation-alerts {
   /* Más oscuro que --color-state-error: el texto debe leerse bien sobre el fondo rojizo. */
   --cancellation-alerts-red: #a82e2e;
+  /* Fondo del título, con texto blanco: igual en los dos temas. */
+  --cancellation-alerts-fill: #a82e2e;
 
   overflow: hidden;
   border: 1px solid var(--cancellation-alerts-red);
@@ -9,10 +11,14 @@
   color: var(--cancellation-alerts-red);
 }
 
+:root[data-theme='dark'] .cancellation-alerts {
+  --cancellation-alerts-red: #f29a9a;
+}
+
 .cancellation-alerts__title {
   margin: 0;
   padding: var(--space-2) var(--space-3);
-  background: var(--cancellation-alerts-red);
+  background: var(--cancellation-alerts-fill);
   color: #fff;
   font-family: var(--font-heading);
   font-size: 14px;
