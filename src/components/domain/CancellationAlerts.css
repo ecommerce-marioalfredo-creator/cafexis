@@ -1,0 +1,59 @@
+.cancellation-alerts {
+  /* Más oscuro que --color-state-error: el texto debe leerse bien sobre el fondo rojizo. */
+  --cancellation-alerts-red: #a82e2e;
+
+  overflow: hidden;
+  border: 1px solid var(--cancellation-alerts-red);
+  border-radius: var(--radius-md);
+  background: rgba(214, 69, 69, 0.1);
+  color: var(--cancellation-alerts-red);
+}
+
+.cancellation-alerts__title {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--cancellation-alerts-red);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Con muchas cancelaciones la lista hace scroll y no empuja el resto del dashboard. */
+.cancellation-alerts__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-3);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.cancellation-alerts__list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid rgba(168, 46, 46, 0.25);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cancellation-alerts__list li:first-child {
+  border-top: none;
+}
+
+.cancellation-alerts__list span {
+  flex: 1 1 240px;
+  overflow-wrap: anywhere;
+}
+
+.cancellation-alerts__list time {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.cancellation-alerts__error {
+  margin: 0;
+}

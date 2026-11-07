@@ -200,12 +200,13 @@ el logotipo definitivo aún está en validación):
 
 **Técnicos (configuración, sin programar):**
 
-1. Aplicar en Supabase las migraciones `0015` (fotos de producto) y `0016`
-   (cancelación y avisos); ver [`supabase/README.md`](supabase/README.md),
-   pasos 15 y 16. Las `0011`–`0014` ya están aplicadas.
+1. Las migraciones `0011`–`0014` y `0016` ya están aplicadas. Si las fotos de
+   producto se aplicaron con su nombre anterior (`0013_fotos_producto_cafexis`),
+   volver a ejecutar la `0015`; ver [`supabase/README.md`](supabase/README.md),
+   paso 15.
 2. Desplegar las Edge Functions si aún no se hizo tras la `0013`:
    `invite-user`, `create-payment-link`, `generate-invoice` y
-   `wompi-webhook`. Publicar el frontend junto con la `0016`.
+   `wompi-webhook`. Publicar el frontend, que ya corresponde a la `0016`.
 3. Agregar `co.cafexis.clientes://auth-callback` en las Redirect URLs de
    Supabase Auth para el login con Google de la app de clientes.
 

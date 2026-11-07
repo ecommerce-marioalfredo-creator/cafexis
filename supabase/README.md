@@ -82,7 +82,7 @@ Tienes dos formas, elige la que prefieras:
    - `migrations/0013_auditoria_seguridad_cafexis.sql` (ya aplicada — ver paso 13)
    - `migrations/0014_pedidos_y_permisos_por_rol_cafexis.sql` (ya aplicada — ver paso 14)
    - `migrations/0015_fotos_producto_cafexis.sql` (ver paso 15)
-   - `migrations/0016_cancelacion_y_avisos_cafexis.sql` (pendiente — ver paso 16)
+   - `migrations/0016_cancelacion_y_avisos_cafexis.sql` (ya aplicada — ver paso 16)
 
 **Opción B — Supabase CLI (recomendado si seguimos iterando el esquema):**
 ```bash
@@ -447,7 +447,7 @@ Esta migración se llamó antes `0013_fotos_producto_cafexis.sql`. Si ya la
 aplicaste con ese nombre, vuelve a ejecutarla: es segura de repetir y ajusta
 los permisos a las reglas de la 0014.
 
-### 16. Cancelación y avisos (pendiente — aplicar después de la 0015)
+### 16. Cancelación y avisos (ya aplicada)
 
 `migrations/0016_cancelacion_y_avisos_cafexis.sql`. No requiere redesplegar
 Edge Functions; sí publicar el frontend del mismo commit.
@@ -466,8 +466,10 @@ Qué incluye:
   avisos del negocio se comparten entre todo su personal, así que marcarlos
   como leídos aplica para todos.
 - **Dónde se ven los cancelados**: en el historial del cliente y en
-  **Reportes → Histórico de pedidos**. No aparecen en el dashboard ni en el
-  tablero de Ventas, y no cuentan en las cifras de ventas.
+  **Reportes → Histórico de pedidos**. No aparecen como comandas en el
+  dashboard ni en el tablero de Ventas, y no cuentan en las cifras de ventas.
+  El dashboard solo muestra una alerta roja con las cancelaciones del día y
+  quién las hizo; esa alerta no depende de si alguien ya abrió la campana.
 
 ## Gestión de usuarios y roles (invitaciones)
 

@@ -18,9 +18,9 @@ function periodStart(period: ClosedOrdersPeriod): Date {
 }
 
 /** Las acciones lanzan el error de la base de datos; quien las llama decide dónde mostrarlo. */
-export function useOrders(period: ClosedOrdersPeriod = 'hoy') {
+export function useOrders(period: ClosedOrdersPeriod = 'hoy', pollMs: number = ORDERS_POLL_MS) {
   const { data, loading, error, reload, refresh } = useAsync(() => listBoardOrders(periodStart(period)), [period], {
-    pollMs: ORDERS_POLL_MS,
+    pollMs,
   })
 
   const setStatus = useCallback(
