@@ -16,7 +16,7 @@ import './CustomerBusinessesPage.css'
  * Google.
  */
 export function CustomerBusinessesPage() {
-  const { customer, loading: authLoading, loginWithGoogle, logout } = useCustomerAuth()
+  const { customer, loading: authLoading, loginWithGoogle } = useCustomerAuth()
   const [links, setLinks] = useState<CustomerBusinessLink[]>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>()
@@ -60,13 +60,7 @@ export function CustomerBusinessesPage() {
   if (error) return <PageError message={error} onRetry={load} />
 
   return (
-    <PublicLayout
-      headerRight={
-        <Button variant="tertiary" onClick={logout}>
-          Cerrar sesión
-        </Button>
-      }
-    >
+    <PublicLayout>
       <h1 className="customer-businesses__title">Mis negocios</h1>
 
       {!links || links.length === 0 ? (

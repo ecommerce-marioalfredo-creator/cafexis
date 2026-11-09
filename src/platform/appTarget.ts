@@ -18,6 +18,16 @@ export const APP_TARGET: AppTarget = mode === 'clientes' || mode === 'equipo' ? 
 export const IS_NATIVE = Capacitor.isNativePlatform()
 
 /**
+ * iPhone o iPad, en la app o en el navegador: a diferencia de Android, no
+ * tienen botón atrás del sistema. iPadOS se presenta como Mac; se distingue
+ * por la pantalla táctil.
+ */
+export const IS_IOS =
+  Capacitor.getPlatform() === 'ios' ||
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+
+/**
  * Esquema de deep links de cada app (debe coincidir con capacitor.config.ts
  * y con las "Redirect URLs" permitidas en Supabase Auth).
  */

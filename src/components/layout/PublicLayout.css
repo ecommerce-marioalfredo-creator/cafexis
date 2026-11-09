@@ -25,6 +25,7 @@
   text-decoration: none;
   color: var(--color-text-primary);
   min-width: 0;
+  margin-right: auto;
 }
 
 .public-layout__logo {
@@ -58,11 +59,49 @@
   white-space: nowrap;
 }
 
+.public-layout__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-default);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.public-layout__back:hover {
+  border-color: var(--color-brand-teal);
+}
+
+.public-layout__back svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.public-layout__nav,
 .public-layout__actions {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   flex-shrink: 0;
+}
+
+.public-layout__nav:empty {
+  display: none;
+}
+
+.public-layout__session {
+  margin-left: auto;
 }
 
 .public-layout__signin {
@@ -79,6 +118,25 @@
   width: 100%;
   margin: 0 auto;
   padding: var(--space-4);
+}
+
+/* En celular no cabe todo en una fila: "Mis pedidos" y la sesión van debajo. */
+@media (max-width: 639px) {
+  .public-layout__header {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+  }
+
+  /* Base 0: el nombre se recorta antes de que el tema y los avisos bajen de fila. */
+  .public-layout__brand {
+    flex: 1 1 0;
+  }
+
+  .public-layout__nav {
+    order: 1;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
 }
 
 @media (min-width: 640px) {

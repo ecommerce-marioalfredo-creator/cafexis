@@ -14,3 +14,4 @@ vite.config.d.ts
 # Builds web de las apps móviles (Fase 7)
 dist-clientes
 dist-equipo
+

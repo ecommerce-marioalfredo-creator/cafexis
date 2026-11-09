@@ -50,6 +50,8 @@ compilación igual que en la web.
   catálogo dentro de la app. Registrados en `AndroidManifest.xml` e
   `Info.plist` de cada proyecto.
 - **Botón atrás de Android**: vuelve a la pantalla anterior o cierra la app.
+- **Volver en iOS**: como no hay botón atrás, las pantallas del cliente muestran
+  una flecha en el encabezado cuando hay una pantalla anterior (`PublicLayout.tsx`).
 - **Bordes de pantalla**: el contenido no queda bajo la barra de estado ni el
   notch (`capacitor.config.ts`).
 - **Abrir un negocio por link o código** en "Mis negocios": dentro de la

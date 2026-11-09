@@ -1,9 +1,10 @@
 import { useEffect, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { NotificationBell } from '@/components/domain/NotificationBell'
 import { Button } from '@/components/ui/Button'
 import { ThemeMenu } from '@/components/ui/ThemeMenu'
 import { useCustomerAuth } from '@/context/CustomerAuthContext'
+import { IS_IOS } from '@/platform/appTarget'
 import { listCustomerNotifications } from '@/services/api/notificationsService'
 import { applyBrandTheme } from '@/styles/applyBrandTheme'
 import type { PublicBusiness } from '@/types/domain'
@@ -23,7 +24,9 @@ interface PublicLayoutProps {
  * color de marca del negocio igual que AppShell, cuando hay uno.
  */
 export function PublicLayout({ business, children, headerRight }: PublicLayoutProps) {
-  const { customer, loginWithGoogle } = useCustomerAuth()
+  const { customer, loginWithGoogle, logout } = useCustomerAuth()
+  const navigate = useNavigate()
+  const signIn = () => loginWithGoogle(window.location.href)
 
   useEffect(() => {
     applyBrandTheme(business?.branding)
@@ -33,9 +36,19 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
   // El inicio del cliente es el catálogo de su negocio: "/" es el panel del personal.
   const home = business ? `/c/${business.slug}` : '/mis-negocios'
 
+  // React Router guarda en history.state la posición dentro de la app: en la primera pantalla no hay a dónde volver.
+  const showBack = IS_IOS && (window.history.state?.idx ?? 0) > 0
+
   return (
     <div className="public-layout">
       <header className="public-layout__header">
+        {showBack && (
+          <button type="button" className="public-layout__back" onClick={() => navigate(-1)} aria-label="Volver">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
         <Link to={home} className="public-layout__brand">
           {business?.branding.logoUrl ? (
             <img src={business.branding.logoUrl} alt={business.name} className="public-layout__logo" />
@@ -46,8 +59,21 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
           )}
           <span className="public-layout__name">{business?.name ?? 'Cafexis'}</span>
         </Link>
-        <div className="public-layout__actions">
+        <div className="public-layout__nav">
           {headerRight}
+          {customer ? (
+            <Button variant="secondary" className="public-layout__session" onClick={logout}>
+              Desconectarse
+            </Button>
+          ) : (
+            business && (
+              <Button variant="primary" className="public-layout__session" onClick={signIn}>
+                Conectarse con Google
+              </Button>
+            )
+          )}
+        </div>
+        <div className="public-layout__actions">
           <ThemeMenu />
           {/* En las pantallas de un negocio los avisos siempre están: sin sesión, explican cómo verlos. */}
           {(customer || business) && (
@@ -58,7 +84,7 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
                 customer ? undefined : (
                   <div className="public-layout__signin">
                     <p>Inicia sesión para ver los avisos de tus pedidos.</p>
-                    <Button variant="secondary" className="btn--block" onClick={() => loginWithGoogle(window.location.href)}>
+                    <Button variant="secondary" className="btn--block" onClick={signIn}>
                       Iniciar sesión con Google
                     </Button>
                   </div>
