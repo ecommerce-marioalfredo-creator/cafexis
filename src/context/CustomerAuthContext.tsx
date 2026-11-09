@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { ConnectModal } from '@/components/domain/ConnectModal'
 import { supabase } from '@/services/api/supabaseClient'
 import * as customerAuthService from '@/services/api/customerAuthService'
 import type { Customer } from '@/types/domain'
@@ -6,7 +7,8 @@ import type { Customer } from '@/types/domain'
 interface CustomerAuthContextValue {
   customer: Customer | undefined
   loading: boolean
-  loginWithGoogle: (redirectTo: string) => Promise<void>
+  /** Abre la ventana con las dos formas de conectarse: Google o sin cuenta. */
+  promptConnect: () => void
   logout: () => Promise<void>
   refresh: () => Promise<void>
 }
@@ -14,7 +16,7 @@ interface CustomerAuthContextValue {
 const CustomerAuthContext = createContext<CustomerAuthContextValue | undefined>(undefined)
 
 /**
- * Sesión del cliente final (login con Google), equivalente a AuthContext.tsx
+ * Sesión del cliente final (Google o invitado), equivalente a AuthContext.tsx
  * pero para /c/:slug, /trazabilidad/:lotId y /mis-negocios — las rutas
  * públicas, nunca para el panel de empleados.
  *
@@ -30,6 +32,7 @@ const CustomerAuthContext = createContext<CustomerAuthContextValue | undefined>(
 export function CustomerAuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer>()
   const [loading, setLoading] = useState(true)
+  const [connectOpen, setConnectOpen] = useState(false)
   const initialLoadDone = useRef(false)
 
   const refresh = useCallback(async () => {
@@ -51,10 +54,20 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.subscription.unsubscribe()
   }, [refresh])
 
-  const loginWithGoogle = useCallback(async (redirectTo: string) => {
-    await customerAuthService.loginWithGoogle(redirectTo)
-    // signInWithOAuth redirige de inmediato al proveedor; no hay nada que refrescar aquí.
-  }, [])
+  // signInWithOAuth redirige de inmediato al proveedor; no hay nada que refrescar aquí.
+  const loginWithGoogle = useCallback(() => customerAuthService.loginWithGoogle(window.location.href), [])
+
+  // A diferencia de Google, no sale de la página: el carrito sigue ahí al conectarse.
+  const loginAsGuest = useCallback(
+    async (name: string) => {
+      await customerAuthService.loginAsGuest(name)
+      await refresh()
+    },
+    [refresh],
+  )
+
+  const promptConnect = useCallback(() => setConnectOpen(true), [])
+  const closeConnect = useCallback(() => setConnectOpen(false), [])
 
   const logout = useCallback(async () => {
     await customerAuthService.logout()
@@ -62,8 +75,9 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <CustomerAuthContext.Provider value={{ customer, loading, loginWithGoogle, logout, refresh }}>
+    <CustomerAuthContext.Provider value={{ customer, loading, promptConnect, logout, refresh }}>
       {children}
+      {connectOpen && <ConnectModal onGoogle={loginWithGoogle} onGuest={loginAsGuest} onClose={closeConnect} />}
     </CustomerAuthContext.Provider>
   )
 }

@@ -445,12 +445,14 @@ export interface PublicCoffeeLot {
   harvestYear: number
 }
 
-/** Perfil del cliente final (login con Google), sin negocio fijo. */
+/** Perfil del cliente final (con Google o invitado), sin negocio fijo. */
 export interface Customer {
   id: string
   name: string
   email: string
   phone?: string
+  /** Entró sin cuenta: su historial solo existe en este dispositivo. */
+  isGuest: boolean
 }
 
 /** Un negocio al que el cliente ya está vinculado (pantalla "Mis negocios"). */

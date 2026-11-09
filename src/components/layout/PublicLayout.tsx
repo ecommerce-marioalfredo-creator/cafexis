@@ -1,7 +1,8 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { NotificationBell } from '@/components/domain/NotificationBell'
 import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
 import { ThemeMenu } from '@/components/ui/ThemeMenu'
 import { useCustomerAuth } from '@/context/CustomerAuthContext'
 import { IS_IOS } from '@/platform/appTarget'
@@ -24,9 +25,9 @@ interface PublicLayoutProps {
  * color de marca del negocio igual que AppShell, cuando hay uno.
  */
 export function PublicLayout({ business, children, headerRight }: PublicLayoutProps) {
-  const { customer, loginWithGoogle, logout } = useCustomerAuth()
+  const { customer, promptConnect, logout } = useCustomerAuth()
   const navigate = useNavigate()
-  const signIn = () => loginWithGoogle(window.location.href)
+  const [confirmingLogout, setConfirmingLogout] = useState(false)
 
   useEffect(() => {
     applyBrandTheme(business?.branding)
@@ -62,13 +63,17 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
         <div className="public-layout__nav">
           {headerRight}
           {customer ? (
-            <Button variant="secondary" className="public-layout__session" onClick={logout}>
+            <Button
+              variant="secondary"
+              className="public-layout__session"
+              onClick={customer.isGuest ? () => setConfirmingLogout(true) : logout}
+            >
               Desconectarse
             </Button>
           ) : (
             business && (
-              <Button variant="primary" className="public-layout__session" onClick={signIn}>
-                Conectarse con Google
+              <Button variant="primary" className="public-layout__session" onClick={promptConnect}>
+                Conectarse
               </Button>
             )
           )}
@@ -83,9 +88,9 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
               empty={
                 customer ? undefined : (
                   <div className="public-layout__signin">
-                    <p>Inicia sesión para ver los avisos de tus pedidos.</p>
-                    <Button variant="secondary" className="btn--block" onClick={signIn}>
-                      Iniciar sesión con Google
+                    <p>Conéctate para ver los avisos de tus pedidos.</p>
+                    <Button variant="secondary" className="btn--block" onClick={promptConnect}>
+                      Conectarse
                     </Button>
                   </div>
                 )
@@ -95,6 +100,34 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
         </div>
       </header>
       <main className="public-layout__content">{children}</main>
+
+      {confirmingLogout && (
+        <Modal
+          title="¿Desconectarte?"
+          onClose={() => setConfirmingLogout(false)}
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setConfirmingLogout(false)}>
+                Volver
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  setConfirmingLogout(false)
+                  void logout()
+                }}
+              >
+                Desconectarme
+              </Button>
+            </>
+          }
+        >
+          <p>
+            Entraste sin cuenta: si te desconectas, ya no podrás ver tus pedidos ni tus avisos en este dispositivo. El
+            negocio conserva tus pedidos.
+          </p>
+        </Modal>
+      )}
     </div>
   )
 }

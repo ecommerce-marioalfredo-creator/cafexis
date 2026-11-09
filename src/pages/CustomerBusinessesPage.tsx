@@ -16,7 +16,7 @@ import './CustomerBusinessesPage.css'
  * Google.
  */
 export function CustomerBusinessesPage() {
-  const { customer, loading: authLoading, loginWithGoogle } = useCustomerAuth()
+  const { customer, loading: authLoading, promptConnect } = useCustomerAuth()
   const [links, setLinks] = useState<CustomerBusinessLink[]>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>()
@@ -36,10 +36,6 @@ export function CustomerBusinessesPage() {
 
   useEffect(load, [customer])
 
-  const handleLogin = async () => {
-    await loginWithGoogle(window.location.href)
-  }
-
   if (authLoading || loading) return <PageLoading label="Cargando…" />
 
   if (!customer) {
@@ -47,9 +43,9 @@ export function CustomerBusinessesPage() {
       <PublicLayout>
         <div className="customer-businesses__empty">
           <h1>Bienvenido a Cafexis</h1>
-          <p>Inicia sesión con Google para ver los negocios a los que te has vinculado.</p>
-          <Button variant="primary" onClick={handleLogin}>
-            Iniciar sesión con Google
+          <p>Conéctate para ver los negocios a los que te has vinculado.</p>
+          <Button variant="primary" onClick={promptConnect}>
+            Conectarse
           </Button>
         </div>
         <OpenBusinessForm />

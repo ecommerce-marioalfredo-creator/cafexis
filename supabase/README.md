@@ -471,6 +471,24 @@ Qué incluye:
   El dashboard solo muestra una alerta roja con las cancelaciones del día y
   quién las hizo; esa alerta no depende de si alguien ya abrió la campana.
 
+### 17. Clientes invitados (pendiente de aplicar)
+
+`migrations/0017_invitados_cafexis.sql`. No requiere redesplegar Edge
+Functions. Además hay que activar **Authentication → Providers → Allow
+anonymous sign-ins** en el panel de Supabase.
+
+Qué incluye:
+
+- **Continuar sin cuenta**: el cliente solo escribe su nombre y queda con una
+  sesión anónima. Pide, ve sus pedidos, recibe avisos y cancela igual que con
+  Google, pero su historial solo existe en ese dispositivo.
+- **Registrar un negocio** (`register_business_cafexis`) ahora exige una cuenta
+  real, para que un script no pueda abrir negocios sin límite con sesiones
+  anónimas.
+- Sin cuenta es más fácil enviar pedidos falsos, y cada pedido descuenta
+  inventario hasta que el personal lo cancela. Antes de recibir negocios reales,
+  activar el CAPTCHA en **Authentication → Attack Protection**.
+
 ## Gestión de usuarios y roles (invitaciones)
 
 Desde "Configuración" en el panel, un administrador (o el supervisor técnico)

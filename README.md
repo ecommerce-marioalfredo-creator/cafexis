@@ -62,7 +62,7 @@ Las migraciones de cada fase están en
 | Frontend web · Vista barista/vendedor | ✅ Tablero de pedidos con recetas, cobro en caja y filtro por período |
 | Frontend web · Catálogo, pedido e historial del cliente final | ✅ Fotos de producto, pago en el negocio y cancelación con aviso |
 | Consola de soporte y casos | ✅ Rutas `/soporte` (equipo) y `/ayuda` (negocios) |
-| Base de datos (Supabase) | ✅ Migraciones `0001`–`0016`, ver [`supabase/`](supabase/) |
+| Base de datos (Supabase) | ✅ Migraciones `0001`–`0017`, ver [`supabase/`](supabase/) |
 | Gestión de usuarios y roles (invitaciones) | ✅ Construido; la Edge Function `invite-user` debe estar desplegada en su versión posterior a la `0013` |
 | Despliegue web | ✅ Configurado para Vercel ([`vercel.json`](vercel.json)) |
 | Backend / API propia | ✅ No hace falta (Supabase + RLS + funciones SQL + Edge Functions la reemplazan) |
@@ -208,10 +208,10 @@ el logotipo definitivo aún está en validación):
 1. Las migraciones `0011`–`0014` y `0016` ya están aplicadas. Si las fotos de
    producto se aplicaron con su nombre anterior (`0013_fotos_producto_cafexis`),
    volver a ejecutar la `0015`; ver [`supabase/README.md`](supabase/README.md),
-   paso 15.
+   paso 15. Falta aplicar la `0017` (clientes invitados), paso 17.
 2. Desplegar las Edge Functions si aún no se hizo tras la `0013`:
    `invite-user`, `create-payment-link`, `generate-invoice` y
-   `wompi-webhook`. Publicar el frontend, que ya corresponde a la `0016`.
+   `wompi-webhook`. Publicar el frontend, que ya corresponde a la `0017`.
 3. Agregar `co.cafexis.clientes://auth-callback` en las Redirect URLs de
    Supabase Auth para el login con Google de la app de clientes.
 

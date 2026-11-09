@@ -1,5 +1,5 @@
 /**
- * Autenticación del cliente final: login con Google (no usuario/contraseña
+ * Autenticación del cliente final: con Google o como invitado (no usuario/contraseña
  * propio de Cafexis), reutilizable en cualquier negocio de la plataforma.
  * Separado de authService.ts (empleados internos) porque son dos perfiles
  * distintos sobre la misma sesión de Supabase — ver la nota de arquitectura
@@ -43,6 +43,18 @@ async function loginWithGoogleNative(redirectTo: string): Promise<void> {
   await Browser.open({ url: data.url, presentationStyle: 'popover' })
 }
 
+/**
+ * Entra sin cuenta: crea una sesión anónima que solo existe en este dispositivo.
+ * El nombre es el que getCurrentCustomer guarda en el perfil y ve el negocio.
+ */
+export async function loginAsGuest(name: string): Promise<void> {
+  const { error } = await supabase.auth.signInAnonymously({ options: { data: { name } } })
+  if (!error) return
+  if (error.status === 429) throw new Error('Hay demasiados intentos desde esta conexión. Espera un momento o conéctate con Google.')
+  if (error.code === 'anonymous_provider_disabled') throw new Error('Por ahora no se puede continuar sin cuenta. Conéctate con Google.')
+  throw new Error(error.message)
+}
+
 export async function logout(): Promise<void> {
   await supabase.auth.signOut()
 }
@@ -57,6 +69,7 @@ export async function getCurrentCustomer(): Promise<Customer | undefined> {
     data: { session },
   } = await supabase.auth.getSession()
   if (!session) return undefined
+  const isGuest = session.user.is_anonymous === true
 
   const { data: existing, error: fetchError } = await supabase
     .from('customers_cafexis')
@@ -65,7 +78,7 @@ export async function getCurrentCustomer(): Promise<Customer | undefined> {
     .maybeSingle<CustomerRow>()
 
   if (fetchError) throw new Error(fetchError.message)
-  if (existing) return mapCustomer(existing)
+  if (existing) return mapCustomer(existing, isGuest)
 
   const meta = session.user.user_metadata as { full_name?: string; name?: string } | undefined
   const { data: created, error: insertError } = await supabase
@@ -78,8 +91,10 @@ export async function getCurrentCustomer(): Promise<Customer | undefined> {
     .select()
     .single<CustomerRow>()
 
+  // El aviso de sesión nueva y quien inició el acceso pueden llegar aquí a la vez.
+  if (insertError?.code === '23505') return getCurrentCustomer()
   if (insertError || !created) throw new Error(insertError?.message ?? 'No se pudo crear tu perfil de cliente.')
-  return mapCustomer(created)
+  return mapCustomer(created, isGuest)
 }
 
 /**

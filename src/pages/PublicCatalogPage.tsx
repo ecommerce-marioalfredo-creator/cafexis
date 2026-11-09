@@ -31,7 +31,7 @@ export function PublicCatalogPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const { customer, loading: authLoading, loginWithGoogle } = useCustomerAuth()
+  const { customer, loading: authLoading, promptConnect } = useCustomerAuth()
 
   const [business, setBusiness] = useState<PublicBusiness>()
   const [products, setProducts] = useState<PublicProduct[]>([])
@@ -105,13 +105,9 @@ export function PublicCatalogPage() {
     )
   }
 
-  const handleLogin = async () => {
-    await loginWithGoogle(window.location.href)
-  }
-
-  // Siempre visible. Sin sesión, /pedidos devolvería al catálogo sin explicar nada: primero se inicia sesión.
+  // Siempre visible. Sin sesión, /pedidos devolvería al catálogo sin explicar nada: primero se conecta.
   const ordersButton = (
-    <Button variant="tertiary" onClick={customer ? () => navigate(`/c/${slug}/pedidos`) : handleLogin}>
+    <Button variant="tertiary" onClick={customer ? () => navigate(`/c/${slug}/pedidos`) : promptConnect}>
       Mis pedidos
     </Button>
   )
@@ -240,9 +236,9 @@ export function PublicCatalogPage() {
 
           {!customer ? (
             <div className="public-catalog__login-prompt">
-              <p>Inicia sesión con tu cuenta de Google para confirmar tu pedido.</p>
-              <Button variant="primary" onClick={handleLogin} className="btn--block">
-                Iniciar sesión con Google
+              <p>Conéctate para confirmar tu pedido.</p>
+              <Button variant="primary" onClick={promptConnect} className="btn--block">
+                Conectarse
               </Button>
             </div>
           ) : (

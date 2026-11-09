@@ -105,12 +105,13 @@ export function mapPublicCoffeeLot(row: PublicCoffeeLotRow): PublicCoffeeLot {
   }
 }
 
-export function mapCustomer(row: CustomerRow): Customer {
+export function mapCustomer(row: CustomerRow, isGuest: boolean): Customer {
   return {
     id: row.id,
     name: row.name,
     email: row.email,
     phone: row.phone ?? undefined,
+    isGuest,
   }
 }
 
