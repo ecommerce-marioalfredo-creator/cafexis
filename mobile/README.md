@@ -54,7 +54,10 @@ compilación igual que en la web.
   notch (`capacitor.config.ts`).
 - **Abrir un negocio por link o código** en "Mis negocios": dentro de la
   app no hay barra de direcciones.
-- Las apps **no muestran la cuenta demo** en el login (la web sí).
+- **Cuentas de prueba del negocio demo**: Cafexis Equipo las muestra en el
+  login (`.env.equipo`), igual que la web (`.env.production`). La app de
+  clientes entra con Google y no las usa. Antes de recibir negocios reales,
+  cambiar esas contraseñas y sacar una versión sin `.env.equipo`.
 
 ## Pendiente antes de publicar
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { PageLoading, PageError } from '@/components/ui/PageState'
 import { Button } from '@/components/ui/Button'
@@ -30,6 +30,7 @@ interface CartLine {
 export function PublicCatalogPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { customer, loading: authLoading, loginWithGoogle } = useCustomerAuth()
 
   const [business, setBusiness] = useState<PublicBusiness>()
@@ -65,6 +66,10 @@ export function PublicCatalogPage() {
   }
 
   useEffect(load, [slug])
+
+  // El logo del encabezado enlaza a esta misma URL: al pulsarlo, la confirmación
+  // del pedido da paso al catálogo. El carrito se conserva.
+  useEffect(() => setSubmittedOrder(undefined), [location.key])
 
   // Una vez logueado, vincula al cliente con este negocio (idempotente) para
   // que pueda pedir y luego ver su historial en /c/:slug/pedidos.

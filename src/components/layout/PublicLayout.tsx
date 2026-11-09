@@ -29,10 +29,13 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
     return () => applyBrandTheme(undefined)
   }, [business?.branding])
 
+  // El inicio del cliente es el catálogo de su negocio: "/" es el panel del personal.
+  const home = business ? `/c/${business.slug}` : '/mis-negocios'
+
   return (
     <div className="public-layout">
       <header className="public-layout__header">
-        <Link to="/" className="public-layout__brand">
+        <Link to={home} className="public-layout__brand">
           {business?.branding.logoUrl ? (
             <img src={business.branding.logoUrl} alt={business.name} className="public-layout__logo" />
           ) : (

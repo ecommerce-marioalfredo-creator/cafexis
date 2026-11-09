@@ -4,14 +4,12 @@ import { AuthLayout } from '@/components/layout/AuthLayout'
 import { FormField } from '@/components/ui/FormField'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
-import { APP_TARGET } from '@/platform/appTarget'
 
-// La cuenta demo es un administrador real del negocio demo: publicar su
-// contraseña en producción le da ese acceso a cualquiera. Solo se muestra
-// en desarrollo o si se pide explícitamente con VITE_SHOW_DEMO_ACCOUNT.
-// Las apps de las tiendas (Fase 7) nunca la muestran.
-const SHOW_DEMO_ACCOUNT =
-  APP_TARGET === 'web' && (import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_ACCOUNT === 'true')
+// Las cuentas demo son usuarios reales del negocio demo: publicar sus
+// contraseñas le da ese acceso a cualquiera. Solo se muestran en desarrollo o
+// si el build lo pide con VITE_SHOW_DEMO_ACCOUNT (.env.production en la web,
+// .env.equipo en la app "Cafexis Equipo").
+const SHOW_DEMO_ACCOUNT = import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_ACCOUNT === 'true'
 
 export function LoginPage() {
   const { login } = useAuth()

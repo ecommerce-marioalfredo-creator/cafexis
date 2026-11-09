@@ -8,6 +8,8 @@ vite.config.d.ts
 .env
 .env.*
 !.env.example
+!.env.production
+!.env.equipo
 
 # Builds web de las apps móviles (Fase 7)
 dist-clientes
