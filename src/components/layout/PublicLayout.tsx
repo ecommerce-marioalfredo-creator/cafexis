@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { NotificationBell } from '@/components/domain/NotificationBell'
+import { Button } from '@/components/ui/Button'
 import { ThemeMenu } from '@/components/ui/ThemeMenu'
 import { useCustomerAuth } from '@/context/CustomerAuthContext'
 import { listCustomerNotifications } from '@/services/api/notificationsService'
@@ -22,7 +23,7 @@ interface PublicLayoutProps {
  * color de marca del negocio igual que AppShell, cuando hay uno.
  */
 export function PublicLayout({ business, children, headerRight }: PublicLayoutProps) {
-  const { customer } = useCustomerAuth()
+  const { customer, loginWithGoogle } = useCustomerAuth()
 
   useEffect(() => {
     applyBrandTheme(business?.branding)
@@ -48,7 +49,23 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
         <div className="public-layout__actions">
           {headerRight}
           <ThemeMenu />
-          {customer && <NotificationBell load={listCustomerNotifications} />}
+          {/* En las pantallas de un negocio los avisos siempre están: sin sesión, explican cómo verlos. */}
+          {(customer || business) && (
+            <NotificationBell
+              key={customer?.id ?? 'sin-sesion'}
+              load={listCustomerNotifications}
+              empty={
+                customer ? undefined : (
+                  <div className="public-layout__signin">
+                    <p>Inicia sesión para ver los avisos de tus pedidos.</p>
+                    <Button variant="secondary" className="btn--block" onClick={() => loginWithGoogle(window.location.href)}>
+                      Iniciar sesión con Google
+                    </Button>
+                  </div>
+                )
+              }
+            />
+          )}
         </div>
       </header>
       <main className="public-layout__content">{children}</main>

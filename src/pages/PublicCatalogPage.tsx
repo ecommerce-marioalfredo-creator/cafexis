@@ -109,6 +109,13 @@ export function PublicCatalogPage() {
     await loginWithGoogle(window.location.href)
   }
 
+  // Siempre visible. Sin sesión, /pedidos devolvería al catálogo sin explicar nada: primero se inicia sesión.
+  const ordersButton = (
+    <Button variant="tertiary" onClick={customer ? () => navigate(`/c/${slug}/pedidos`) : handleLogin}>
+      Mis pedidos
+    </Button>
+  )
+
   const handleSubmitOrder = async () => {
     if (!business || cart.length === 0) return
     setSaveError(undefined)
@@ -143,7 +150,7 @@ export function PublicCatalogPage() {
 
   if (submittedOrder) {
     return (
-      <PublicLayout business={business}>
+      <PublicLayout business={business} headerRight={ordersButton}>
         <div className="public-catalog__confirmation">
           <h1>¡Pedido enviado!</h1>
           <p>
@@ -165,16 +172,7 @@ export function PublicCatalogPage() {
   }
 
   return (
-    <PublicLayout
-      business={business}
-      headerRight={
-        customer ? (
-          <Button variant="tertiary" onClick={() => navigate(`/c/${slug}/pedidos`)}>
-            Mis pedidos
-          </Button>
-        ) : undefined
-      }
-    >
+    <PublicLayout business={business} headerRight={ordersButton}>
       {categories.length > 1 && (
         <div className="public-catalog__categories">
           {['todas', ...categories].map((c) => (

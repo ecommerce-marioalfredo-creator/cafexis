@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useAsync } from '@/hooks/useAsync'
 import { useDismiss } from '@/hooks/useDismiss'
 import { ORDERS_POLL_MS } from '@/hooks/useOrders'
@@ -11,6 +11,8 @@ const dateFormat = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeS
 
 interface NotificationBellProps {
   load: () => Promise<OrderNotification[]>
+  /** Reemplaza "No tienes avisos" cuando la lista está vacía (ej. quien aún no ha iniciado sesión). */
+  empty?: ReactNode
 }
 
 /**
@@ -18,7 +20,7 @@ interface NotificationBellProps {
  * abierta también aparece como aviso emergente; lo anterior solo suma al contador.
  * Si la consulta falla, la campana queda vacía: los avisos no deben tumbar la página.
  */
-export function NotificationBell({ load }: NotificationBellProps) {
+export function NotificationBell({ load, empty }: NotificationBellProps) {
   const { data, refresh } = useAsync(load, [], { pollMs: ORDERS_POLL_MS })
   const [open, setOpen] = useState(false)
   const [toast, setToast] = useState<OrderNotification>()
@@ -80,7 +82,7 @@ export function NotificationBell({ load }: NotificationBellProps) {
         <div className="notification-bell__panel">
           <strong className="notification-bell__title">Avisos</strong>
           {notifications.length === 0 ? (
-            <p className="notification-bell__empty">No tienes avisos.</p>
+            (empty ?? <p className="notification-bell__empty">No tienes avisos.</p>)
           ) : (
             <ul className="notification-bell__list">
               {notifications.map((n) => (

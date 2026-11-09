@@ -65,6 +65,14 @@
   flex-shrink: 0;
 }
 
+.public-layout__signin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
 .public-layout__content {
   flex: 1;
   max-width: 720px;
