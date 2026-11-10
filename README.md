@@ -54,6 +54,8 @@ Las migraciones de cada fase están en
 | 5 · Cliente final (web) | ✅ | Página pública de trazabilidad por lote con QR real, catálogo/menú público por negocio (`/c/:slug`) con QR, pedido con carrito y mesa/referencia, historial y estado de pedidos del cliente | `0010` |
 | 6 · Integraciones externas | ✅ Código terminado · ⚠️ requiere trámites | Suscripciones con 14 días de prueba y bloqueo al vencer (**funciona ya**). Pagos en línea con Wompi (link de pago + webhook con verificación de firma) y facturación electrónica DIAN con Factus (botón "Generar factura" en pedidos entregados): **programados, pero sin probar contra las APIs reales hasta tener las cuentas** | `0012` |
 | 7 · Plataforma y móvil | ✅ Código terminado · ⚠️ requiere publicación | Consola de soporte multi-negocio con casos (tickets) y rol de soporte de solo lectura, cierre de huecos de seguridad en roles, apps Android e iOS con Capacitor (**Cafexis** para clientes y **Cafexis Equipo** para el personal) | `0011` |
+| Planes de suscripción | ✅ `0019` y `0020` aplicadas | Tres planes (**Básica** gratis, **Profesional** y **Premium**) con funciones y límites verificados en la base de datos; prueba de 14 días en Premium; al vencer, el negocio baja a Básica en vez de bloquearse; página **Suscripción** del panel con el comparativo y **Cambiar de plan** (bajar a Básica es inmediato; un plan pago queda pendiente hasta que el supervisor confirma el pago) | `0019`, `0020` |
+| Panel del super usuario y códigos de promoción | ⚠️ `0021` por aplicar | En el **Dashboard** del supervisor técnico, vista **Plataforma**: todos los negocios con su suscripción completa y todos sus usuarios (rol, estado, último ingreso, invitaciones); editar cualquier dato de una suscripción (plan, estado, forma de pago, fechas, factura DIAN, descuento, aprobar o rechazar solicitudes); **códigos de promoción** con fecha de vencimiento y tope de usos (días gratis de un plan o descuento); y editar los planes (precios, prueba, límites y funciones). El administrador canjea el código en **Suscripción** | `0021` |
 | Auditoría · Seguridad y operación | ✅ `0013` aplicada · ⚠️ `0014` por aplicar | Usuarios desactivados sin acceso, pedidos solo por RPC (sin inserts directos del cliente), validación de que productos, recetas, lotes y compras sean del mismo negocio, registro atómico de negocio, pagos con monto validado, facturas que nunca se emiten dos veces, cobro en caja, cancelación con reposición de inventario, máquina de estados de pedidos y permisos por rol en el servidor | `0013`, `0014` |
 
 | Componente | Estado |
@@ -62,11 +64,11 @@ Las migraciones de cada fase están en
 | Frontend web · Vista barista/vendedor | ✅ Tablero de pedidos con recetas, cobro en caja y filtro por período; **Guías de preparación** con videos y PDF por producto |
 | Frontend web · Catálogo, pedido e historial del cliente final | ✅ Fotos de producto, pago en el negocio, cancelación con aviso y "Cómo se prepara" en los productos que el negocio publica |
 | Consola de soporte y casos | ✅ Rutas `/soporte` (equipo) y `/ayuda` (negocios) |
-| Base de datos (Supabase) | ✅ Migraciones `0001`–`0018`, ver [`supabase/`](supabase/) |
+| Base de datos (Supabase) | ✅ Migraciones `0001`–`0020` · ⚠️ `0021` por aplicar, ver [`supabase/`](supabase/) |
 | Gestión de usuarios y roles (invitaciones) | ✅ Construido; la Edge Function `invite-user` debe estar desplegada en su versión posterior a la `0013` |
 | Despliegue web | ✅ Configurado para Vercel ([`vercel.json`](vercel.json)) |
 | Backend / API propia | ✅ No hace falta (Supabase + RLS + funciones SQL + Edge Functions la reemplazan) |
-| Suscripciones y período de prueba | ✅ Funciona sin terceros; el cobro de la suscripción es manual (el supervisor técnico la activa) |
+| Planes y suscripciones | ✅ Básica, Profesional y Premium (`0019`). El dueño cambia de plan desde Suscripción (`0020`); un plan pago queda pendiente y el supervisor técnico lo aprueba al confirmar el pago, que es manual hasta tener la cuenta de Wompi |
 | Pagos en línea (Wompi) | ⚠️ Código listo pero sin usar en el catálogo: mientras no haya cuenta de comercio aprobada, el personal cobra y confirma cada comanda |
 | Facturación electrónica DIAN (Factus) | ⚠️ Código listo; falta habilitación ante la DIAN, resolución de numeración y contrato con el proveedor |
 | Apps Android / iOS | ⚠️ Proyectos nativos creados en [`mobile/`](mobile/); falta ícono definitivo, cuentas de desarrollador y publicación en tiendas |
@@ -79,13 +81,27 @@ directamente, no puede hacer más de lo que su rol permite.
 
 | Rol | Qué puede hacer |
 |---|---|
-| Supervisor técnico | Todo, en cualquier negocio (selector de negocio); asigna roles de plataforma y activa suscripciones |
+| Supervisor técnico (super usuario) | Todo, en cualquier negocio (selector de negocio); asigna roles de plataforma; en el Dashboard, vista **Plataforma**: ve todos los negocios y sus usuarios, cambia cualquier dato de las suscripciones, crea códigos de promoción y edita los planes |
 | Soporte | Consola de soporte y casos de todos los negocios, en **solo lectura** sobre sus datos |
-| Administrador / dueño | Todo en su negocio: inventario, productos y recetas, videos y PDF de preparación (y si el cliente los ve), lotes, compras, proveedores, reportes, usuarios, datos y logo; cancela pedidos y emite facturas |
+| Administrador / dueño | Todo en su negocio (y canjea códigos de promoción en Suscripción): inventario, productos y recetas, videos y PDF de preparación (y si el cliente los ve), lotes, compras, proveedores, reportes, usuarios, datos y logo; cancela pedidos y emite facturas |
 | Barista / vendedor | Vende desde el punto de venta (a precios del catálogo), avanza los pedidos, confirma cobros en caja, cancela pedidos no entregados, consulta las guías de preparación (videos y PDF) y abre casos de soporte; no edita inventario, catálogo, guías ni datos de pedidos |
 | Cliente final | Entra con Google, ve el catálogo (y los videos o PDF de preparación que el negocio publique), pide (solo a través de la función de pedidos), cancela sus pedidos mientras no hayan empezado a prepararse y consulta su historial |
 
 Un usuario desactivado desde Configuración pierde el acceso de inmediato.
+
+Además del rol, cuenta el **plan** del negocio (`0019`): un módulo fuera del
+plan sigue en el menú con un candado y explica en qué plan está, y la base
+de datos rechaza lo que el plan no incluye (por ejemplo, un pedido desde el
+celular en Básica o el producto número 21).
+
+| Plan | Panel del negocio | Lo que ve el cliente |
+|---|---|---|
+| **Básica** (gratis) | Punto de venta, comandas, inventario con descuento automático; hasta 2 usuarios, 20 productos y 30 insumos; histórico de pedidos de 30 días | Menú digital con QR, solo para consultar |
+| **Profesional** | Todo lo de Básica sin límites de productos ni insumos, hasta 6 usuarios, compras y proveedores, los 4 reportes, más vendidos en el dashboard, guías de preparación, lotes de café y color de marca | Pedido desde el celular con carrito, "Mis pedidos" y avisos |
+| **Premium** | Todo lo de Profesional, usuarios ilimitados, reportes personalizados, factura electrónica DIAN y pagos en línea (cuando estén habilitados) | Además, "Cómo se prepara" y el origen del café con QR |
+
+El detalle completo está en **Suscripción**, dentro del panel. La factura
+DIAN también se vende como complemento de Profesional.
 
 ## Pasos fuera de la programación (pagos y DIAN)
 

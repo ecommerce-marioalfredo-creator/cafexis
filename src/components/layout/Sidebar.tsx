@@ -2,8 +2,11 @@ import { NavLink } from 'react-router-dom'
 import logoOnDark from '@/assets/logo-dark.png'
 import { useBusiness } from '@/hooks/useBusiness'
 import { useAuth } from '@/context/AuthContext'
+import { usePlan } from '@/context/PlanContext'
+import { LockIcon } from '@/components/plan/UpgradeNotice'
+import { availableInLabel } from '@/components/plan/planCatalog'
 import { ADMIN_ROLES, BUSINESS_STAFF_ROLES, HELP_ROLES, PLATFORM_ROLES } from './roles'
-import type { UserRole } from '@/types/domain'
+import type { PlanFeature, UserRole } from '@/types/domain'
 import './Sidebar.css'
 
 /**
@@ -17,18 +20,21 @@ import './Sidebar.css'
  * Fase 7: el equipo de plataforma (supervisor técnico y soporte) tiene la
  * consola de soporte; soporte solo ve esa sección (es de solo lectura sobre
  * los negocios). Administrador y barista abren casos desde "Ayuda".
+ *
+ * Planes (0019): los módulos que el plan no incluye siguen en el menú con
+ * un candado; al abrirlos, RequirePlan explica qué se gana al subir.
  */
-const NAV_ITEMS: Array<{ to: string; label: string; icon: string; end?: true; roles?: UserRole[] }> = [
+const NAV_ITEMS: Array<{ to: string; label: string; icon: string; end?: true; roles?: UserRole[]; feature?: PlanFeature }> = [
   { to: '/soporte', label: 'Consola de soporte', icon: '🛟', roles: PLATFORM_ROLES },
   { to: '/', label: 'Dashboard', icon: '📊', end: true, roles: ADMIN_ROLES },
   { to: '/ventas', label: 'Ventas', icon: '🧾', roles: BUSINESS_STAFF_ROLES },
-  { to: '/preparacion', label: 'Guías de preparación', icon: '🎬', roles: BUSINESS_STAFF_ROLES },
+  { to: '/preparacion', label: 'Guías de preparación', icon: '🎬', roles: BUSINESS_STAFF_ROLES, feature: 'guias_equipo' },
   { to: '/inventario', label: 'Inventario', icon: '📦', roles: ADMIN_ROLES },
   { to: '/productos', label: 'Productos y recetas', icon: '☕', roles: ADMIN_ROLES },
-  { to: '/compras', label: 'Compras', icon: '🛒', roles: ADMIN_ROLES },
-  { to: '/proveedores', label: 'Proveedores', icon: '🚚', roles: ADMIN_ROLES },
+  { to: '/compras', label: 'Compras', icon: '🛒', roles: ADMIN_ROLES, feature: 'compras' },
+  { to: '/proveedores', label: 'Proveedores', icon: '🚚', roles: ADMIN_ROLES, feature: 'compras' },
   { to: '/reportes', label: 'Reportes', icon: '📈', roles: ADMIN_ROLES },
-  { to: '/trazabilidad', label: 'Trazabilidad', icon: '🌱', roles: ADMIN_ROLES },
+  { to: '/trazabilidad', label: 'Trazabilidad', icon: '🌱', roles: ADMIN_ROLES, feature: 'lotes' },
   { to: '/suscripcion', label: 'Suscripción', icon: '💳', roles: ADMIN_ROLES },
   { to: '/configuracion', label: 'Configuración', icon: '⚙️', roles: ADMIN_ROLES },
   { to: '/ayuda', label: 'Ayuda y soporte', icon: '💬', roles: HELP_ROLES },
@@ -42,6 +48,7 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const { business } = useBusiness()
   const { user } = useAuth()
+  const { can } = usePlan()
   const visibleItems = NAV_ITEMS.filter((item) => !item.roles || (user && item.roles.includes(user.role)))
 
   return (
@@ -67,17 +74,28 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
           )}
         </div>
         <nav className="sidebar__nav">
-          {visibleItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end ?? false}
-              className={({ isActive }) => ['sidebar__link', isActive ? 'sidebar__link--active' : ''].join(' ')}
-            >
-              <span aria-hidden="true">{item.icon}</span>
-              {item.label}
-            </NavLink>
-          ))}
+          {visibleItems.map((item) => {
+            const locked = item.feature !== undefined && !can(item.feature)
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end ?? false}
+                className={({ isActive }) =>
+                  ['sidebar__link', isActive ? 'sidebar__link--active' : '', locked ? 'sidebar__link--locked' : ''].join(' ')
+                }
+              >
+                <span aria-hidden="true">{item.icon}</span>
+                {item.label}
+                {locked && item.feature && (
+                  <span className="sidebar__lock" title={availableInLabel(item.feature)}>
+                    <LockIcon />
+                    <span className="visually-hidden">({availableInLabel(item.feature)})</span>
+                  </span>
+                )}
+              </NavLink>
+            )
+          })}
         </nav>
       </aside>
     </>

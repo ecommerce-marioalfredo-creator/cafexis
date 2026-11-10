@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useUsers, useBusiness, useInvitations } from '@/hooks/useBusiness'
 import { useAuth } from '@/context/AuthContext'
+import { usePlan } from '@/context/PlanContext'
+import { LimitNotice } from '@/components/plan/UpgradeNotice'
+import { availableInLabel } from '@/components/plan/planCatalog'
 import { PageLoading, PageError } from '@/components/ui/PageState'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Card } from '@/components/ui/Card'
@@ -23,6 +26,8 @@ export function SettingsPage() {
   const { user: sessionUser } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
   const [editBusinessOpen, setEditBusinessOpen] = useState(false)
+  const { can, limit } = usePlan()
+  const canBrandColor = can('color_marca')
 
   if (loading || loadingBusiness) return <PageLoading label="Cargando configuración…" />
   if (error) return <PageError message={error} onRetry={reload} />
@@ -33,6 +38,15 @@ export function SettingsPage() {
   // servidor si alguien intenta forzarlo.
   const canManageUsers = sessionUser?.role === 'administrador' || sessionUser?.role === 'supervisor_tecnico'
   const isSupervisor = sessionUser?.role === 'supervisor_tecnico'
+
+  // Tope de usuarios del plan (0019): cuentan administradores y baristas
+  // activos más las invitaciones pendientes, igual que en la base de datos.
+  const isTeamRole = (role: UserRole) => role === 'administrador' || role === 'barista'
+  const maxTeam = limit('usuarios')
+  const teamSize =
+    users.filter((u) => u.active && isTeamRole(u.role)).length +
+    invitations.filter((i) => i.status === 'pendiente' && isTeamRole(i.role)).length
+  const teamFull = maxTeam !== undefined && teamSize >= maxTeam
 
   const handleInvite = async (input: { email: string; name: string; role: InvitableRole }) => {
     await invite(input)
@@ -81,6 +95,7 @@ export function SettingsPage() {
           <p className="settings-page__brand-color">
             Color de marca: <span className="settings-page__color-dot" style={{ background: business?.branding.primaryColor }} />
             {business?.branding.primaryColor}
+            {!canBrandColor && <span className="section-subtitle"> · Se usa desde el plan Profesional.</span>}
           </p>
         </Card>
       </section>
@@ -108,13 +123,21 @@ export function SettingsPage() {
 
       <section>
         <div className="page-toolbar">
-          <h3>Usuarios internos</h3>
+          <div>
+            <h3>Usuarios internos</h3>
+            {maxTeam !== undefined && (
+              <p className="section-subtitle">
+                {teamSize} de {maxTeam} usuarios del equipo que permite tu plan (incluye invitaciones pendientes).
+              </p>
+            )}
+          </div>
           {canManageUsers && (
-            <Button variant="primary" onClick={() => setModalOpen(true)}>
+            <Button variant="primary" onClick={() => setModalOpen(true)} disabled={teamFull && !isSupervisor}>
               Invitar usuario
             </Button>
           )}
         </div>
+        {canManageUsers && teamFull && <LimitNotice resource="usuarios" />}
         <div className="card-grid">
           {users.map((user) => {
             const isSelf = user.id === sessionUser?.id
@@ -143,6 +166,8 @@ export function SettingsPage() {
                   <button
                     className="settings-page__toggle-active"
                     onClick={() => setActive(user.id, !user.active)}
+                    disabled={!user.active && teamFull && isTeamRole(user.role)}
+                    title={!user.active && teamFull && isTeamRole(user.role) ? 'Llegaste al tope de usuarios de tu plan' : undefined}
                   >
                     {user.active ? 'Desactivar' : 'Activar'}
                   </button>
@@ -183,6 +208,7 @@ export function SettingsPage() {
           onSave={updateBusinessInfo}
           onUploadLogo={uploadLogo}
           onClose={() => setEditBusinessOpen(false)}
+          brandColorLockedHint={canBrandColor ? undefined : availableInLabel('color_marca')}
         />
       )}
     </div>

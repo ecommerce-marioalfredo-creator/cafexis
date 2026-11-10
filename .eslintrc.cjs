@@ -20,10 +20,10 @@ module.exports = {
     'vite.config.d.ts',
   ],
   rules: {
-    // useAuth/useCustomerAuth viven junto a su Provider a propósito (comparten el contexto).
+    // useAuth/useCustomerAuth/usePlan viven junto a su Provider a propósito (comparten el contexto).
     'react-refresh/only-export-components': [
       'warn',
-      { allowConstantExport: true, allowExportNames: ['useAuth', 'useCustomerAuth'] },
+      { allowConstantExport: true, allowExportNames: ['useAuth', 'useCustomerAuth', 'usePlan'] },
     ],
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
   },

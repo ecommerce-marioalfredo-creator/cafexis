@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAsync } from '@/hooks/useAsync'
 import { listOrderHistory } from '@/services/api/reportsService'
 import { ORDER_STATUS_META } from '@/components/domain/orderStatus'
@@ -36,9 +37,20 @@ function CancellationDetail({ order }: { order: Order }) {
  * Histórico de pedidos del negocio: todos los del período con su estado,
  * incluidos los cancelados y quién los canceló. A diferencia de los reportes de
  * ventas, no agrega cifras: es la lista de lo que pasó, pedido por pedido.
+ *
+ * historyDays: el plan Básica (0019) solo consulta los últimos N días; el
+ * período elegido se recorta a esa ventana.
  */
-export function OrderHistoryReport() {
-  const { period, rangeInvalid, controls } = useReportPeriod('mes')
+export function OrderHistoryReport({ historyDays }: { historyDays?: number }) {
+  const { period: chosenPeriod, rangeInvalid, controls } = useReportPeriod('mes')
+  const minFrom = useMemo(() => {
+    if (historyDays === undefined) return undefined
+    const today = new Date()
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate() - (historyDays - 1))
+  }, [historyDays])
+  const outOfPlan = minFrom !== undefined && chosenPeriod.to <= minFrom
+  const clipped = minFrom !== undefined && !outOfPlan && chosenPeriod.from < minFrom
+  const period = clipped ? { ...chosenPeriod, from: minFrom } : chosenPeriod
   const [onlyCancelled, setOnlyCancelled] = useState(false)
   const [moreOrders, setMoreOrders] = useState<Order[]>([])
   const [loadingMore, setLoadingMore] = useState(false)
@@ -48,8 +60,8 @@ export function OrderHistoryReport() {
   const to = period.to.getTime()
 
   const { data, loading, error, reload } = useAsync(
-    async () => (rangeInvalid ? undefined : listOrderHistory(period, onlyCancelled, 0, PAGE_SIZE)),
-    [from, to, onlyCancelled, rangeInvalid],
+    async () => (rangeInvalid || outOfPlan ? undefined : listOrderHistory(period, onlyCancelled, 0, PAGE_SIZE)),
+    [from, to, onlyCancelled, rangeInvalid, outOfPlan],
   )
 
   useEffect(() => {
@@ -77,6 +89,12 @@ export function OrderHistoryReport() {
       <ReportPeriodFilters controls={controls} />
 
       {rangeInvalid && <div className="form-error-banner">La fecha inicial debe ser anterior a la final.</div>}
+      {(outOfPlan || clipped) && (
+        <p className="section-subtitle" role="status">
+          {outOfPlan ? 'Este período queda fuera de tu plan: ' : ''}
+          Tu plan muestra los pedidos de los últimos {historyDays} días. <Link to="/suscripcion">Ver planes</Link>
+        </p>
+      )}
 
       <div className="page-toolbar__filters" role="group" aria-label="Qué pedidos ver">
         <button

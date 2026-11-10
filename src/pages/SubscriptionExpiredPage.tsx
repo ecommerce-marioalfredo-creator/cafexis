@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/Button'
 import './SubscriptionExpiredPage.css'
 
 /**
- * Bloqueo real de acceso cuando la suscripción del negocio venció (Fase 6).
- * RequireAuth.tsx redirige aquí; el administrador puede cerrar sesión, pero
- * ninguna otra ruta del panel es alcanzable hasta que el supervisor técnico
- * reactive la suscripción (ver listAllSubscriptions/updateSubscriptionStatus).
+ * Bloqueo de acceso cuando la cuenta del negocio está cancelada. Desde la
+ * 0019 vencer ya no bloquea (el negocio baja a Básica): solo llega aquí una
+ * cuenta que el supervisor técnico canceló. RequireAuth.tsx redirige aquí;
+ * se puede cerrar sesión, pero ninguna otra ruta del panel es alcanzable
+ * hasta que el supervisor la reactive en Suscripción.
  */
 export function SubscriptionExpiredPage() {
   const { logout } = useAuth()
@@ -14,10 +15,10 @@ export function SubscriptionExpiredPage() {
   return (
     <div className="subscription-expired">
       <div className="subscription-expired__panel">
-        <h1>Tu suscripción venció</h1>
+        <h1>Tu cuenta está cancelada</h1>
         <p>
-          Tu período de prueba o suscripción a Cafexis llegó a su fin. Contacta a soporte para reactivar tu cuenta y
-          seguir usando el panel.
+          La cuenta de tu negocio en Cafexis está cancelada. Escríbenos a soporte para reactivarla y volver a usar el
+          panel; tus datos se conservan.
         </p>
         <Button variant="secondary" onClick={logout}>
           Cerrar sesión

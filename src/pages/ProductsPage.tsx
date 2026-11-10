@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useProducts } from '@/hooks/useProducts'
+import { usePlan } from '@/context/PlanContext'
+import { LimitNotice } from '@/components/plan/UpgradeNotice'
 import { RecipeCard } from '@/components/domain/RecipeCard'
 import { ProductFormModal } from '@/components/domain/ProductFormModal'
 import { PageLoading, PageError } from '@/components/ui/PageState'
@@ -11,6 +13,8 @@ export function ProductsPage() {
   const { products, loading, error, reload, create, update } = useProducts()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product>()
+  const { limit, atLimit } = usePlan()
+  const maxProducts = limit('productos')
 
   if (loading) return <PageLoading label="Cargando productos…" />
   if (error) return <PageError message={error} onRetry={reload} />
@@ -38,11 +42,14 @@ export function ProductsPage() {
   return (
     <div>
       <div className="page-toolbar">
-        <span className="section-subtitle">{products.length} productos registrados</span>
-        <Button variant="primary" onClick={openCreate}>
+        <span className="section-subtitle">
+          {products.length} productos registrados{maxProducts !== undefined && ` de ${maxProducts} que permite tu plan`}
+        </span>
+        <Button variant="primary" onClick={openCreate} disabled={atLimit('productos', products.length)}>
           Nuevo producto
         </Button>
       </div>
+      {atLimit('productos', products.length) && <LimitNotice resource="productos" />}
 
       {products.length === 0 ? (
         <EmptyState title="Aún no has registrado productos" description="Crea tu primera bebida o café empacado." />

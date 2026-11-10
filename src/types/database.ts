@@ -299,6 +299,14 @@ export interface SubscriptionPlanRow {
   trial_days: number
   active: boolean
   created_at: string
+  // 0019: sin esa migración estas columnas no llegan.
+  code?: string | null
+  description?: string | null
+  price_annual_cents?: number
+  features?: string[]
+  limits?: Record<string, number>
+  recommended?: boolean
+  sort_order?: number
 }
 
 export interface BusinessSubscriptionRow {
@@ -309,9 +317,41 @@ export interface BusinessSubscriptionRow {
   current_period_ends_at: string | null
   created_at: string
   updated_at: string
+  /** 0019. */
+  addons?: string[]
+  /** 0020. */
+  billing_period?: BillingPeriodRow
+  pending_plan_id?: string | null
+  pending_billing_period?: BillingPeriodRow | null
+  pending_requested_at?: string | null
   // Presente solo en el select anidado del supervisor.
-  subscription_plans_cafexis?: { name: string } | null
+  subscription_plans_cafexis?: { name: string; code?: string | null } | null
   businesses_cafexis?: { name: string } | null
+}
+
+/** Respuesta de get_business_plan_cafexis (0019). */
+export interface BusinessPlanRow {
+  business_id: string
+  status: SubscriptionStatusRow | null
+  trial_ends_at: string | null
+  current_period_ends_at: string | null
+  plan_code: string
+  plan_name: string
+  effective_plan_code: string
+  effective_plan_name: string
+  features: string[]
+  limits: Record<string, number>
+  addons: string[]
+  usage: { usuarios: number; productos: number; insumos: number }
+  /** 0020. */
+  billing_period?: BillingPeriodRow
+  pending?: {
+    plan_code: string
+    plan_name: string
+    billing_period: BillingPeriodRow
+    requested_at: string
+    case_id: string | null
+  } | null
 }
 
 export interface PaymentTransactionRow {

@@ -599,30 +599,109 @@ export interface PlatformBusinessDetail {
 export type SubscriptionStatus = 'trial' | 'activa' | 'vencida' | 'cancelada'
 export type BillingPeriod = 'mensual' | 'anual'
 
+/** Planes de Cafexis (0019_planes_suscripcion_cafexis.sql). El código no cambia; el nombre sí puede. */
+export type PlanCode = 'basica' | 'profesional' | 'premium'
+
+/** Funciones que activa un plan: mismas claves que subscription_plans_cafexis.features. */
+export type PlanFeature =
+  | 'pedidos_cliente'
+  | 'compras'
+  | 'lotes'
+  | 'reportes'
+  | 'dashboard_mas_vendidos'
+  | 'guias_equipo'
+  | 'color_marca'
+  | 'trazabilidad_publica'
+  | 'guias_cliente'
+  | 'reportes_personalizados'
+  | 'pagos_en_linea'
+  | 'factura_dian'
+
+/** Topes de un plan: mismas claves que subscription_plans_cafexis.limits. Sin la clave, no hay límite. */
+export type PlanLimit = 'usuarios' | 'productos' | 'insumos' | 'historial_dias'
+
 export interface SubscriptionPlan {
   id: string
+  code: PlanCode
   name: string
-  priceCents: number
-  billingPeriod: BillingPeriod
+  description: string
+  /** Pesos, no centavos. */
+  monthlyPrice: number
+  annualPrice: number
   trialDays: number
-  active: boolean
+  features: PlanFeature[]
+  limits: Partial<Record<PlanLimit, number>>
+  recommended: boolean
 }
 
-/** Estado de suscripción de un negocio a la plataforma (no confundir con una suscripción de ese negocio a sus propios clientes). */
-export interface BusinessSubscription {
+/** Plan pago que el negocio pidió y aún no se ha cobrado (0020). */
+export interface PendingPlanChange {
+  planCode: PlanCode
+  planName: string
+  billingPeriod: BillingPeriod
+  requestedAt: string
+  /** Caso de soporte donde se coordina el pago. */
+  caseId?: string
+}
+
+/** Plan con el que opera el negocio ahora mismo, sus funciones, límites y uso (get_business_plan_cafexis). */
+export interface BusinessPlan {
   businessId: string
+  status: SubscriptionStatus
+  trialEndsAt?: string
+  currentPeriodEndsAt?: string
+  /** Plan contratado. */
+  planCode: PlanCode
+  planName: string
+  /** Plan con el que opera hoy: el contratado si sigue vigente; si no, Básica. */
+  effectivePlanCode: PlanCode
+  effectivePlanName: string
+  features: PlanFeature[]
+  limits: Partial<Record<PlanLimit, number>>
+  addons: PlanFeature[]
+  usage: Record<'usuarios' | 'productos' | 'insumos', number>
+  /** false solo si la cuenta está cancelada: el panel se bloquea. Vencer ya no bloquea, baja a Básica. */
+  isActive: boolean
+  /** La prueba o el plan pagado vencieron y el negocio opera en Básica. */
+  lapsed: boolean
+  /** Sin la migración 0019: no hay planes ni datos de uso; el negocio tiene todo, como antes. */
+  legacy: boolean
+  /** Forma de pago del plan vigente (0020). */
+  billingPeriod: BillingPeriod
+  pendingChange?: PendingPlanChange
+}
+
+/** Resultado de cambiar de plan: aplicado al instante, o solicitud pendiente de pago con su caso de soporte. */
+export interface PlanChangeResult {
+  applied: boolean
+  planName: string
+  caseId?: string
+  periodEndsAt?: string
+}
+
+/** Suscripción de un negocio, para la lista del supervisor técnico. */
+export interface BusinessSubscriptionOverview {
+  businessId: string
+  businessName: string
   planId: string
+  planCode?: PlanCode
   planName?: string
   status: SubscriptionStatus
   trialEndsAt?: string
   currentPeriodEndsAt?: string
-  /** true si el negocio puede operar ahora mismo (trial vigente o período activo). */
-  isActive: boolean
+  addons: PlanFeature[]
+  /** Solicitud de cambio pendiente de pago (0020). */
+  pendingPlanId?: string
+  pendingBillingPeriod?: BillingPeriod
+  pendingRequestedAt?: string
 }
 
-/** Fila de business_subscriptions_cafexis con el nombre del negocio, para la lista del supervisor. */
-export interface BusinessSubscriptionOverview extends BusinessSubscription {
-  businessName: string
+export interface SubscriptionUpdate {
+  planId?: string
+  status?: SubscriptionStatus
+  /** null quita la fecha de vencimiento. */
+  currentPeriodEndsAt?: string | null
+  addons?: PlanFeature[]
 }
 
 export type PaymentTransactionStatus = 'pendiente' | 'aprobada' | 'declinada' | 'error'
@@ -647,3 +726,137 @@ export interface Invoice {
   xmlUrl?: string
   errorMessage?: string
 }
+
+// --- Panel del super usuario (0021_super_usuario_promociones_cafexis.sql) ---
+
+/** dias_gratis: N días de un plan pago, al instante. descuento: N % sobre el precio durante N meses. */
+export type PromoBenefit = 'dias_gratis' | 'descuento'
+
+/** Un negocio que usó un código de promoción. */
+export interface PromoRedemption {
+  businessId: string
+  businessName: string
+  code: string
+  /** Lo que dio, en texto: "30 días de Premium, hasta el 10/12/2026". */
+  summary: string
+  /** Lo aplicó el supervisor técnico (no el administrador del negocio). */
+  byPlatform: boolean
+  createdAt: string
+}
+
+export interface PromoCodeInput {
+  code: string
+  description?: string
+  benefit: PromoBenefit
+  /** dias_gratis: plan que se regala. descuento: plan al que aplica (vacío = cualquier plan pago). */
+  planId?: string
+  freeDays?: number
+  discountPercent?: number
+  discountMonths?: number
+  /** Último momento en que se puede canjear. */
+  expiresAt: string
+  /** Vacío = sin tope. */
+  maxRedemptions?: number
+  active: boolean
+}
+
+export interface PromoCode extends PromoCodeInput {
+  id: string
+  createdAt: string
+  redemptions: PromoRedemption[]
+}
+
+export interface PromoRedeemResult {
+  code: string
+  benefit: PromoBenefit
+  summary: string
+  planName?: string
+  endsAt?: string
+}
+
+/** Descuento vigente y códigos usados por el negocio activo, para Suscripción. */
+export interface BusinessPromoStatus {
+  discountPercent?: number
+  discountEndsAt?: string
+  redemptions: PromoRedemption[]
+}
+
+export interface PlatformAccountUser {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  active: boolean
+  createdAt: string
+  lastSignInAt?: string
+}
+
+export interface PlatformAccountInvitation {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  createdAt: string
+}
+
+/** Suscripción completa de un negocio, como la ve el super usuario. */
+export interface PlatformAccountSubscription {
+  planId: string
+  planCode?: PlanCode
+  planName?: string
+  /** Plan con el que opera hoy (el contratado si sigue vigente; si no, Básica). */
+  effectivePlanCode: PlanCode
+  status: SubscriptionStatus
+  billingPeriod: BillingPeriod
+  trialEndsAt?: string
+  currentPeriodEndsAt?: string
+  addons: PlanFeature[]
+  discountPercent?: number
+  discountEndsAt?: string
+  discountCode?: string
+  pendingPlanId?: string
+  pendingBillingPeriod?: BillingPeriod
+  pendingRequestedAt?: string
+  pendingCaseId?: string
+  updatedAt: string
+}
+
+/** Un negocio con su suscripción, uso, usuarios, invitaciones y códigos usados. */
+export interface PlatformAccount {
+  id: string
+  name: string
+  type: BusinessType
+  slug?: string
+  primaryColor: string
+  createdAt: string
+  subscription?: PlatformAccountSubscription
+  usage: Record<'usuarios' | 'productos' | 'insumos' | 'clientes', number>
+  users: PlatformAccountUser[]
+  invitations: PlatformAccountInvitation[]
+  redemptions: Array<Pick<PromoRedemption, 'code' | 'summary' | 'byPlatform' | 'createdAt'>>
+}
+
+/** Todo lo que el super usuario puede cambiar de una suscripción. */
+export interface SubscriptionAdminUpdate {
+  planId: string
+  status: SubscriptionStatus
+  billingPeriod: BillingPeriod
+  /** null = sin fecha. */
+  trialEndsAt: string | null
+  currentPeriodEndsAt: string | null
+  addons: PlanFeature[]
+  /** null quita el descuento (y el código que lo dio). */
+  discountPercent: number | null
+  discountEndsAt: string | null
+}
+
+/** Plan tal como lo edita el super usuario (incluye los que no están a la venta). */
+export interface AdminPlan extends SubscriptionPlan {
+  active: boolean
+  sortOrder: number
+}
+
+export type AdminPlanUpdate = Pick<
+  AdminPlan,
+  'name' | 'description' | 'monthlyPrice' | 'annualPrice' | 'trialDays' | 'features' | 'limits' | 'recommended' | 'active'
+>

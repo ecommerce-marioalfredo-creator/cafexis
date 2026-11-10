@@ -1,0 +1,481 @@
+/* Panel del super usuario (Dashboard del supervisor técnico). */
+
+.su-panel,
+.su-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.su-muted {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.su-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.su-toolbar__text {
+  flex: 1 1 420px;
+  max-width: 80ch;
+}
+
+.su-filters {
+  margin-top: calc(-1 * var(--space-2));
+}
+
+.su-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.su-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-brand-teal);
+}
+
+.su-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.su-code--button {
+  border: 1px dashed var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-primary);
+  padding: 2px var(--space-2);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.su-code--button:hover,
+.su-code--button:focus-visible {
+  border-color: var(--color-brand-teal);
+}
+
+.su-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--color-brand-teal);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* --- Negocios ------------------------------------------------------------ */
+
+.su-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.su-account {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.su-account__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.su-account__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.su-account__title h3 {
+  font-size: 18px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.su-account__swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-default);
+}
+
+.su-account__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.su-account__sub {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-3);
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-md);
+}
+
+.su-account__sub dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+}
+
+.su-account__sub dd {
+  margin: var(--space-1) 0 0;
+  font-size: 14px;
+}
+
+.su-account__alerts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.su-account__usage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.su-account__usage strong {
+  color: var(--color-text-primary);
+}
+
+.su-account__usage--full,
+.su-account__usage--full strong {
+  color: var(--color-state-warning-text);
+}
+
+.su-account__codes {
+  margin: 0;
+}
+
+.su-users td {
+  padding: var(--space-2) var(--space-3);
+  font-size: 14px;
+  border-bottom: 1px solid var(--color-border-default);
+  vertical-align: middle;
+}
+
+.su-users__name {
+  display: block;
+  font-weight: 600;
+}
+
+.su-users__email {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.su-users__match td {
+  background: rgba(29, 158, 117, 0.08);
+}
+
+.su-users__summary {
+  margin: var(--space-2) 0 0;
+}
+
+/* --- Formularios (suscripción, códigos, planes) ------------------------- */
+
+.su-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.su-edit__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0 var(--space-4);
+}
+
+.su-edit__label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.su-edit__quick {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.su-edit__discount {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.su-edit__discount legend {
+  font-weight: 700;
+  font-size: 14px;
+  padding: 0 var(--space-1);
+}
+
+.su-edit__preview {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: rgba(29, 158, 117, 0.08);
+  font-size: 14px;
+}
+
+.su-edit__preview--warning {
+  background: rgba(232, 163, 61, 0.14);
+  color: var(--color-state-warning-text);
+}
+
+.su-edit__pending {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-state-warning);
+  border-radius: var(--radius-md);
+  background: rgba(232, 163, 61, 0.08);
+}
+
+.su-edit__pending p {
+  margin: 0;
+}
+
+.su-edit__pending-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.su-code-input {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.su-code-input input {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-transform: uppercase;
+}
+
+/* --- Códigos -------------------------------------------------------------- */
+
+.su-codes td {
+  padding: var(--space-2) var(--space-3);
+  font-size: 14px;
+  border-bottom: 1px solid var(--color-border-default);
+  vertical-align: middle;
+}
+
+.su-codes__desc {
+  display: block;
+  margin-top: var(--space-1);
+}
+
+.su-codes__actions {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+.su-codes__uses td {
+  background: var(--color-surface-sunken);
+}
+
+.su-codes__uses ul {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* --- Planes --------------------------------------------------------------- */
+
+.su-plans__intro {
+  max-width: 90ch;
+  margin: 0;
+}
+
+.su-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.su-plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.su-plan__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.su-plan__head h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.su-plan__features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-2);
+}
+
+.su-plan__flags {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.su-plan__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* --- Dashboard del supervisor: Plataforma / Negocio ----------------------- */
+
+.su-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.su-dashboard__switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.su-dashboard__segmented {
+  display: inline-flex;
+  padding: var(--space-1);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: 999px;
+  max-width: 100%;
+}
+
+.su-dashboard__segmented button {
+  min-height: 36px;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: 700 14px var(--font-body);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.su-dashboard__segmented button[aria-selected='true'] {
+  background: var(--color-text-primary);
+  color: var(--color-surface-default);
+}
+
+@media (max-width: 640px) {
+  .su-account__actions {
+    width: 100%;
+  }
+
+  .su-account__actions > * {
+    flex: 1 1 auto;
+  }
+
+  .su-codes thead {
+    display: none;
+  }
+
+  .su-codes tr,
+  .su-codes td {
+    display: block;
+    border: 0;
+  }
+
+  .su-codes tbody tr {
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  .su-codes td.console-table__num {
+    text-align: left !important;
+  }
+
+  .su-codes td[data-label]::before {
+    content: attr(data-label) ': ';
+    color: var(--color-text-secondary);
+    font-size: 13px;
+  }
+
+  .su-codes__actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .su-dashboard__segmented {
+    display: flex;
+    width: 100%;
+    border-radius: var(--radius-lg);
+  }
+
+  .su-dashboard__segmented button {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: normal;
+    line-height: 1.2;
+    border-radius: var(--radius-md);
+  }
+}

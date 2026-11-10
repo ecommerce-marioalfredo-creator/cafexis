@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { SubscriptionBanner } from './SubscriptionBanner'
 import { useBusiness } from '@/hooks/useBusiness'
+import { usePlan } from '@/context/PlanContext'
 import { applyBrandTheme } from '@/styles/applyBrandTheme'
 import './AppShell.css'
 
@@ -35,12 +36,16 @@ export function AppShell() {
   const title =
     TITLES[location.pathname] ?? PREFIX_TITLES.find(([prefix]) => location.pathname.startsWith(prefix))?.[1] ?? 'Cafexis'
   const { business } = useBusiness()
+  const { can } = usePlan()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
+  // Color de marca propio desde Profesional; en Básica, el de Cafexis (el
+  // guardado no se borra y vuelve al subir de plan).
+  const branding = can('color_marca') ? business?.branding : undefined
   useEffect(() => {
-    applyBrandTheme(business?.branding)
+    applyBrandTheme(branding)
     return () => applyBrandTheme(undefined)
-  }, [business?.branding])
+  }, [branding])
 
   // Cierra el menú móvil automáticamente al navegar a otra sección.
   useEffect(() => {

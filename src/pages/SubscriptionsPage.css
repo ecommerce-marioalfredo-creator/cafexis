@@ -1,12 +1,792 @@
-.subscriptions-page__row {
+/* Suscripción: plan actual con su uso, tarjetas de plan, cuadro comparativo
+   y ciclo de vida. Mismo diseño que la propuesta "Planes Cafexis", con los
+   tokens del sistema para que funcione en los dos temas y con el color de
+   marca del negocio. */
+
+.plans-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  max-width: 1080px;
+}
+
+.plans-page h2,
+.plans-page h3 {
+  text-wrap: balance;
+}
+
+.plans-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.plans-check {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--color-brand-teal);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.plans-tag {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+
+.plans-tag--soon {
+  border: 1px dashed var(--color-border-default);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-secondary);
+}
+
+.plans-tag--setup {
+  background: color-mix(in srgb, var(--color-state-warning) 18%, transparent);
+  color: var(--color-state-warning-text);
+}
+
+/* --- Plan actual ------------------------------------------------------- */
+
+.plans-current {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  padding: var(--space-6);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.plans-current__summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.plans-current__name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.plans-current__name h2 {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.plans-current__detail {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.plans-usage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.plans-usage__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-3);
+  font-size: 14px;
+}
+
+.plans-usage__item dt {
+  color: var(--color-text-secondary);
+}
+
+.plans-usage__item dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.plans-usage__note {
+  color: var(--color-state-warning-text);
+  font-weight: 700;
+}
+
+.plans-usage__bar {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  overflow: hidden;
+}
+
+.plans-usage__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-brand-teal);
+}
+
+.plans-usage__item--full .plans-usage__bar span {
+  background: var(--color-state-warning);
+}
+
+/* --- Secciones --------------------------------------------------------- */
+
+.plans-section__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.plans-section__head h2 {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.plans-section__head p {
+  max-width: 70ch;
+  color: var(--color-text-secondary);
+}
+
+/* --- Mensual / anual --------------------------------------------------- */
+
+.plans-billing {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.plans-billing small {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.plans-segmented {
+  display: inline-flex;
+  padding: var(--space-1);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: 999px;
+}
+
+.plans-segmented button {
+  min-height: 36px;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: 700 14px var(--font-body);
+  cursor: pointer;
+}
+
+.plans-segmented button[aria-pressed='true'] {
+  background: var(--color-text-primary);
+  color: var(--color-surface-default);
+}
+
+/* --- Tarjetas de plan -------------------------------------------------- */
+
+.plans-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+.plans-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: 18px;
+}
+
+.plans-card--featured {
+  border: 2px solid var(--color-brand-orange);
+  box-shadow: var(--shadow-md);
+}
+
+.plans-card--current {
+  border: 2px solid var(--color-brand-teal);
+}
+
+.plans-card__badge {
+  position: absolute;
+  top: -12px;
+  left: var(--space-6);
+  padding: 3px var(--space-3);
+  border-radius: 999px;
+  background: var(--color-brand-orange);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* El teal de marca con texto blanco: el más oscuro de los dos, para que se lea. */
+.plans-card__badge--current {
+  background: var(--color-brand-teal-hover);
+}
+
+.plans-card__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.plans-card__head h3 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.plans-card__head p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.plans-card__price {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 64px;
+}
+
+.plans-card__amount {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.plans-card__amount small {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.plans-card__note {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.plans-card ul {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plans-card li {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: var(--space-2);
+  font-size: 14px;
+}
+
+.plans-card li .plans-check {
+  margin-top: 2px;
+}
+
+.plans-card__ideal {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-default);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.plans-card__ideal strong {
+  color: var(--color-text-primary);
+}
+
+/* --- Cuadro comparativo ------------------------------------------------ */
+
+.plans-compare__tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.plans-compare__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.plans-compare__toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-brand-orange);
+}
+
+.plans-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.plans-legend .plans-tag {
+  margin-left: 0;
+}
+
+/* position: los textos para lectores de pantalla de cada celda son absolutos;
+   sin esto escapan del scroll y ensanchan la página en el teléfono. */
+.plans-compare__wrap {
+  position: relative;
+  overflow-x: auto;
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: 18px;
+}
+
+.plans-compare {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+.plans-compare th,
+.plans-compare td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border-default);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.plans-compare thead th {
+  background: var(--color-surface-default);
+  border-bottom: 2px solid var(--color-border-default);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.plans-compare thead th:first-child {
+  border-top-left-radius: 18px;
+}
+
+.plans-compare thead th:last-child {
+  border-top-right-radius: 18px;
+}
+
+.plans-compare__plan,
+.plans-compare__value {
+  width: 19%;
+  text-align: center !important;
+}
+
+.plans-compare__plan span {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.plans-compare__plan .plans-compare__current {
+  margin-top: var(--space-1);
+  color: var(--color-brand-teal-hover);
+  font-weight: 800;
+}
+
+.plans-compare__col--featured {
+  background: color-mix(in srgb, var(--color-brand-orange) 6%, transparent);
+}
+
+.plans-compare thead .plans-compare__col--featured {
+  background: color-mix(in srgb, var(--color-brand-orange) 6%, var(--color-surface-default));
+}
+
+.plans-compare tbody th {
+  font-weight: 500;
+}
+
+.plans-compare__group th {
+  padding-block: var(--space-2);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-secondary);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.plans-compare tbody tr:last-child th,
+.plans-compare tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.plans-compare__value .plans-check {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.plans-compare__no {
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  font-weight: 700;
+  opacity: 0.5;
+}
+
+.plans-compare__text {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Con espacio, la tabla no necesita su propio scroll y el encabezado queda
+   fijo bajo la barra superior mientras se recorre. */
+@media (min-width: 1100px) {
+  .plans-compare__wrap {
+    overflow: visible;
+  }
+
+  .plans-compare thead th {
+    position: sticky;
+    top: var(--topbar-height);
+    z-index: 2;
+  }
+}
+
+/* --- Ciclo de vida ----------------------------------------------------- */
+
+.plans-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: plans-step;
+}
+
+.plans-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 2px solid var(--color-text-primary);
+  counter-increment: plans-step;
+}
+
+.plans-step::before {
+  content: counter(plans-step);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-brand-orange);
+}
+
+.plans-step h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.plans-step p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+/* --- Solicitud y tabla del supervisor ---------------------------------- */
+
+.plans-request {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.plans-request__billing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.plans-request__billing legend {
+  margin-bottom: var(--space-2);
+  font-weight: 700;
+}
+
+.plans-request__billing label {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
 }
 
-.subscriptions-page__actions {
+.plans-request__billing input {
+  accent-color: var(--color-brand-orange);
+}
+
+.plans-admin select,
+.plans-admin input[type='date'] {
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-default);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.plans-admin__addon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .plans-page {
+    gap: var(--space-8);
+  }
+
+  .plans-current {
+    grid-template-columns: 1fr;
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 640px) {
+  .plans-compare th,
+  .plans-compare td {
+    padding: var(--space-2);
+  }
+}
+
+/* --- Cambio de plan (0020) -------------------------------------------- */
+
+.plans-current__actions {
   display: flex;
   flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.plans-pending {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-state-warning) 45%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-state-warning) 10%, transparent);
+  font-size: 14px;
+}
+
+.plans-pending__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.plans-pending__actions .btn,
+.plans-current__actions .btn {
+  text-decoration: none;
+}
+
+.plans-change {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.plans-change__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.plans-change__options legend {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.plans-change__option {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-default);
+  cursor: pointer;
+}
+
+.plans-change__option input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-brand-orange);
+}
+
+.plans-change__option--selected {
+  border-color: var(--color-brand-orange);
+  box-shadow: inset 0 0 0 1px var(--color-brand-orange);
+}
+
+.plans-change__option--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.plans-change__option-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.plans-change__option-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+.plans-change__current {
+  padding: 1px var(--space-2);
+  border-radius: 999px;
+  background: var(--color-brand-teal-hover);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.plans-change__option-desc {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.plans-change__option-price {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.plans-change__billing {
+  margin-bottom: 0;
+}
+
+.plans-diff {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken);
+}
+
+.plans-diff h4 {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-heading);
+  font-size: 14px;
+}
+
+.plans-diff ul {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.plans-diff li {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: var(--space-2);
+}
+
+.plans-diff__minus,
+.plans-diff__arrow {
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  text-align: center;
+}
+
+.plans-change__warning {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-state-warning) 12%, transparent);
+  color: var(--color-state-warning-text);
+  font-size: 14px;
+}
+
+.plans-change__how {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.plans-admin__request {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 180px;
+}
+
+.plans-admin__request-actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+@media (max-width: 640px) {
+  .plans-change__option {
+    grid-template-columns: auto 1fr;
+  }
+
+  .plans-change__option-price {
+    grid-column: 2;
+    text-align: left;
+  }
 }

@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useInventory } from '@/hooks/useInventory'
 import { useSuppliers } from '@/hooks/useSuppliers'
+import { usePlan } from '@/context/PlanContext'
+import { LimitNotice } from '@/components/plan/UpgradeNotice'
 import { InventoryRow } from '@/components/domain/InventoryRow'
 import { InventoryItemModal } from '@/components/domain/InventoryItemModal'
 import { PageLoading, PageError } from '@/components/ui/PageState'
@@ -18,6 +20,7 @@ const FILTERS: Array<{ value: StockStatus | 'todos'; label: string }> = [
 export function InventoryPage() {
   const { items, loading, error, reload, create, update, adjustQuantity } = useInventory()
   const { suppliers } = useSuppliers()
+  const { atLimit } = usePlan()
   const [filter, setFilter] = useState<StockStatus | 'todos'>('todos')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<InventoryItem>()
@@ -64,10 +67,11 @@ export function InventoryPage() {
             </button>
           ))}
         </div>
-        <Button variant="primary" onClick={openCreate}>
+        <Button variant="primary" onClick={openCreate} disabled={atLimit('insumos', items.length)}>
           Nuevo ingrediente
         </Button>
       </div>
+      {atLimit('insumos', items.length) && <LimitNotice resource="insumos" />}
 
       {filtered.length === 0 ? (
         <EmptyState title="No hay ingredientes en esta categoría" />

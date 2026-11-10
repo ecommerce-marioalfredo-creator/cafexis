@@ -11,12 +11,12 @@ import { OrderReview } from '@/components/domain/OrderReview'
 import { QuantityStepper } from '@/components/domain/QuantityStepper'
 import { useCustomerAuth } from '@/context/CustomerAuthContext'
 import { itemCountLabel, useCustomerCart } from '@/hooks/useCustomerCart'
-import { getPublicBusiness, getPublicCatalog } from '@/services/api/publicBusinessService'
+import { getPublicBusiness, getPublicCatalog, getPublicPlanFeatures } from '@/services/api/publicBusinessService'
 import { linkToBusiness } from '@/services/api/customerAuthService'
 import { registerPublicOrder } from '@/services/api/publicOrdersService'
 import { listPublicProductGuides } from '@/services/api/productGuidesService'
 import { PAYMENT_LABEL, currency } from '@/components/domain/paymentMethods'
-import type { PublicBusiness, PublicProduct, PublicProductGuide, PaymentMethod } from '@/types/domain'
+import type { PlanFeature, PublicBusiness, PublicProduct, PublicProductGuide, PaymentMethod } from '@/types/domain'
 import './PublicCatalogPage.css'
 
 /**
@@ -37,6 +37,9 @@ const REVIEW_PARAM = 'pedido'
  *   2. Una barra compacta al fondo resume el carrito (unidades y total) sin
  *      tapar el menú; al tocarla se abre "Tu pedido".
  *   3. Tu pedido (OrderReview): revisar, ajustar, elegir mesa y pago, enviar.
+ *
+ * En el plan Básica (0019) el catálogo es solo menú: fotos, precios y
+ * categorías, sin carrito ni conexión. El pedido se hace en la barra.
  */
 export function PublicCatalogPage() {
   const { slug } = useParams()
@@ -50,6 +53,8 @@ export function PublicCatalogPage() {
 
   const [business, setBusiness] = useState<PublicBusiness>()
   const [products, setProducts] = useState<PublicProduct[]>([])
+  // undefined: sin la migración 0019, o sin respuesta; el catálogo funciona con todo, como antes.
+  const [features, setFeatures] = useState<PlanFeature[]>()
   // Videos y PDF que el negocio marcó como disponibles para el cliente (0018).
   const [guides, setGuides] = useState<PublicProductGuide[]>([])
   const [guidePicker, setGuidePicker] = useState<PublicProduct>()
@@ -76,15 +81,18 @@ export function PublicCatalogPage() {
           return
         }
         setBusiness(b)
-        const [catalog, publicGuides] = await Promise.all([
+        const [catalog, publicGuides, planFeatures] = await Promise.all([
           getPublicCatalog(b.id),
           // Sin la migración 0018 el catálogo sigue funcionando, solo sin guías.
           listPublicProductGuides(b.id).catch(() => [] as PublicProductGuide[]),
+          // Si falla, se muestra con carrito: la base de datos rechaza el pedido si el plan no lo permite.
+          getPublicPlanFeatures(b.id).catch(() => undefined),
         ])
         setProducts(catalog)
         setGuides(publicGuides)
+        setFeatures(planFeatures)
         // Recupera el carrito de esta pestaña (ej. al volver de entrar con Google).
-        restoreCart(catalog)
+        if (!planFeatures || planFeatures.includes('pedidos_cliente')) restoreCart(catalog)
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'No se pudo cargar el catálogo.'))
       .finally(() => setLoading(false))
@@ -138,6 +146,7 @@ export function PublicCatalogPage() {
     return map
   }, [guides])
   const showTableField = business?.type === 'cafeteria' || business?.type === 'mixto'
+  const canOrder = !features || features.includes('pedidos_cliente')
 
   // Con un solo material se abre directo; con varios, primero se elige cuál.
   const openGuides = (product: PublicProduct) => {
@@ -218,7 +227,7 @@ export function PublicCatalogPage() {
     )
   }
 
-  if (reviewing) {
+  if (reviewing && canOrder) {
     return (
       <PublicLayout business={business} headerRight={ordersButton}>
         <OrderReview
@@ -244,8 +253,11 @@ export function PublicCatalogPage() {
   }
 
   return (
-    <PublicLayout business={business} headerRight={ordersButton}>
+    <PublicLayout business={business} headerRight={canOrder ? ordersButton : undefined} accountActions={canOrder}>
       <div className="public-catalog">
+        {!canOrder && (
+          <p className="public-catalog__menu-note">Este es el menú de {business.name}. Haz tu pedido en la barra.</p>
+        )}
         {categories.length > 1 && (
           <div className="public-catalog__categories">
             {['todas', ...categories].map((c) => (
@@ -268,6 +280,25 @@ export function PublicCatalogPage() {
             {visibleProducts.map((product) => {
               const quantity = cart.quantityOf(product.id)
               const productGuides = guidesByProductId[product.id]
+              if (!canOrder) {
+                return (
+                  <div key={product.id} className="public-catalog__item">
+                    <div className="public-catalog__product public-catalog__product--static">
+                      <div className="public-catalog__product-main">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt="" loading="lazy" className="public-catalog__product-image" />
+                        ) : (
+                          <span className="public-catalog__product-image public-catalog__product-image--empty" aria-hidden="true">
+                            ☕
+                          </span>
+                        )}
+                        <span className="public-catalog__product-name">{product.name}</span>
+                        <span className="public-catalog__product-price">{currency.format(product.price)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
               return (
                 <div key={product.id} className="public-catalog__item">
                   <div className={['public-catalog__product', quantity > 0 ? 'public-catalog__product--selected' : ''].join(' ')}>
@@ -326,7 +357,7 @@ export function PublicCatalogPage() {
           {cart.count > 0 ? `Tu pedido: ${itemCountLabel(cart.count)}, ${currency.format(cart.total)}` : ''}
         </p>
 
-        {cart.count > 0 && (
+        {canOrder && cart.count > 0 && (
           <div className="public-catalog__dock">
             <button
               type="button"

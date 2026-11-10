@@ -11,6 +11,8 @@ interface BusinessEditModalProps {
   onSave: (input: BusinessUpdateInput) => Promise<void>
   onUploadLogo: (file: File) => Promise<void>
   onClose: () => void
+  /** Si el plan no incluye color de marca (0019), el selector se deshabilita con este texto. */
+  brandColorLockedHint?: string
 }
 
 const BUSINESS_TYPE_LABEL: Record<BusinessType, string> = {
@@ -20,7 +22,7 @@ const BUSINESS_TYPE_LABEL: Record<BusinessType, string> = {
 }
 
 /** Edita nombre, tipo, país y color del negocio, y sube un logo nuevo a Supabase Storage. */
-export function BusinessEditModal({ business, onSave, onUploadLogo, onClose }: BusinessEditModalProps) {
+export function BusinessEditModal({ business, onSave, onUploadLogo, onClose, brandColorLockedHint }: BusinessEditModalProps) {
   const [name, setName] = useState(business.name)
   const [type, setType] = useState<BusinessType>(business.type)
   const [country, setCountry] = useState(business.country)
@@ -105,8 +107,14 @@ export function BusinessEditModal({ business, onSave, onUploadLogo, onClose }: B
           <input id="business-country" value={country} onChange={(e) => setCountry(e.target.value)} />
         </FormField>
 
-        <FormField label="Color de marca" htmlFor="business-color">
-          <input id="business-color" type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} />
+        <FormField label="Color de marca" htmlFor="business-color" hint={brandColorLockedHint}>
+          <input
+            id="business-color"
+            type="color"
+            value={primaryColor}
+            disabled={Boolean(brandColorLockedHint)}
+            onChange={(e) => setPrimaryColor(e.target.value)}
+          />
         </FormField>
 
         <FormField label="Logo" htmlFor="business-logo" hint="PNG, JPG o WebP de máximo 2 MB." error={errors.logo}>

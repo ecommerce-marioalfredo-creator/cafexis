@@ -3,6 +3,7 @@ import { useOrders, type ClosedOrdersPeriod } from '@/hooks/useOrders'
 import { useProducts } from '@/hooks/useProducts'
 import { useProductGuides } from '@/hooks/useProductGuides'
 import { useAuth } from '@/context/AuthContext'
+import { usePlan } from '@/context/PlanContext'
 import { OrderCard } from '@/components/domain/OrderCard'
 import { useStaffOrderActions } from '@/components/domain/useStaffOrderActions'
 import { PointOfSaleModal } from '@/components/domain/PointOfSaleModal'
@@ -42,14 +43,16 @@ export function SalesPage() {
   // Si falla (por ejemplo, sin la migración 0018), el tablero sigue igual, sin el enlace.
   const { guidesByProductId } = useProductGuides()
   const { user } = useAuth()
+  const { can } = usePlan()
   const { cardProps, actionError, modals } = useStaffOrderActions({ setStatus, confirmPayment, cancel })
   const [posOpen, setPosOpen] = useState(false)
   const [invoicingOrderId, setInvoicingOrderId] = useState<string>()
   const [invoiceError, setInvoiceError] = useState<string>()
   const [actionMessage, setActionMessage] = useState<string>()
 
-  // Facturar: solo quien administra el negocio (la base de datos lo exige igual).
-  const canInvoice = user?.role === 'administrador' || user?.role === 'supervisor_tecnico'
+  // Facturar: solo quien administra el negocio y con la factura en el plan
+  // (Premium o complemento, 0019). La base de datos lo exige igual.
+  const canInvoice = (user?.role === 'administrador' || user?.role === 'supervisor_tecnico') && can('factura_dian')
 
   const handleGenerateInvoice = async (orderId: string) => {
     setInvoiceError(undefined)
@@ -83,7 +86,12 @@ export function SalesPage() {
   }, [products])
 
   // Productos con video o PDF: su línea en la comanda enlaza a la guía de preparación.
-  const guideProductIds = useMemo(() => new Set(Object.keys(guidesByProductId)), [guidesByProductId])
+  // Las guías del equipo son desde Profesional: sin ellas, la comanda no enlaza a Guías de preparación.
+  const canGuides = can('guias_equipo')
+  const guideProductIds = useMemo(
+    () => new Set(canGuides ? Object.keys(guidesByProductId) : []),
+    [guidesByProductId, canGuides],
+  )
 
   const periodLabel = PERIODS.find((p) => p.id === period)?.label.toLowerCase()
 

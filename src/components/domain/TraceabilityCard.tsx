@@ -20,9 +20,11 @@ const PROCESS_LABEL: Record<CoffeeLot['process'], string> = {
 interface TraceabilityCardProps {
   lot: CoffeeLot
   onEdit?: (lot: CoffeeLot) => void
+  /** La página pública del lote es de Premium (0019): sin ella, el QR no se ofrece. */
+  publicPage?: boolean
 }
 
-export function TraceabilityCard({ lot, onEdit }: TraceabilityCardProps) {
+export function TraceabilityCard({ lot, onEdit, publicPage = true }: TraceabilityCardProps) {
   const [showQr, setShowQr] = useState(false)
 
   return (
@@ -45,15 +47,17 @@ export function TraceabilityCard({ lot, onEdit }: TraceabilityCardProps) {
       {lot.story && <p className="trace-card__story">{lot.story}</p>}
 
       <footer className="trace-card__footer">
-        <Button variant="tertiary" onClick={() => setShowQr((v) => !v)}>
-          {showQr ? 'Ocultar código QR' : 'Ver código QR para el cliente'}
-        </Button>
+        {publicPage && (
+          <Button variant="tertiary" onClick={() => setShowQr((v) => !v)}>
+            {showQr ? 'Ocultar código QR' : 'Ver código QR para el cliente'}
+          </Button>
+        )}
         {onEdit && (
           <Button variant="secondary" onClick={() => onEdit(lot)}>
             Editar
           </Button>
         )}
-        {showQr && (
+        {publicPage && showQr && (
           <div className="trace-card__qr">
             <QRCodeSVG
               value={`${window.location.origin}/trazabilidad/${lot.id}`}

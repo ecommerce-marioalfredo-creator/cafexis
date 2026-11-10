@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-do
 import { AppShell } from '@/components/layout/AppShell'
 import { RequireAuth } from '@/components/layout/RequireAuth'
 import { RequireRole } from '@/components/layout/RequireRole'
+import { RequirePlan } from '@/components/plan/UpgradeNotice'
 import { CustomerAuthRoot } from '@/components/layout/CustomerAuthRoot'
 import { RequireCustomerAuth } from '@/components/layout/RequireCustomerAuth'
 import { LoginPage } from '@/pages/LoginPage'
@@ -39,7 +40,8 @@ const staffRoutes: RouteObject[] = [
   {
     element: <RequireAuth />,
     children: [
-      // Fase 6: bloqueo de acceso cuando la suscripción del negocio venció.
+      // Bloqueo de acceso cuando la cuenta está cancelada (desde la 0019,
+      // vencer solo baja el negocio a Básica).
       // Fuera de AppShell (no necesita Sidebar/Topbar) pero dentro de
       // RequireAuth (exige sesión de empleado) — ver la excepción de
       // pathname en RequireAuth.tsx para no generar un bucle.
@@ -54,10 +56,20 @@ const staffRoutes: RouteObject[] = [
               { index: true, element: <DashboardPage /> },
               { path: 'inventario', element: <InventoryPage /> },
               { path: 'productos', element: <ProductsPage /> },
-              { path: 'compras', element: <PurchasesPage /> },
-              { path: 'proveedores', element: <SuppliersPage /> },
+              // Módulos que dependen del plan (0019): sin él, aviso de "sube de plan".
+              {
+                element: <RequirePlan feature="compras" />,
+                children: [
+                  { path: 'compras', element: <PurchasesPage /> },
+                  { path: 'proveedores', element: <SuppliersPage /> },
+                ],
+              },
+              {
+                element: <RequirePlan feature="lotes" />,
+                children: [{ path: 'trazabilidad', element: <TraceabilityPage /> }],
+              },
+              // Básica tiene el histórico de pedidos; ReportsPage bloquea el resto.
               { path: 'reportes', element: <ReportsPage /> },
-              { path: 'trazabilidad', element: <TraceabilityPage /> },
               { path: 'suscripcion', element: <SubscriptionsPage /> },
               { path: 'configuracion', element: <SettingsPage /> },
             ],
@@ -67,7 +79,10 @@ const staffRoutes: RouteObject[] = [
             children: [
               { path: 'ventas', element: <SalesPage /> },
               // Guías de preparación (0018): el barista consulta; quien administra también sube y publica.
-              { path: 'preparacion', element: <PreparationPage /> },
+              {
+                element: <RequirePlan feature="guias_equipo" />,
+                children: [{ path: 'preparacion', element: <PreparationPage /> }],
+              },
             ],
           },
           {

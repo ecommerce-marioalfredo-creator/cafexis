@@ -85,6 +85,9 @@ Tienes dos formas, elige la que prefieras:
    - `migrations/0016_cancelacion_y_avisos_cafexis.sql` (ya aplicada — ver paso 16)
    - `migrations/0017_invitados_cafexis.sql` (ver paso 17)
    - `migrations/0018_guias_preparacion_cafexis.sql` (pendiente — ver paso 18)
+   - `migrations/0019_planes_suscripcion_cafexis.sql` (ya aplicada — ver paso 19)
+   - `migrations/0020_cambio_de_plan_cafexis.sql` (ya aplicada — ver paso 20)
+   - `migrations/0021_super_usuario_promociones_cafexis.sql` (pendiente — ver paso 21)
 
 **Opción B — Supabase CLI (recomendado si seguimos iterando el esquema):**
 ```bash
@@ -282,9 +285,9 @@ espera de una cuenta real.
   migración quedan en estado "activa" sin fecha de vencimiento, para no
   bloquear ninguna cuenta real. El administrador ve su propio estado en
   **Suscripción** (menú lateral); el supervisor técnico, además, ve y
-  cambia el de cualquier negocio ahí mismo. Si una suscripción queda
-  "vencida", el panel completo se bloquea (`/suscripcion-vencida`) hasta
-  que el supervisor técnico la reactive.
+  cambia el de cualquier negocio ahí mismo. **Desde la 0019 (paso 19)** una
+  suscripción vencida ya no bloquea el panel: el negocio baja al plan
+  Básica. Solo una cuenta "cancelada" va a `/suscripcion-vencida`.
 - **Pasarela de pagos (Wompi, de referencia — requiere cuenta)**: desde
   esta migración, el pedido público del cliente final (`/c/:slug`) nace en
   estado `pendiente_pago`, no directo en `pedido`; el punto de venta
@@ -520,6 +523,154 @@ Qué incluye:
   Supabase. Para videos más pesados, súbelos a YouTube como "no listado" (o a
   Drive) y pega el enlace; en un plan pago se puede subir el límite en
   **Storage → Settings** y en la migración.
+
+### 19. Planes de suscripción: Básica, Profesional y Premium (ya aplicada)
+
+`migrations/0019_planes_suscripcion_cafexis.sql`. Requiere la 0018 (recrea
+su función pública de guías). No requiere redesplegar Edge Functions; sí
+publicar el frontend del mismo commit. El frontend funciona antes de aplicarla:
+sin la migración, todo negocio se comporta como hoy (sistema completo) y la
+página **Suscripción** muestra los planes de referencia.
+
+Qué hace:
+
+- **Tres planes** en `subscription_plans_cafexis`, cada uno con sus
+  funciones (`features`) y límites (`limits`). El plan "Básico" de la 0012
+  se renombra a **Básica** (mismo id) y se agregan **Profesional** y
+  **Premium**. Precios de referencia: $ 0, $ 79.900 y $ 149.900 al mes
+  ($ 799.000 y $ 1.499.000 al año); se cambian en la tabla.
+- **Negocios existentes**: los que estaban en prueba o activos pasan a
+  Premium para no perder nada de lo que ya usan; el supervisor técnico les
+  asigna después su plan real en **Suscripción → Todos los negocios**. El
+  negocio demo (Mi Cafetería) queda en **Premium activo sin vencimiento**.
+- **Negocios nuevos**: 14 días de prueba en Premium. Al terminar la prueba
+  o el período pago, el negocio **baja solo a Básica** y sigue operando (ya
+  no se bloquea). Lo que pase de los límites no se borra: solo no se pueden
+  crear más registros. Solo una cuenta **cancelada** queda bloqueada.
+- **Verificación en el servidor**: `plan_permite_cafexis()` y
+  `plan_limite_cafexis()` se revisan en triggers, así que no basta con
+  saltarse la pantalla:
+  - Pedidos desde el celular (`register_public_order_cafexis`): desde
+    Profesional. En Básica el catálogo es solo menú.
+  - Compras y proveedores, lotes de café y guías de preparación: desde
+    Profesional. Las propuestas de compra automáticas no se generan en
+    Básica (de lo contrario harían fallar la venta).
+  - Reportes personalizados y factura DIAN: Premium (la factura también como
+    complemento de Profesional: `addons = '{factura_dian}'`).
+  - Color de marca: desde Profesional (en Básica, el panel y el catálogo
+    usan el color de Cafexis; el guardado no se borra).
+  - Topes de Básica: 2 usuarios del equipo (administradores y baristas
+    activos más invitaciones pendientes), 20 productos y 30 insumos.
+    Profesional: 6 usuarios.
+  - Página pública del lote (QR) y "Cómo se prepara" en el catálogo:
+    Premium; las RPC públicas no devuelven nada en otros planes.
+- **Solo en pantalla**: el histórico de pedidos de 30 días de Básica, los
+  reportes predefinidos y "más vendidos" en el dashboard (son lecturas de
+  los propios datos del negocio).
+- **Cambio de plan**: el administrador lo solicita desde **Suscripción**
+  (se abre un caso de soporte con el plan y la forma de pago); el supervisor
+  técnico lo asigna ahí mismo, con la fecha hasta la que está pago y el
+  complemento de factura DIAN. El cobro recurrente con Wompi queda para
+  cuando esté la cuenta de comercio.
+
+Para cambiar un plan (por ejemplo, el precio o un límite) basta con editar
+su fila; las claves de `features` y `limits` están documentadas al inicio
+de la migración. Si cambias qué incluye cada plan, actualiza también el
+cuadro de `src/components/plan/planCatalog.ts`, que es lo que ve el dueño.
+
+### 20. Cambio de plan desde Suscripción (ya aplicada)
+
+`migrations/0020_cambio_de_plan_cafexis.sql`. Requiere la 0019. No requiere
+redesplegar Edge Functions; sí publicar el frontend del mismo commit. Sin la
+migración, "Cambiar de plan" sigue funcionando a medias: el administrador
+deja la solicitud como caso de soporte y el supervisor técnico cambia el plan
+directamente.
+
+Qué incluye:
+
+- **Botón "Cambiar de plan"** en **Suscripción** (también "Cambiar a …" en
+  cada tarjeta de plan). Se elige el plan y la forma de pago (mensual o
+  anual) y se ve qué funciones se ganan o se pierden y cómo cambian los
+  límites, con aviso si el negocio ya pasa de los límites del plan nuevo.
+- **Bajar a Básica** (o a cualquier plan gratis): inmediato.
+- **Plan pago pedido por el administrador**: queda como **solicitud
+  pendiente** (`pending_plan_id`, `pending_billing_period`) y se abre un
+  caso de soporte con el plan, la forma de pago y el precio. El negocio la ve
+  en Suscripción y puede cancelarla; mientras tanto sigue en su plan.
+- **Supervisor técnico**: aprueba o rechaza la solicitud desde Suscripción
+  (en el negocio que opera o en **Todos los negocios**, columna
+  "Solicitud"). Al aprobar, el plan queda pago por un mes o un año desde hoy
+  (la fecha se puede ajustar en la tabla) y se deja constancia en el caso.
+  También puede cambiar el plan de cualquier negocio al instante.
+- RPC nuevas: `change_business_plan_cafexis(plan, forma de pago, negocio)` y
+  `cancel_plan_change_cafexis(negocio)`. `get_business_plan_cafexis` ahora
+  devuelve la forma de pago y la solicitud pendiente.
+
+Cuando esté la cuenta de Wompi, el webhook del cobro hará lo mismo que
+"Aprobar": llamar a `change_business_plan_cafexis` con el plan pendiente.
+
+### 21. Panel del super usuario y códigos de promoción (pendiente de aplicar)
+
+`migrations/0021_super_usuario_promociones_cafexis.sql`. Requiere 0001–0020.
+No requiere redesplegar Edge Functions; sí publicar el frontend del mismo
+commit. "Super usuario" es el rol `supervisor_tecnico`; soporte no ve nada
+de esto. Sin la migración, el Dashboard del supervisor muestra un aviso para
+aplicarla y Suscripción simplemente no muestra el campo del código.
+
+Qué incluye:
+
+- **Dashboard → Plataforma (super usuario)**, la vista por defecto del
+  supervisor técnico (la otra pestaña, **Negocio**, es el dashboard del
+  negocio que opera):
+  - Resumen: negocios, usuarios activos, ingreso mensual estimado (plan
+    efectivo con su descuento; el anual se reparte en 12) y lo que hay por
+    atender (solicitudes de plan, planes vencidos o que vencen en 7 días,
+    cuentas canceladas).
+  - **Negocios y usuarios**: cada negocio con su suscripción completa, uso
+    frente a los límites, clientes registrados, códigos usados y la lista de
+    usuarios (rol, estado, último ingreso) e invitaciones pendientes.
+    Búsqueda por negocio, usuario o correo, y filtros por plan y estado.
+  - **Editar suscripción**: plan, estado, forma de pago, fin de la prueba,
+    pago vigente hasta (+1 mes, +1 año, sin vencimiento), factura DIAN,
+    descuento (% y hasta cuándo), y aprobar o rechazar la solicitud
+    pendiente. Muestra con qué plan quedará operando el negocio.
+  - **Aplicar código** a cualquier negocio.
+  - **Códigos de promoción**: crear, editar, activar o desactivar, borrar
+    los que nadie ha usado y ver qué negocios usaron cada uno.
+  - **Planes**: nombre, descripción, precios, días de prueba, límites,
+    funciones, recomendado y si está a la venta.
+- **Suscripción** (administrador): "¿Tienes un código de promoción?", con el
+  descuento vigente y los códigos que ya usó.
+- Tablas nuevas: `promo_codes_cafexis` (solo el supervisor la lee y la
+  escribe) y `promo_code_redemptions_cafexis` (cada canje; el negocio ve los
+  suyos). Columnas nuevas en `business_subscriptions_cafexis`:
+  `discount_percent`, `discount_ends_at` y `discount_promo_code_id`.
+- RPC nuevas: `platform_subscriptions_overview_cafexis()` y
+  `redeem_promo_code_cafexis(código, negocio)`. El supervisor ahora puede
+  editar `subscription_plans_cafexis`.
+
+Reglas de los códigos (las aplica la base de datos):
+
+- Hay dos tipos. **Días gratis** de un plan pago: se aplican al instante, y
+  si el negocio ya tiene ese plan vigente, los días se suman al final.
+  **Descuento**: N % en un plan, o en cualquier plan pago, durante N meses.
+  Mientras el cobro sea manual, el supervisor resta el descuento al cobrar;
+  queda a la vista en su panel y en Suscripción.
+- Cada código tiene fecha de vencimiento (después nadie lo puede usar, pero
+  lo que ya se dio no se pierde) y, si quieres, un tope de usos. Cada
+  negocio lo usa una sola vez.
+- El administrador no puede canjear días de un plan menor al que ya tiene,
+  ni días de otro plan si tiene un plan pago vigente (perdería lo pagado),
+  ni un descuento si ya tiene uno vigente. En esos casos escribe a soporte.
+  El supervisor sí puede aplicarlos.
+- Un código que ya se usó no cambia su beneficio y no se borra: solo
+  cambian su descripción, vencimiento, tope o si está activo.
+- La Básica no se puede cobrar ni quitar de la venta, porque es el plan al
+  que baja todo negocio cuando vence. Las funciones y los límites de un plan
+  tienen que ser claves que el sistema conoce.
+
+Si cambias funciones o límites de un plan, actualiza también los textos del
+cuadro comparativo en `src/components/plan/planCatalog.ts`.
 
 ## Gestión de usuarios y roles (invitaciones)
 

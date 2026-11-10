@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useReports } from '@/hooks/useReports'
+import { usePlan } from '@/context/PlanContext'
+import { UpgradeNotice } from '@/components/plan/UpgradeNotice'
 import { ReportViewer } from '@/components/reports/ReportViewer'
 import { OrderHistoryReport } from '@/components/reports/OrderHistoryReport'
 import { CustomReportModal } from '@/components/reports/CustomReportModal'
@@ -19,6 +21,13 @@ export function ReportsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [editing, setEditing] = useState<ReportDefinition | 'new'>()
   const [deleteError, setDeleteError] = useState<string>()
+  // Planes (0019): Básica tiene el histórico de pedidos de los últimos 30
+  // días; los predefinidos son desde Profesional y los personalizados, de
+  // Premium. Los personalizados que ya existían se pueden consultar.
+  const { can, limit } = usePlan()
+  const canPredefined = can('reportes')
+  const canCustom = can('reportes_personalizados')
+  const historyDays = limit('historial_dias')
 
   if (loading) return <PageLoading label="Cargando reportes…" />
   if (error) return <PageError message={error} onRetry={reload} />
@@ -60,7 +69,20 @@ export function ReportsPage() {
             <p className="section-subtitle">{ORDER_HISTORY_DESCRIPTION}</p>
           </div>
         </div>
-        <OrderHistoryReport />
+        <OrderHistoryReport historyDays={historyDays} />
+      </div>
+    )
+  }
+
+  if (open && !open.custom && !canPredefined) {
+    return (
+      <div className="section-stack">
+        <div>
+          <Button variant="tertiary" onClick={() => openReport()}>
+            ← Todos los reportes
+          </Button>
+        </div>
+        <UpgradeNotice feature="reportes" variant="page" title={open.name} />
       </div>
     )
   }
@@ -76,7 +98,7 @@ export function ReportsPage() {
             <h3>{open.name}</h3>
             {open.description && <p className="section-subtitle">{open.description}</p>}
           </div>
-          {open.custom && (
+          {open.custom && canCustom && (
             <Button variant="secondary" onClick={() => setEditing(open)}>
               Editar reporte
             </Button>
@@ -97,7 +119,7 @@ export function ReportsPage() {
         <h3>Reportes predefinidos</h3>
         <p className="section-subtitle">Filtra por día, semana o mes y recorre períodos anteriores.</p>
         <div className="card-grid">
-          {predefined.map((report) => (
+          {canPredefined && predefined.map((report) => (
             <Card key={report.id} title={report.name}>
               <p className="section-subtitle">{report.description}</p>
               <Button variant="secondary" onClick={() => openReport(report.id)}>
@@ -106,11 +128,19 @@ export function ReportsPage() {
             </Card>
           ))}
           <Card title="Histórico de pedidos">
-            <p className="section-subtitle">{ORDER_HISTORY_DESCRIPTION}</p>
+            <p className="section-subtitle">
+              {ORDER_HISTORY_DESCRIPTION}
+              {historyDays !== undefined && ` En tu plan, los últimos ${historyDays} días.`}
+            </p>
             <Button variant="secondary" onClick={() => openReport(ORDER_HISTORY_ID)}>
               Consultar
             </Button>
           </Card>
+          {!canPredefined && (
+            <Card>
+              <UpgradeNotice feature="reportes" />
+            </Card>
+          )}
         </div>
       </section>
 
@@ -122,13 +152,16 @@ export function ReportsPage() {
               Elige qué datos consultar, cómo agruparlos, qué medir y con qué filtros, y guárdalo para volver a usarlo.
             </p>
           </div>
-          <Button variant="primary" onClick={() => setEditing('new')}>
-            Crear reporte personalizado
-          </Button>
+          {canCustom && (
+            <Button variant="primary" onClick={() => setEditing('new')}>
+              Crear reporte personalizado
+            </Button>
+          )}
         </div>
         {deleteError && <div className="form-error-banner">{deleteError}</div>}
+        {!canCustom && <UpgradeNotice feature="reportes_personalizados" />}
         {custom.length === 0 ? (
-          <EmptyState title="Aún no hay reportes personalizados" description="Crea el primero con el botón de arriba." />
+          canCustom && <EmptyState title="Aún no hay reportes personalizados" description="Crea el primero con el botón de arriba." />
         ) : (
           <div className="card-grid">
             {custom.map((report) => (
@@ -138,9 +171,11 @@ export function ReportsPage() {
                   <Button variant="secondary" onClick={() => openReport(report.id)}>
                     Consultar
                   </Button>
-                  <Button variant="tertiary" onClick={() => setEditing(report)}>
-                    Editar
-                  </Button>
+                  {canCustom && (
+                    <Button variant="tertiary" onClick={() => setEditing(report)}>
+                      Editar
+                    </Button>
+                  )}
                   <Button variant="tertiary" onClick={() => handleDelete(report)}>
                     Eliminar
                   </Button>

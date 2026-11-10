@@ -27,7 +27,6 @@ import type {
   PublicCoffeeLotRow,
   CustomerRow,
   CustomerBusinessRow,
-  BusinessSubscriptionRow,
   PaymentTransactionRow,
   InvoiceRow,
 } from '@/types/database'
@@ -53,8 +52,6 @@ import type {
   PublicCoffeeLot,
   Customer,
   CustomerBusinessLink,
-  BusinessSubscription,
-  BusinessSubscriptionOverview,
   PaymentTransaction,
   Invoice,
 } from '@/types/domain'
@@ -326,36 +323,6 @@ export function mapCustomReport(row: CustomReportRow): ReportDefinition {
 }
 
 // --- Fase 6: suscripciones, pagos en línea, facturación DIAN ---
-
-function isSubscriptionActive(row: BusinessSubscriptionRow): boolean {
-  const now = Date.now()
-  if (row.status === 'trial') {
-    return !row.trial_ends_at || new Date(row.trial_ends_at).getTime() > now
-  }
-  if (row.status === 'activa') {
-    return !row.current_period_ends_at || new Date(row.current_period_ends_at).getTime() > now
-  }
-  return false
-}
-
-export function mapBusinessSubscription(row: BusinessSubscriptionRow): BusinessSubscription {
-  return {
-    businessId: row.business_id,
-    planId: row.plan_id,
-    planName: row.subscription_plans_cafexis?.name,
-    status: row.status,
-    trialEndsAt: row.trial_ends_at ?? undefined,
-    currentPeriodEndsAt: row.current_period_ends_at ?? undefined,
-    isActive: isSubscriptionActive(row),
-  }
-}
-
-export function mapBusinessSubscriptionOverview(row: BusinessSubscriptionRow): BusinessSubscriptionOverview {
-  return {
-    ...mapBusinessSubscription(row),
-    businessName: row.businesses_cafexis?.name ?? '',
-  }
-}
 
 export function mapPaymentTransaction(row: PaymentTransactionRow): PaymentTransaction {
   return {

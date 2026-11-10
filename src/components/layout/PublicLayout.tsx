@@ -16,6 +16,12 @@ interface PublicLayoutProps {
   business?: PublicBusiness
   children: ReactNode
   headerRight?: ReactNode
+  /**
+   * false en el catálogo de un negocio en plan Básica (0019): es solo menú,
+   * así que no se invita a conectarse ni se muestran avisos de pedidos. Si
+   * el cliente ya está conectado (por otro negocio), conserva su sesión.
+   */
+  accountActions?: boolean
 }
 
 /**
@@ -24,7 +30,7 @@ interface PublicLayoutProps {
  * administrativo (AppShell.tsx es solo para empleados internos). Aplica el
  * color de marca del negocio igual que AppShell, cuando hay uno.
  */
-export function PublicLayout({ business, children, headerRight }: PublicLayoutProps) {
+export function PublicLayout({ business, children, headerRight, accountActions = true }: PublicLayoutProps) {
   const { customer, promptConnect, logout } = useCustomerAuth()
   const navigate = useNavigate()
   const [confirmingLogout, setConfirmingLogout] = useState(false)
@@ -71,7 +77,8 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
               Desconectarse
             </Button>
           ) : (
-            business && (
+            business &&
+            accountActions && (
               <Button variant="primary" className="public-layout__session" onClick={promptConnect}>
                 Conectarse
               </Button>
@@ -81,7 +88,7 @@ export function PublicLayout({ business, children, headerRight }: PublicLayoutPr
         <div className="public-layout__actions">
           <ThemeMenu />
           {/* En las pantallas de un negocio los avisos siempre están: sin sesión, explican cómo verlos. */}
-          {(customer || business) && (
+          {(customer || (business && accountActions)) && (
             <NotificationBell
               key={customer?.id ?? 'sin-sesion'}
               load={listCustomerNotifications}

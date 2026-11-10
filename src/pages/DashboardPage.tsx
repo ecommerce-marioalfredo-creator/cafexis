@@ -1,4 +1,8 @@
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { usePlan } from '@/context/PlanContext'
+import { SuperUserPanel } from '@/components/superuser/SuperUserPanel'
+import { UpgradeNotice } from '@/components/plan/UpgradeNotice'
 import { DASHBOARD_POLL_MS, useDashboardData } from '@/hooks/useDashboardData'
 import { useCancellationAlerts } from '@/hooks/useCancellationAlerts'
 import { useOrders } from '@/hooks/useOrders'
@@ -19,10 +23,44 @@ const ACTIVE_STATUSES: OrderStatus[] = ['pendiente_pago', 'pedido', 'en_preparac
 /**
  * key: el supervisor técnico puede cambiar de negocio sin salir de esta página.
  * Sin esto seguiría viendo las alertas y comandas del anterior hasta el siguiente refresco.
+ *
+ * El supervisor técnico (super usuario) tiene además la vista "Plataforma":
+ * todos los negocios con su suscripción y sus usuarios, códigos de promoción
+ * y planes (0021). Es la vista por defecto; ?vista=negocio muestra el
+ * dashboard del negocio que está operando.
  */
 export function DashboardPage() {
-  const { business } = useAuth()
-  return <DashboardContent key={business?.id} />
+  const { user, business } = useAuth()
+  const [params, setParams] = useSearchParams()
+
+  if (user?.role !== 'supervisor_tecnico') return <DashboardContent key={business?.id} />
+
+  const view = params.get('vista') === 'negocio' ? 'negocio' : 'plataforma'
+  const views = [
+    { id: 'plataforma', label: 'Plataforma (super usuario)' },
+    { id: 'negocio', label: business ? `Negocio: ${business.name}` : 'Negocio' },
+  ] as const
+
+  return (
+    <div className="su-dashboard">
+      <div className="su-dashboard__switch">
+        <div className="su-dashboard__segmented" role="tablist" aria-label="Vista del dashboard">
+          {views.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              role="tab"
+              aria-selected={view === v.id}
+              onClick={() => setParams(v.id === 'negocio' ? { vista: 'negocio' } : {}, { replace: true })}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {view === 'plataforma' ? <SuperUserPanel /> : <DashboardContent key={business?.id} />}
+    </div>
+  )
 }
 
 function DashboardContent() {
@@ -32,6 +70,7 @@ function DashboardContent() {
     DASHBOARD_POLL_MS,
   )
   const { alerts, failed: alertsFailed } = useCancellationAlerts()
+  const { can } = usePlan()
 
   const activeOrders = ACTIVE_STATUSES.flatMap((status) => orders.filter((o) => o.status === status))
 
@@ -88,7 +127,9 @@ function DashboardContent() {
 
       <section className="dashboard-page__grid">
         <Card title="Bebidas y productos más vendidos">
-          {data.topProducts.length === 0 ? (
+          {!can('dashboard_mas_vendidos') ? (
+            <UpgradeNotice feature="dashboard_mas_vendidos" />
+          ) : data.topProducts.length === 0 ? (
             <EmptyState title="Aún no hay ventas registradas" />
           ) : (
             <ol className="dashboard-page__ranking">
