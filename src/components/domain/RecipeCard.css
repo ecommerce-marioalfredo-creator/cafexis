@@ -68,6 +68,20 @@
   color: var(--color-text-primary);
 }
 
+.recipe-card__guides {
+  display: block;
+  margin-top: var(--space-2);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-brand-teal);
+  text-decoration: none;
+}
+
+.recipe-card__guides:hover {
+  text-decoration: underline;
+}
+
 .recipe-card__edit:hover {
   border-color: var(--color-brand-teal);
   color: var(--color-brand-teal);

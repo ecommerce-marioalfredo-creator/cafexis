@@ -44,6 +44,19 @@
   gap: 1px;
 }
 
+.order-card__guide-link {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-brand-teal);
+  text-decoration: none;
+}
+
+.order-card__guide-link:hover {
+  text-decoration: underline;
+}
+
 .order-card__footer {
   display: flex;
   flex-wrap: wrap;

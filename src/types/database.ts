@@ -125,6 +125,35 @@ export interface ProductRow {
   updated_at: string
 }
 
+export type ProductGuideKindRow = 'video' | 'pdf'
+
+/** product_guides_cafexis (0018): video o PDF de preparación de un producto. */
+export interface ProductGuideRow {
+  id: string
+  business_id: string
+  product_id: string
+  title: string
+  description: string | null
+  kind: ProductGuideKindRow
+  storage_path: string | null
+  external_url: string | null
+  visible_to_customers: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** Fila devuelta por get_public_product_guides_cafexis: solo materiales disponibles para el cliente. */
+export interface PublicProductGuideRow {
+  id: string
+  product_id: string
+  title: string
+  description: string | null
+  kind: ProductGuideKindRow
+  storage_path: string | null
+  external_url: string | null
+}
+
 export interface ProductRecipeItemRow {
   id: string
   product_id: string

@@ -83,6 +83,8 @@ Tienes dos formas, elige la que prefieras:
    - `migrations/0014_pedidos_y_permisos_por_rol_cafexis.sql` (ya aplicada — ver paso 14)
    - `migrations/0015_fotos_producto_cafexis.sql` (ver paso 15)
    - `migrations/0016_cancelacion_y_avisos_cafexis.sql` (ya aplicada — ver paso 16)
+   - `migrations/0017_invitados_cafexis.sql` (ver paso 17)
+   - `migrations/0018_guias_preparacion_cafexis.sql` (pendiente — ver paso 18)
 
 **Opción B — Supabase CLI (recomendado si seguimos iterando el esquema):**
 ```bash
@@ -488,6 +490,36 @@ Qué incluye:
 - Sin cuenta es más fácil enviar pedidos falsos, y cada pedido descuenta
   inventario hasta que el personal lo cancela. Antes de recibir negocios reales,
   activar el CAPTCHA en **Authentication → Attack Protection**.
+
+### 18. Guías de preparación: videos y PDF por producto (pendiente de aplicar)
+
+`migrations/0018_guias_preparacion_cafexis.sql`. No requiere redesplegar Edge
+Functions; sí publicar el frontend del mismo commit. Sin la migración, la
+pantalla **Guías de preparación** muestra un error y el resto sigue igual: el
+tablero de Ventas y el catálogo simplemente no muestran el enlace.
+
+Qué incluye:
+
+- **Tabla `product_guides_cafexis`**: uno o varios materiales por producto
+  (cualquier producto de venta, no solo bebidas), cada uno con título,
+  descripción, tipo (video o PDF) y origen: archivo subido **o** enlace
+  externo (YouTube, Vimeo, Google Drive…).
+- **Quién hace qué**: todo el personal activo del negocio los consulta (el
+  barista en `/preparacion` y desde cada comanda); solo el administrador o el
+  supervisor técnico los suben, editan, borran y marcan como **disponibles
+  para el cliente**. Soporte no escribe.
+- **Cliente final**: `get_public_product_guides_cafexis` devuelve solo los
+  materiales marcados como disponibles; en el catálogo aparece el botón
+  "Cómo se prepara" bajo esos productos.
+- **Bucket privado `product-guides`** (máximo 50 MB; PDF, MP4 o WebM). Los
+  archivos se abren con URLs firmadas que vencen en 2 horas: un material
+  interno nunca queda público, y al quitarle "disponible para el cliente"
+  deja de poder abrirse desde fuera del negocio. Un trigger impide que una
+  guía apunte a un producto o a un archivo de otro negocio.
+- **Límite de 50 MB**: es el máximo por archivo del plan gratuito de
+  Supabase. Para videos más pesados, súbelos a YouTube como "no listado" (o a
+  Drive) y pega el enlace; en un plan pago se puede subir el límite en
+  **Storage → Settings** y en la migración.
 
 ## Gestión de usuarios y roles (invitaciones)
 

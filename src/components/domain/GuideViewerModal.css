@@ -1,0 +1,52 @@
+.guide-viewer__description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+  white-space: pre-line;
+}
+
+.guide-viewer__video,
+.guide-viewer__frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: var(--radius-md);
+  background: #000;
+}
+
+.guide-viewer__frame--pdf {
+  aspect-ratio: auto;
+  height: 65vh;
+  background: var(--color-surface-sunken);
+}
+
+.guide-viewer__open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--space-3);
+  text-decoration: none;
+}
+
+.guide-viewer__external {
+  text-align: center;
+  padding: var(--space-6) 0;
+}
+
+.guide-viewer__external p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+/* Los navegadores de celular no muestran PDF dentro de un iframe (o solo la
+   primera página): ahí se ofrece solo el botón para abrirlo aparte. */
+@media (max-width: 700px) {
+  .guide-viewer__frame--pdf {
+    display: none;
+  }
+
+  .guide-viewer__open {
+    width: 100%;
+  }
+}

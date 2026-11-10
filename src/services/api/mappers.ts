@@ -10,6 +10,8 @@ import type {
   InventoryItemRow,
   ProductRow,
   ProductRecipeItemRow,
+  ProductGuideRow,
+  PublicProductGuideRow,
   CoffeeLotRow,
   SupplierRow,
   SupplierBranchRow,
@@ -35,6 +37,8 @@ import type {
   InventoryItem,
   Product,
   RecipeIngredient,
+  ProductGuide,
+  PublicProductGuide,
   CoffeeLot,
   Supplier,
   Order,
@@ -173,6 +177,26 @@ export function mapProduct(row: ProductRow, recipeRows: ProductRecipeItemRow[] =
     recipe: recipeRows.length > 0 ? recipeRows.map(mapRecipeItem) : undefined,
     coffeeLotId: row.coffee_lot_id ?? undefined,
     lotKgPerUnit: row.lot_kg_per_unit != null ? Number(row.lot_kg_per_unit) : undefined,
+  }
+}
+
+export function mapPublicProductGuide(row: PublicProductGuideRow): PublicProductGuide {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    title: row.title,
+    description: row.description ?? undefined,
+    kind: row.kind,
+    storagePath: row.storage_path ?? undefined,
+    externalUrl: row.external_url ?? undefined,
+  }
+}
+
+export function mapProductGuide(row: ProductGuideRow): ProductGuide {
+  return {
+    ...mapPublicProductGuide(row),
+    visibleToCustomers: row.visible_to_customers,
+    createdAt: row.created_at,
   }
 }
 

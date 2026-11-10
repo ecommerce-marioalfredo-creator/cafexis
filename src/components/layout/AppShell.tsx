@@ -10,6 +10,7 @@ import './AppShell.css'
 const TITLES: Record<string, string> = {
   '/': 'Dashboard',
   '/ventas': 'Ventas',
+  '/preparacion': 'Guías de preparación',
   '/inventario': 'Inventario',
   '/productos': 'Productos y recetas',
   '/compras': 'Compras',

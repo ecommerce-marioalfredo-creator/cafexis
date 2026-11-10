@@ -1,0 +1,239 @@
+.preparation-page__intro {
+  margin-bottom: 0;
+  max-width: 720px;
+}
+
+.preparation-page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.preparation-page__search {
+  height: 40px;
+  min-width: min(280px, 100%);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: var(--color-surface-default);
+  color: var(--color-text-primary);
+}
+
+.preparation-page__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.preparation-page__focus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.preparation-page__focus .section-subtitle {
+  margin-bottom: 0;
+}
+
+.preparation-page__grid {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-items: start;
+}
+
+/* --- Tarjeta de producto --- */
+
+.preparation-card {
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.preparation-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.preparation-card__header strong {
+  display: block;
+  font-family: var(--font-heading);
+}
+
+.preparation-card__image {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+.preparation-card__image--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-sunken);
+  font-size: 24px;
+}
+
+.preparation-card__category {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.preparation-card__recipe {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.preparation-card__recipe summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.preparation-card__recipe ul {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.preparation-card__empty {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.preparation-card__guides {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.preparation-card__guide {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.preparation-card__guide-open {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.preparation-card__guide-open:hover {
+  background: var(--color-surface-sunken);
+}
+
+.preparation-card__guide-open > span:first-child {
+  font-size: 20px;
+}
+
+.preparation-card__guide-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.preparation-card__guide-kind {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.preparation-card__guide-cta {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-brand-teal);
+}
+
+.preparation-card__guide-admin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--color-border-default);
+  background: var(--color-surface-sunken);
+}
+
+.preparation-card__guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.preparation-card__guide-actions button {
+  border: none;
+  background: transparent;
+  color: var(--color-brand-teal);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.preparation-card__guide-actions button:hover:not(:disabled) {
+  background: rgba(29, 158, 117, 0.1);
+}
+
+.preparation-card__guide-actions button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.preparation-card__guide-actions .preparation-card__danger {
+  color: var(--color-state-error);
+}
+
+.preparation-card__guide-actions .preparation-card__danger:hover:not(:disabled) {
+  background: rgba(214, 69, 69, 0.1);
+}
+
+.preparation-card__add {
+  border: 1px dashed var(--color-brand-teal);
+  color: var(--color-brand-teal);
+  background: transparent;
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.preparation-card__add:hover {
+  background: rgba(29, 158, 117, 0.08);
+}

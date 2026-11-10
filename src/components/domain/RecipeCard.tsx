@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { Product } from '@/types/domain'
 import './RecipeCard.css'
 
@@ -34,6 +35,11 @@ export function RecipeCard({ product, onEdit }: RecipeCardProps) {
         <button className="recipe-card__edit" onClick={() => onEdit(product)}>
           Editar
         </button>
+      )}
+      {onEdit && (
+        <Link className="recipe-card__guides" to={`/preparacion?producto=${product.id}`}>
+          🎬 Videos y PDF de preparación
+        </Link>
       )}
     </article>
   )

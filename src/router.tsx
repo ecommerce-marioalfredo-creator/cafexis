@@ -8,6 +8,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { SalesPage } from '@/pages/SalesPage'
+import { PreparationPage } from '@/pages/PreparationPage'
 import { InventoryPage } from '@/pages/InventoryPage'
 import { ProductsPage } from '@/pages/ProductsPage'
 import { PurchasesPage } from '@/pages/PurchasesPage'
@@ -28,7 +29,7 @@ import { APP_TARGET, type AppTarget } from '@/platform/appTarget'
 import { ADMIN_ROLES, BUSINESS_STAFF_ROLES, HELP_ROLES, PLATFORM_ROLES } from '@/components/layout/roles'
 
 // Grupos de roles en components/layout/roles.ts (los mismos que usa el
-// menú en Sidebar.tsx). El barista solo tiene /ventas y /ayuda; soporte
+// menú en Sidebar.tsx). El barista solo tiene /ventas, /preparacion y /ayuda; soporte
 // solo la consola (/soporte), que es de solo lectura sobre los negocios.
 
 /** Panel del personal (empleados internos y equipo de plataforma). */
@@ -63,7 +64,11 @@ const staffRoutes: RouteObject[] = [
           },
           {
             element: <RequireRole roles={BUSINESS_STAFF_ROLES} />,
-            children: [{ path: 'ventas', element: <SalesPage /> }],
+            children: [
+              { path: 'ventas', element: <SalesPage /> },
+              // Guías de preparación (0018): el barista consulta; quien administra también sube y publica.
+              { path: 'preparacion', element: <PreparationPage /> },
+            ],
           },
           {
             element: <RequireRole roles={HELP_ROLES} />,

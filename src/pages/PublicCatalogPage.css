@@ -12,23 +12,115 @@
   margin-bottom: var(--space-6);
 }
 
-.public-catalog__product {
-  position: relative;
+/* Cada producto: la tarjeta (agrega al carrito) y, si el negocio lo publicó,
+   el enlace a su video o PDF de preparación. */
+.public-catalog__item {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: var(--space-1);
+}
+
+.public-catalog__item .public-catalog__product {
+  flex: 1;
+}
+
+.public-catalog__guide-link {
+  border: 1px solid var(--color-brand-teal);
+  background: transparent;
+  color: var(--color-brand-teal);
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.public-catalog__guide-link:hover {
+  background: rgba(29, 158, 117, 0.08);
+}
+
+.public-catalog__guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.public-catalog__guide-list button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-default);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.public-catalog__guide-list button:hover {
+  border-color: var(--color-brand-teal);
+}
+
+.public-catalog__guide-list button > span:first-child {
+  font-size: 20px;
+}
+
+.public-catalog__guide-kind {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Tarjeta de producto, estilo kiosko: la parte de arriba agrega una unidad;
+   abajo va "Agregar" o, ya agregado, el selector de cantidad. Los dos miden
+   lo mismo para que la tarjeta no salte al agregar. */
+.public-catalog__product {
+  display: flex;
+  flex-direction: column;
   background: var(--color-surface-default);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
-  padding: var(--space-3);
-  cursor: pointer;
-  text-align: left;
   box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .public-catalog__product:hover {
   border-color: var(--color-brand-orange);
+}
+
+.public-catalog__product--selected {
+  border-color: var(--color-brand-orange);
+  box-shadow: inset 0 0 0 1px var(--color-brand-orange), var(--shadow-sm);
+}
+
+.public-catalog__product-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-3) var(--space-3) 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Hacia adentro: hacia afuera el contorno se montaría sobre el borde de la tarjeta. */
+.public-catalog__product-main:focus-visible {
+  outline-offset: -2px;
 }
 
 .public-catalog__product-image {
@@ -53,113 +145,169 @@
 }
 
 .public-catalog__product-price {
-  color: var(--color-text-secondary);
-  font-size: 13px;
+  margin-bottom: var(--space-1);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
-.public-catalog__product-count {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  background: var(--color-brand-orange);
-  color: #fff;
-  border-radius: 999px;
-  min-width: 22px;
-  height: 22px;
+.public-catalog__product-add {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  gap: var(--space-1);
+  align-self: stretch;
+  height: 44px;
+  margin-top: auto;
+  margin-bottom: var(--space-3);
+  border-radius: 999px;
+  background: var(--color-brand-orange);
+  color: #fff;
   font-weight: 700;
-}
-
-.public-catalog__cart {
-  position: sticky;
-  bottom: 0;
-  background: var(--color-surface-default);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  box-shadow: var(--shadow-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.public-catalog__cart h2 {
-  font-family: var(--font-heading);
-  font-size: 16px;
-  margin: 0;
-}
-
-.public-catalog__cart-lines {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.public-catalog__cart-lines li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
   font-size: 14px;
+  transition: background-color 0.15s ease;
 }
 
-.public-catalog__stepper {
+.public-catalog__product-main:hover .public-catalog__product-add {
+  background: var(--color-brand-orange-hover);
+}
+
+.public-catalog__product-add svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.public-catalog__product .public-catalog__product-stepper {
+  display: flex;
+  margin: var(--space-1) var(--space-3) var(--space-3);
+}
+
+/* Barra del carrito: va al final del menú, pero queda pegada al borde
+   inferior mientras haya productos debajo. Es una sola línea, así que nunca
+   tapa más que eso; el detalle se ve en "Tu pedido". */
+.public-catalog__dock {
+  position: sticky;
+  bottom: var(--space-3);
+  z-index: 4;
+}
+
+.public-catalog__cart-bar {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-}
-
-.public-catalog__stepper button {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border-default);
-  background: var(--color-surface-default);
-  cursor: pointer;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 60px;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-brand-orange);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  font-family: var(--font-body);
   font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 
-.public-catalog__total {
+.public-catalog__cart-bar:hover {
+  background: var(--color-brand-orange-hover);
+}
+
+.public-catalog__cart-bar-icon {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid var(--color-border-default);
-  padding-top: var(--space-2);
-  font-family: var(--font-heading);
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.18);
 }
 
-.public-catalog__login-prompt {
-  text-align: center;
+.public-catalog__cart-bar-icon svg,
+.public-catalog__cart-bar-chevron {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.public-catalog__login-prompt p {
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
-}
-
-.public-catalog__payment-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: var(--space-2);
-}
-
-.public-catalog__payment-options {
+/* Blanco y carbón fijos: van sobre el color del negocio en los dos temas. */
+.public-catalog__cart-bar-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-text-charcoal);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
-.public-catalog__payment-hint {
-  display: block;
-  margin-top: var(--space-2);
-  font-size: 12px;
+.public-catalog__cart-bar-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.public-catalog__cart-bar-total {
+  font-family: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .public-catalog__product-main:active .public-catalog__product-image {
+    transform: scale(0.97);
+  }
+
+  .public-catalog__product-image {
+    transition: transform 0.1s ease;
+  }
+
+  .public-catalog__dock {
+    animation: public-catalog-dock-in 0.25s ease-out;
+  }
+
+  /* Confirma cada producto agregado sin mover el resto de la barra. */
+  .public-catalog__cart-bar-count {
+    animation: public-catalog-count-pop 0.3s ease-out;
+  }
+}
+
+@keyframes public-catalog-dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes public-catalog-count-pop {
+  40% {
+    transform: scale(1.35);
+  }
 }
 
 .public-catalog__confirmation {

@@ -133,6 +133,42 @@ export interface Product {
   lotKgPerUnit?: number
 }
 
+// --- Guías de preparación (videos y PDF por producto, 0018) ---
+
+export type ProductGuideKind = 'video' | 'pdf'
+
+/**
+ * Material que explica cómo preparar un producto. Viene de un archivo del
+ * bucket privado product-guides (storagePath) o de un enlace externo
+ * (externalUrl); nunca de ambos.
+ */
+export interface ProductGuide {
+  id: string
+  productId: string
+  title: string
+  description?: string
+  kind: ProductGuideKind
+  storagePath?: string
+  externalUrl?: string
+  /** Si el cliente final lo ve desde el catálogo público. */
+  visibleToCustomers: boolean
+  createdAt: string
+}
+
+/** Datos editables de un material (el archivo, si lo hay, se sube aparte). */
+export interface ProductGuideInput {
+  productId: string
+  title: string
+  description?: string
+  kind: ProductGuideKind
+  /** Enlace externo (YouTube, Vimeo, Drive…); se ignora si se sube un archivo. */
+  externalUrl?: string
+  visibleToCustomers: boolean
+}
+
+/** Lo que el cliente final ve de un material desde el catálogo. */
+export type PublicProductGuide = Omit<ProductGuide, 'visibleToCustomers' | 'createdAt'>
+
 // --- Trazabilidad (café en grano/molido) ---
 
 export type CoffeeProcess = 'lavado' | 'honey' | 'natural' | 'otro'

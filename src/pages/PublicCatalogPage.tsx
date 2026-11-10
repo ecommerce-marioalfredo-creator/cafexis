@@ -1,45 +1,63 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { PageLoading, PageError } from '@/components/ui/PageState'
 import { Button } from '@/components/ui/Button'
-import { FormField } from '@/components/ui/FormField'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Modal } from '@/components/ui/Modal'
+import { GuideViewerModal } from '@/components/domain/GuideViewerModal'
+import { GUIDE_KIND_ICON, GUIDE_KIND_LABEL } from '@/components/domain/guideMedia'
+import { OrderReview } from '@/components/domain/OrderReview'
+import { QuantityStepper } from '@/components/domain/QuantityStepper'
 import { useCustomerAuth } from '@/context/CustomerAuthContext'
+import { itemCountLabel, useCustomerCart } from '@/hooks/useCustomerCart'
 import { getPublicBusiness, getPublicCatalog } from '@/services/api/publicBusinessService'
 import { linkToBusiness } from '@/services/api/customerAuthService'
 import { registerPublicOrder } from '@/services/api/publicOrdersService'
-import { PAYMENT_LABEL, SALE_PAYMENT_METHODS, currency } from '@/components/domain/paymentMethods'
-import type { PublicBusiness, PublicProduct, PaymentMethod } from '@/types/domain'
+import { listPublicProductGuides } from '@/services/api/productGuidesService'
+import { PAYMENT_LABEL, currency } from '@/components/domain/paymentMethods'
+import type { PublicBusiness, PublicProduct, PublicProductGuide, PaymentMethod } from '@/types/domain'
 import './PublicCatalogPage.css'
 
-interface CartLine {
-  product: PublicProduct
-  quantity: number
-}
+/**
+ * La revisión del pedido vive en ?ver=pedido y no en un estado interno: así el
+ * botón atrás (Android, navegador, el del encabezado en iOS) vuelve al menú en
+ * vez de sacar al cliente del catálogo.
+ */
+const REVIEW_PARAM = 'pedido'
 
 /**
  * Catálogo público de un negocio (/c/:slug): el menú que ve el cliente al
- * escanear el QR de acceso. Ver el catálogo es público sin sesión; agregar
- * al carrito y pedir exige haber iniciado sesión con Google.
+ * escanear el QR de acceso. Ver el catálogo es público sin sesión; enviar el
+ * pedido exige conectarse (Google o invitado).
  *
- * El carrito reutiliza el mismo patrón de PointOfSaleModal.tsx (agregar con
- * un clic, +/- por línea), adaptado a una página de ancho de celular en vez
- * de un modal de escritorio.
+ * Funciona como los kioscos de autoservicio de comida rápida:
+ *   1. Menú: se toca un producto para agregarlo; ya agregado, la tarjeta
+ *      muestra su cantidad para ajustarla ahí mismo.
+ *   2. Una barra compacta al fondo resume el carrito (unidades y total) sin
+ *      tapar el menú; al tocarla se abre "Tu pedido".
+ *   3. Tu pedido (OrderReview): revisar, ajustar, elegir mesa y pago, enviar.
  */
 export function PublicCatalogPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const reviewing = searchParams.get('ver') === REVIEW_PARAM
   const { customer, loading: authLoading, promptConnect } = useCustomerAuth()
+  const cart = useCustomerCart(slug)
+  const restoreCart = cart.restore
 
   const [business, setBusiness] = useState<PublicBusiness>()
   const [products, setProducts] = useState<PublicProduct[]>([])
+  // Videos y PDF que el negocio marcó como disponibles para el cliente (0018).
+  const [guides, setGuides] = useState<PublicProductGuide[]>([])
+  const [guidePicker, setGuidePicker] = useState<PublicProduct>()
+  const [viewingGuide, setViewingGuide] = useState<{ guide: PublicProductGuide; productName: string }>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>()
 
   const [category, setCategory] = useState('todas')
-  const [cart, setCart] = useState<CartLine[]>([])
   const [tableOrReference, setTableOrReference] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo')
   const [saving, setSaving] = useState(false)
@@ -58,14 +76,22 @@ export function PublicCatalogPage() {
           return
         }
         setBusiness(b)
-        const catalog = await getPublicCatalog(b.id)
+        const [catalog, publicGuides] = await Promise.all([
+          getPublicCatalog(b.id),
+          // Sin la migración 0018 el catálogo sigue funcionando, solo sin guías.
+          listPublicProductGuides(b.id).catch(() => [] as PublicProductGuide[]),
+        ])
         setProducts(catalog)
+        setGuides(publicGuides)
+        // Recupera el carrito de esta pestaña (ej. al volver de entrar con Google).
+        restoreCart(catalog)
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'No se pudo cargar el catálogo.'))
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [slug])
+  // restoreCart cambia solo con el slug: no provoca recargas extra.
+  useEffect(load, [slug, restoreCart])
 
   // El logo del encabezado enlaza a esta misma URL: al pulsarlo, la confirmación
   // del pedido da paso al catálogo. El carrito se conserva.
@@ -83,26 +109,41 @@ export function PublicCatalogPage() {
       .finally(() => setLinking(false))
   }, [customer, business])
 
+  // "Tu pedido" empieza arriba; al volver, el menú queda donde el cliente lo dejó.
+  const menuScrollY = useRef(0)
+  useLayoutEffect(() => {
+    window.scrollTo(0, reviewing ? 0 : menuScrollY.current)
+  }, [reviewing])
+
+  const openReview = () => {
+    menuScrollY.current = window.scrollY
+    navigate({ search: `?ver=${REVIEW_PARAM}` }, { state: { fromMenu: true } })
+  }
+
+  // Si llegó a la revisión desde el menú, atrás es el menú. Si entró directo
+  // (recargó, volvió de Google), no hay historial propio: se reemplaza la URL.
+  const backToMenu = () => {
+    if ((location.state as { fromMenu?: boolean } | null)?.fromMenu) navigate(-1)
+    else navigate({ search: '' }, { replace: true })
+  }
+
   const categories = useMemo(() => Array.from(new Set(products.map((p) => p.category))).sort(), [products])
   const visibleProducts = useMemo(
     () => (category === 'todas' ? products : products.filter((p) => p.category === category)),
     [products, category],
   )
-  const total = cart.reduce((sum, line) => sum + line.product.price * line.quantity, 0)
+  const guidesByProductId = useMemo(() => {
+    const map: Record<string, PublicProductGuide[]> = {}
+    for (const guide of guides) (map[guide.productId] ??= []).push(guide)
+    return map
+  }, [guides])
   const showTableField = business?.type === 'cafeteria' || business?.type === 'mixto'
 
-  const addProduct = (product: PublicProduct) => {
-    setCart((prev) => {
-      const existing = prev.find((l) => l.product.id === product.id)
-      if (existing) return prev.map((l) => (l.product.id === product.id ? { ...l, quantity: l.quantity + 1 } : l))
-      return [...prev, { product, quantity: 1 }]
-    })
-  }
-
-  const changeQuantity = (productId: string, delta: number) => {
-    setCart((prev) =>
-      prev.map((l) => (l.product.id === productId ? { ...l, quantity: l.quantity + delta } : l)).filter((l) => l.quantity > 0),
-    )
+  // Con un solo material se abre directo; con varios, primero se elige cuál.
+  const openGuides = (product: PublicProduct) => {
+    const productGuides = guidesByProductId[product.id] ?? []
+    if (productGuides.length === 1) setViewingGuide({ guide: productGuides[0], productName: product.name })
+    else setGuidePicker(product)
   }
 
   // Siempre visible. Sin sesión, /pedidos devolvería al catálogo sin explicar nada: primero se conecta.
@@ -113,7 +154,7 @@ export function PublicCatalogPage() {
   )
 
   const handleSubmitOrder = async () => {
-    if (!business || cart.length === 0) return
+    if (!business || cart.lines.length === 0) return
     setSaveError(undefined)
     setSaving(true)
     try {
@@ -121,12 +162,15 @@ export function PublicCatalogPage() {
       // con la forma de pago elegida; quien lo atiende cobra y lo confirma.
       await registerPublicOrder({
         businessId: business.id,
-        items: cart.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
+        items: cart.lines.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
         paymentMethod,
         tableOrReference: tableOrReference.trim() || undefined,
       })
-      setSubmittedOrder({ paymentMethod, total })
-      setCart([])
+      setSubmittedOrder({ paymentMethod, total: cart.total })
+      cart.clear()
+      // Un pedido nuevo empieza desde arriba del menú.
+      menuScrollY.current = 0
+      window.scrollTo(0, 0)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'No se pudo registrar tu pedido.')
     } finally {
@@ -155,10 +199,17 @@ export function PublicCatalogPage() {
             pedido y empezará a prepararlo. Puedes cancelarlo desde “Mis pedidos” mientras no hayan empezado.
           </p>
           <div className="public-catalog__confirmation-actions">
-            <Button variant="secondary" onClick={() => setSubmittedOrder(undefined)}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setSubmittedOrder(undefined)
+                if (reviewing) backToMenu()
+              }}
+            >
               Pedir algo más
             </Button>
-            <Button variant="primary" onClick={() => navigate(`/c/${slug}/pedidos`)}>
+            {/* Desde la revisión, reemplaza: atrás en "Mis pedidos" debe llevar al menú, no a un pedido vacío. */}
+            <Button variant="primary" onClick={() => navigate(`/c/${slug}/pedidos`, { replace: reviewing })}>
               Ver mis pedidos
             </Button>
           </div>
@@ -167,122 +218,172 @@ export function PublicCatalogPage() {
     )
   }
 
+  if (reviewing) {
+    return (
+      <PublicLayout business={business} headerRight={ordersButton}>
+        <OrderReview
+          lines={cart.lines}
+          total={cart.total}
+          itemCount={cart.count}
+          onChangeQuantity={cart.changeQuantity}
+          onBack={backToMenu}
+          connected={Boolean(customer)}
+          onConnect={promptConnect}
+          showTableField={showTableField}
+          tableOrReference={tableOrReference}
+          onTableOrReferenceChange={setTableOrReference}
+          paymentMethod={paymentMethod}
+          onPaymentMethodChange={setPaymentMethod}
+          submitting={saving}
+          submitDisabled={saving || linking}
+          error={saveError}
+          onSubmit={handleSubmitOrder}
+        />
+      </PublicLayout>
+    )
+  }
+
   return (
     <PublicLayout business={business} headerRight={ordersButton}>
-      {categories.length > 1 && (
-        <div className="public-catalog__categories">
-          {['todas', ...categories].map((c) => (
+      <div className="public-catalog">
+        {categories.length > 1 && (
+          <div className="public-catalog__categories">
+            {['todas', ...categories].map((c) => (
+              <button
+                type="button"
+                key={c}
+                className={['filter-chip', category === c ? 'filter-chip--active' : ''].join(' ')}
+                onClick={() => setCategory(c)}
+              >
+                {c === 'todas' ? 'Todas' : c}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {products.length === 0 ? (
+          <EmptyState title="Aún no hay productos en este catálogo" />
+        ) : (
+          <div className="public-catalog__products">
+            {visibleProducts.map((product) => {
+              const quantity = cart.quantityOf(product.id)
+              const productGuides = guidesByProductId[product.id]
+              return (
+                <div key={product.id} className="public-catalog__item">
+                  <div className={['public-catalog__product', quantity > 0 ? 'public-catalog__product--selected' : ''].join(' ')}>
+                    {/* Toda la tarjeta agrega una unidad, como en un kiosko; la cantidad se ajusta debajo. */}
+                    <button
+                      type="button"
+                      className="public-catalog__product-main"
+                      onClick={() => cart.add(product)}
+                      aria-label={`Agregar ${product.name}, ${currency.format(product.price)}`}
+                    >
+                      {product.imageUrl ? (
+                        <img src={product.imageUrl} alt="" loading="lazy" className="public-catalog__product-image" />
+                      ) : (
+                        <span className="public-catalog__product-image public-catalog__product-image--empty" aria-hidden="true">
+                          ☕
+                        </span>
+                      )}
+                      <span className="public-catalog__product-name">{product.name}</span>
+                      <span className="public-catalog__product-price">{currency.format(product.price)}</span>
+                      {quantity === 0 && (
+                        <span className="public-catalog__product-add" aria-hidden="true">
+                          <svg viewBox="0 0 24 24">
+                            <path d="M12 5v14M5 12h14" />
+                          </svg>
+                          Agregar
+                        </span>
+                      )}
+                    </button>
+                    {quantity > 0 && (
+                      <QuantityStepper
+                        className="public-catalog__product-stepper"
+                        name={product.name}
+                        quantity={quantity}
+                        onChange={(delta) => cart.changeQuantity(product.id, delta)}
+                      />
+                    )}
+                  </div>
+                  {productGuides && (
+                    <button
+                      type="button"
+                      className="public-catalog__guide-link"
+                      onClick={() => openGuides(product)}
+                      aria-label={`Cómo se prepara ${product.name}`}
+                    >
+                      {productGuides.length === 1 ? GUIDE_KIND_ICON[productGuides[0].kind] : '🎬'} Cómo se prepara
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Fuera del condicional: una región en vivo que aparece junto con su texto no siempre se anuncia. */}
+        <p className="visually-hidden" aria-live="polite">
+          {cart.count > 0 ? `Tu pedido: ${itemCountLabel(cart.count)}, ${currency.format(cart.total)}` : ''}
+        </p>
+
+        {cart.count > 0 && (
+          <div className="public-catalog__dock">
             <button
               type="button"
-              key={c}
-              className={['filter-chip', category === c ? 'filter-chip--active' : ''].join(' ')}
-              onClick={() => setCategory(c)}
+              className="public-catalog__cart-bar"
+              onClick={openReview}
+              aria-label={`Ver mi pedido: ${itemCountLabel(cart.count)}, ${currency.format(cart.total)}`}
             >
-              {c === 'todas' ? 'Todas' : c}
+              <span className="public-catalog__cart-bar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2" />
+                  <circle cx="10" cy="20.5" r="1" />
+                  <circle cx="17" cy="20.5" r="1" />
+                </svg>
+                {/* La key reinicia la animación cada vez que cambia la cantidad. */}
+                <span key={cart.count} className="public-catalog__cart-bar-count">
+                  {cart.count}
+                </span>
+              </span>
+              <span className="public-catalog__cart-bar-label">Ver mi pedido</span>
+              <span className="public-catalog__cart-bar-total">{currency.format(cart.total)}</span>
+              <svg className="public-catalog__cart-bar-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
             </button>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
-      {products.length === 0 ? (
-        <EmptyState title="Aún no hay productos en este catálogo" />
-      ) : (
-        <div className="public-catalog__products">
-          {visibleProducts.map((product) => {
-            const inCart = cart.find((l) => l.product.id === product.id)?.quantity
-            return (
-              <button type="button" key={product.id} className="public-catalog__product" onClick={() => addProduct(product)}>
-                {product.imageUrl ? (
-                  <img src={product.imageUrl} alt="" loading="lazy" className="public-catalog__product-image" />
-                ) : (
-                  <span className="public-catalog__product-image public-catalog__product-image--empty" aria-hidden="true">
-                    ☕
+      {guidePicker && (
+        <Modal title={`Cómo se prepara · ${guidePicker.name}`} onClose={() => setGuidePicker(undefined)}>
+          <ul className="public-catalog__guide-list">
+            {(guidesByProductId[guidePicker.id] ?? []).map((guide) => (
+              <li key={guide.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGuidePicker(undefined)
+                    setViewingGuide({ guide, productName: guidePicker.name })
+                  }}
+                >
+                  <span aria-hidden="true">{GUIDE_KIND_ICON[guide.kind]}</span>
+                  <span>
+                    <strong>{guide.title}</strong>
+                    <span className="public-catalog__guide-kind">{GUIDE_KIND_LABEL[guide.kind]}</span>
                   </span>
-                )}
-                <span className="public-catalog__product-name">{product.name}</span>
-                <span className="public-catalog__product-price">{currency.format(product.price)}</span>
-                {inCart && <span className="public-catalog__product-count">{inCart}</span>}
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-      {cart.length > 0 && (
-        <section className="public-catalog__cart" aria-label="Tu pedido">
-          <h2>Tu pedido</h2>
-          <ul className="public-catalog__cart-lines">
-            {cart.map((line) => (
-              <li key={line.product.id}>
-                <span>{line.product.name}</span>
-                <div className="public-catalog__stepper">
-                  <button type="button" onClick={() => changeQuantity(line.product.id, -1)} aria-label={`Quitar una unidad de ${line.product.name}`}>
-                    −
-                  </button>
-                  <span>{line.quantity}</span>
-                  <button type="button" onClick={() => changeQuantity(line.product.id, 1)} aria-label={`Agregar una unidad de ${line.product.name}`}>
-                    +
-                  </button>
-                </div>
-                <span>{currency.format(line.product.price * line.quantity)}</span>
+                </button>
               </li>
             ))}
           </ul>
-
-          <div className="public-catalog__total">
-            <span>Total</span>
-            <strong>{currency.format(total)}</strong>
-          </div>
-
-          {!customer ? (
-            <div className="public-catalog__login-prompt">
-              <p>Conéctate para confirmar tu pedido.</p>
-              <Button variant="primary" onClick={promptConnect} className="btn--block">
-                Conectarse
-              </Button>
-            </div>
-          ) : (
-            <>
-              {showTableField && (
-                <FormField label="Mesa" htmlFor="catalog-table" hint="Ej. Mesa 4, Para llevar">
-                  <input id="catalog-table" value={tableOrReference} onChange={(e) => setTableOrReference(e.target.value)} />
-                </FormField>
-              )}
-
-              <div className="public-catalog__payment" role="radiogroup" aria-label="Método de pago">
-                <span className="public-catalog__payment-label">Método de pago</span>
-                <div className="public-catalog__payment-options">
-                  {SALE_PAYMENT_METHODS.map((method) => (
-                    <button
-                      type="button"
-                      key={method}
-                      role="radio"
-                      aria-checked={paymentMethod === method}
-                      className={['filter-chip', paymentMethod === method ? 'filter-chip--active' : ''].join(' ')}
-                      onClick={() => setPaymentMethod(method)}
-                    >
-                      {PAYMENT_LABEL[method]}
-                    </button>
-                  ))}
-                </div>
-                <span className="section-subtitle public-catalog__payment-hint">
-                  Pagas en el negocio; el equipo confirma tu pago y empieza a prepararlo.
-                </span>
-              </div>
-
-              {saveError && <div className="form-error-banner">{saveError}</div>}
-
-              <Button
-                variant="primary"
-                className="btn--block"
-                disabled={saving || linking}
-                onClick={handleSubmitOrder}
-              >
-                {saving ? 'Enviando…' : `Confirmar pedido · ${currency.format(total)}`}
-              </Button>
-            </>
-          )}
-        </section>
+        </Modal>
+      )}
+      {viewingGuide && (
+        <GuideViewerModal
+          guide={viewingGuide.guide}
+          productName={viewingGuide.productName}
+          onClose={() => setViewingGuide(undefined)}
+        />
       )}
     </PublicLayout>
   )

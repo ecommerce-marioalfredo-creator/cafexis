@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useOrders, type ClosedOrdersPeriod } from '@/hooks/useOrders'
 import { useProducts } from '@/hooks/useProducts'
+import { useProductGuides } from '@/hooks/useProductGuides'
 import { useAuth } from '@/context/AuthContext'
 import { OrderCard } from '@/components/domain/OrderCard'
 import { useStaffOrderActions } from '@/components/domain/useStaffOrderActions'
@@ -38,6 +39,8 @@ export function SalesPage() {
   const { orders, closedTruncated, initialLoading, error, reload, setStatus, register, confirmPayment, cancel } =
     useOrders(period)
   const { products } = useProducts()
+  // Si falla (por ejemplo, sin la migración 0018), el tablero sigue igual, sin el enlace.
+  const { guidesByProductId } = useProductGuides()
   const { user } = useAuth()
   const { cardProps, actionError, modals } = useStaffOrderActions({ setStatus, confirmPayment, cancel })
   const [posOpen, setPosOpen] = useState(false)
@@ -78,6 +81,9 @@ export function SalesPage() {
     for (const product of products) map[product.id] = product.recipe
     return map
   }, [products])
+
+  // Productos con video o PDF: su línea en la comanda enlaza a la guía de preparación.
+  const guideProductIds = useMemo(() => new Set(Object.keys(guidesByProductId)), [guidesByProductId])
 
   const periodLabel = PERIODS.find((p) => p.id === period)?.label.toLowerCase()
 
@@ -138,6 +144,7 @@ export function SalesPage() {
                 order={order}
                 {...cardProps(order)}
                 recipesByProductId={recipesByProductId}
+                guideProductIds={guideProductIds}
                 onGenerateInvoice={canInvoice ? () => handleGenerateInvoice(order.id) : undefined}
                 generatingInvoice={invoicingOrderId === order.id}
               />

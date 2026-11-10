@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/Badge'
 import { PAYMENT_LABEL, currency } from './paymentMethods'
 import { NEXT_ORDER_STATUS, ORDER_STATUS_META } from './orderStatus'
@@ -9,6 +10,8 @@ interface OrderCardProps {
   onAdvance?: (nextStatus: OrderStatus) => void
   /** Receta de cada producto (por id), para mostrarla bajo cada línea del pedido — clave para que quien prepare la bebida sepa qué lleva. */
   recipesByProductId?: Record<string, RecipeIngredient[] | undefined>
+  /** Panel interno: productos con video o PDF de preparación; cada línea enlaza a /preparacion?producto=<id>. */
+  guideProductIds?: ReadonlySet<string>
   /** Solo en el panel interno (administrador/supervisor), y solo sobre pedidos entregados (Fase 6). */
   onGenerateInvoice?: () => void
   /** Mientras se emite la factura de este pedido. */
@@ -25,6 +28,7 @@ export function OrderCard({
   order,
   onAdvance,
   recipesByProductId,
+  guideProductIds,
   onGenerateInvoice,
   generatingInvoice,
   onConfirmPayment,
@@ -61,6 +65,11 @@ export function OrderCard({
                     </li>
                   ))}
                 </ul>
+              )}
+              {guideProductIds?.has(item.productId) && (
+                <Link className="order-card__guide-link" to={`/preparacion?producto=${item.productId}`}>
+                  🎬 Cómo se prepara
+                </Link>
               )}
             </li>
           )

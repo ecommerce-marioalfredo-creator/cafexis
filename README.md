@@ -59,10 +59,10 @@ Las migraciones de cada fase están en
 | Componente | Estado |
 |---|---|
 | Frontend web · Panel del negocio (administrador / supervisor) | ✅ Ver [`src/`](src/) |
-| Frontend web · Vista barista/vendedor | ✅ Tablero de pedidos con recetas, cobro en caja y filtro por período |
-| Frontend web · Catálogo, pedido e historial del cliente final | ✅ Fotos de producto, pago en el negocio y cancelación con aviso |
+| Frontend web · Vista barista/vendedor | ✅ Tablero de pedidos con recetas, cobro en caja y filtro por período; **Guías de preparación** con videos y PDF por producto |
+| Frontend web · Catálogo, pedido e historial del cliente final | ✅ Fotos de producto, pago en el negocio, cancelación con aviso y "Cómo se prepara" en los productos que el negocio publica |
 | Consola de soporte y casos | ✅ Rutas `/soporte` (equipo) y `/ayuda` (negocios) |
-| Base de datos (Supabase) | ✅ Migraciones `0001`–`0017`, ver [`supabase/`](supabase/) |
+| Base de datos (Supabase) | ✅ Migraciones `0001`–`0018`, ver [`supabase/`](supabase/) |
 | Gestión de usuarios y roles (invitaciones) | ✅ Construido; la Edge Function `invite-user` debe estar desplegada en su versión posterior a la `0013` |
 | Despliegue web | ✅ Configurado para Vercel ([`vercel.json`](vercel.json)) |
 | Backend / API propia | ✅ No hace falta (Supabase + RLS + funciones SQL + Edge Functions la reemplazan) |
@@ -81,9 +81,9 @@ directamente, no puede hacer más de lo que su rol permite.
 |---|---|
 | Supervisor técnico | Todo, en cualquier negocio (selector de negocio); asigna roles de plataforma y activa suscripciones |
 | Soporte | Consola de soporte y casos de todos los negocios, en **solo lectura** sobre sus datos |
-| Administrador / dueño | Todo en su negocio: inventario, productos y recetas, lotes, compras, proveedores, reportes, usuarios, datos y logo; cancela pedidos y emite facturas |
-| Barista / vendedor | Vende desde el punto de venta (a precios del catálogo), avanza los pedidos, confirma cobros en caja, cancela pedidos no entregados y abre casos de soporte; no edita inventario, catálogo ni datos de pedidos |
-| Cliente final | Entra con Google, ve el catálogo, pide (solo a través de la función de pedidos), cancela sus pedidos mientras no hayan empezado a prepararse y consulta su historial |
+| Administrador / dueño | Todo en su negocio: inventario, productos y recetas, videos y PDF de preparación (y si el cliente los ve), lotes, compras, proveedores, reportes, usuarios, datos y logo; cancela pedidos y emite facturas |
+| Barista / vendedor | Vende desde el punto de venta (a precios del catálogo), avanza los pedidos, confirma cobros en caja, cancela pedidos no entregados, consulta las guías de preparación (videos y PDF) y abre casos de soporte; no edita inventario, catálogo, guías ni datos de pedidos |
+| Cliente final | Entra con Google, ve el catálogo (y los videos o PDF de preparación que el negocio publique), pide (solo a través de la función de pedidos), cancela sus pedidos mientras no hayan empezado a prepararse y consulta su historial |
 
 Un usuario desactivado desde Configuración pierde el acceso de inmediato.
 
@@ -208,10 +208,11 @@ el logotipo definitivo aún está en validación):
 1. Las migraciones `0011`–`0014` y `0016` ya están aplicadas. Si las fotos de
    producto se aplicaron con su nombre anterior (`0013_fotos_producto_cafexis`),
    volver a ejecutar la `0015`; ver [`supabase/README.md`](supabase/README.md),
-   paso 15. Falta aplicar la `0017` (clientes invitados), paso 17.
+   paso 15. Falta aplicar la `0017` (clientes invitados), paso 17, y la
+   `0018` (guías de preparación con videos y PDF), paso 18.
 2. Desplegar las Edge Functions si aún no se hizo tras la `0013`:
    `invite-user`, `create-payment-link`, `generate-invoice` y
-   `wompi-webhook`. Publicar el frontend, que ya corresponde a la `0017`.
+   `wompi-webhook`. Publicar el frontend, que ya corresponde a la `0018`.
 3. Agregar `co.cafexis.clientes://auth-callback` en las Redirect URLs de
    Supabase Auth para el login con Google de la app de clientes.
 

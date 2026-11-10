@@ -10,8 +10,9 @@ import './Sidebar.css'
  * Ítems de navegación según Design System sección 2 (Arquitectura de
  * información), filtrados por rol (Fase 3 — Roles y personal): el barista
  * solo necesita su tablero de pedidos (con la receta de cada bebida
- * visible ahí mismo, ver OrderCard.tsx), no el resto del panel
- * administrativo. administrador y supervisor_tecnico ven todo.
+ * visible ahí mismo, ver OrderCard.tsx) y las guías de preparación (videos
+ * y PDF por producto, solo consulta), no el resto del panel administrativo.
+ * administrador y supervisor_tecnico ven todo.
  *
  * Fase 7: el equipo de plataforma (supervisor técnico y soporte) tiene la
  * consola de soporte; soporte solo ve esa sección (es de solo lectura sobre
@@ -21,6 +22,7 @@ const NAV_ITEMS: Array<{ to: string; label: string; icon: string; end?: true; ro
   { to: '/soporte', label: 'Consola de soporte', icon: '🛟', roles: PLATFORM_ROLES },
   { to: '/', label: 'Dashboard', icon: '📊', end: true, roles: ADMIN_ROLES },
   { to: '/ventas', label: 'Ventas', icon: '🧾', roles: BUSINESS_STAFF_ROLES },
+  { to: '/preparacion', label: 'Guías de preparación', icon: '🎬', roles: BUSINESS_STAFF_ROLES },
   { to: '/inventario', label: 'Inventario', icon: '📦', roles: ADMIN_ROLES },
   { to: '/productos', label: 'Productos y recetas', icon: '☕', roles: ADMIN_ROLES },
   { to: '/compras', label: 'Compras', icon: '🛒', roles: ADMIN_ROLES },
